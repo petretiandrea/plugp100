@@ -33,7 +33,7 @@ jobs:
             curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py &&
             python3.9 get-pip.py --user"
 
-      - uses:
+      - uses: docker://multiarch/ubuntu-core:arm64-bionic
         name: "Install plugp100 dependecies"
         with:
           args: >
