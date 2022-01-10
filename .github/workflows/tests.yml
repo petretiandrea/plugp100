@@ -27,7 +27,7 @@ jobs:
           args: >
             bash -c "
             apt-get update -y &&
-            apt-get install software-properties-common &&
+            apt-get install -y software-properties-common &&
             add-apt-repository ppa:deadsnakes/ppa &&
             apt-get install python3.9 python3-distutils &&
             curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py &&
