@@ -10,30 +10,14 @@ on:
 
 jobs:
   dependecies_job:
-    runs-on: ubuntu-20.04
-    name: Build on ${{ matrix.distro }} ${{ matrix.arch }}
-
-    strategy:
-      matrix:
-        include:
-          - arch: aarch64
-            distro: ubuntu20.04
-          - arch: armv7
-            distro: ubuntu20.04
+    runs-on: ubuntu-latest
+    name: Build on
 
     steps:
-      - uses: actions/checkout@v2.1.0
-      - uses: uraimo/run-on-arch-action@v2.1.1
-        name: "Install dependencies"
+      - run: |
+          docker run --rm --privileged multiarch/qemu-user-static:register --reset
+      - uses: docker://multiarch/ubuntu-core:arm64-bionic
         with:
-          arch: ${{ matrix.arch }}
-          distro: ${{ matrix.distro }}
-          shell: /bin/sh
-          install: |
-            apt-get update -q -y
-            apt-get install -q -y git
-            apt-get install python3.9 python3.9-distutils curl
-            curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
-            python3.9 get-pip.py --user
-          run:
-            python3.9 --version
+          args: 'uname -a'
+
+      - uses: actions/checkout@v2.1.0
