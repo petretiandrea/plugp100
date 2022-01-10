@@ -24,10 +24,11 @@ jobs:
       - uses: docker://multiarch/ubuntu-core:arm64-bionic
         name: "Install python3.9"
         with:
-          args: |
+          args: >
+          bash -c "
             apt-get update -y
             apt-get install -y git
             apt-get install python3.9 python3.9-distutils curl
             curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
             python3.9 get-pip.py --user
-            python3.9 --version
+            python3.9 --version"
