@@ -1,5 +1,5 @@
 certifi==2021.10.8
-idna==2.10
+idna==3.3
 jsons==1.6.1
 pkcs7==0.1.2
 pycryptodome==3.12.0
