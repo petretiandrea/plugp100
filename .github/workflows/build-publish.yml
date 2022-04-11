@@ -52,7 +52,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2.4.0
       - name: "Retrieve compiled requirements"
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: wheel
           path: ./dist
