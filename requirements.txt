@@ -1,6 +1,6 @@
 certifi>=2020.12.5
 idna>=2.10
-jsons==1.6.1
+jsons==1.6.2
 pkcs7==0.1.2
 pycryptodome==3.12.0
 requests>=2.25.1
