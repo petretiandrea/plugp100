@@ -44,7 +44,7 @@ jobs:
             ${{ matrix.python }} build_tools/build_platform_wheel.py ./plugp100/_vendor requirements.txt
             ${{ matrix.python }} build_tools/rename_wheels.py ${{ matrix.platform }}
       - name: "Upload generated wheel for ${{ matrix.python }} ${{ matrix.platform }}"
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: wheel
           path: dist/*
