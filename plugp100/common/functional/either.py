@@ -117,6 +117,10 @@ class Left(Either[TSource, TError]):
     def __init__(self, error: TError) -> None:
         self._error = error
 
+    @property
+    def error(self):
+        return self._error
+
     @classmethod
     def pure(cls, value: Callable[[TSource], TResult]) -> Either[Callable[[TSource], TResult], TError]:
         return Right(value)

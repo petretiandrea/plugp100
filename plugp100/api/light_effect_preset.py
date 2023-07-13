@@ -25,12 +25,9 @@ class LightEffectPreset(enum.Enum):
 
     @staticmethod
     def from_name(name: str) -> Optional['LightEffectPreset']:
-        for member in LightEffectPreset:
-            if member.value.lower() == name.lower():
-                return member
-        return None
+        return next([member for member in LightEffectPreset if member.value.lower() == name.lower()], None)
 
-    def to_effect(self) -> 'LightingEffect':
+    def to_effect(self) -> LightEffect:
         _preset_mapping = {
             LightEffectPreset.BubblingCauldron: LightEffect.bubbling_calderon,
             LightEffectPreset.Aurora: LightEffect.aurora,

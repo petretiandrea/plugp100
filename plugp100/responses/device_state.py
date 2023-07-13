@@ -18,7 +18,7 @@ class PlugDeviceState(DeviceState):
     device_on: bool
 
     @staticmethod
-    def from_json(kwargs: dict[str, Any]) -> Either['PlugDeviceState', Exception]:
+    def try_from_json(kwargs: dict[str, Any]) -> Either['PlugDeviceState', Exception]:
         try:
             return Right(PlugDeviceState(
                 info=DeviceInfo(**kwargs),
@@ -38,7 +38,7 @@ class LightDeviceState(DeviceState):
     color_temp: Optional[int]
 
     @staticmethod
-    def from_json(kwargs: dict[str, Any]) -> Either['LightDeviceState', Exception]:
+    def try_from_json(kwargs: dict[str, Any]) -> Either['LightDeviceState', Exception]:
         try:
             return Right(LightDeviceState(
                 info=DeviceInfo(**kwargs),
@@ -63,7 +63,7 @@ class LedStripDeviceState(DeviceState):
     lighting_effect: Optional[LightEffect]
 
     @staticmethod
-    def from_json(kwargs: dict[str, Any]) -> Either['LedStripDeviceState', Exception]:
+    def try_from_json(kwargs: dict[str, Any]) -> Either['LedStripDeviceState', Exception]:
         try:
             return Right(LedStripDeviceState(
                 info=DeviceInfo(**kwargs),
@@ -113,3 +113,19 @@ class DeviceInfo:
                 return semantic_version.Version('0.0.0')
         except ValueError:
             return semantic_version.Version('0.0.0')
+
+
+@dataclass
+class HubDeviceState(DeviceState):
+    info: 'DeviceInfo'
+    in_alarm: bool
+
+    @staticmethod
+    def try_from_json(kwargs: dict[str, Any]) -> Either['HubDeviceState', Exception]:
+        try:
+            return Right(HubDeviceState(
+                info=DeviceInfo(**kwargs),
+                in_alarm=kwargs.get('in_alarm', False),
+            ))
+        except Exception as e:
+            return Left(e)

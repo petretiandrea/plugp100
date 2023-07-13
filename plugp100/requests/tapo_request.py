@@ -1,9 +1,11 @@
-from typing import TypeVar, Any
+from dataclasses import dataclass
+from typing import TypeVar, Any, List
 
 from plugp100.api.light_effect import LightEffect
 from plugp100.requests.handshake_params import HandshakeParams
 from plugp100.requests.login_device import LoginDeviceParams
 from plugp100.requests.secure_passthrough_params import SecurePassthroughParams
+from plugp100.requests.trigger_logs_params import GetTriggerLogsParams
 
 T = TypeVar("T")
 
@@ -54,11 +56,27 @@ class TapoRequest(object):
     def get_child_device_component_list() -> 'TapoRequest':
         return TapoRequest(method='get_child_device_component_list', params=None)
 
+    @staticmethod
+    def multiple_request(requests: 'MultipleRequestParams') -> 'TapoRequest':
+        return TapoRequest(method='multipleRequest', params=requests)
+
+    @staticmethod
+    def control_child(device_id: str, request: 'TapoRequest') -> 'TapoRequest':
+        return TapoRequest(method='control_child', params=ControlChildParams(device_id, request))
+
+    @staticmethod
+    def get_child_event_logs(trigger_log_params: GetTriggerLogsParams) -> 'TapoRequest':
+        return TapoRequest(method='get_trigger_logs', params=trigger_log_params)
+
+    @staticmethod
+    def get_temperature_humidity_records() -> 'TapoRequest':
+        return TapoRequest(method='get_temp_humidity_records', params=None)
+
     def __init__(self, method: str, params):
         self.method = method
         self.params = params
 
-    def with_request_time_milis(self, t: float) -> 'TapoRequest':
+    def with_request_time_millis(self, t: float) -> 'TapoRequest':
         self.request_time_milis = t
         return self
 
@@ -71,3 +89,15 @@ class TapoRequest(object):
 
     def get_method(self):
         return self.method
+
+
+# moved here to avoid circular import in python
+@dataclass
+class ControlChildParams:
+    device_id: str
+    requestData: 'TapoRequest'
+
+
+@dataclass
+class MultipleRequestParams:
+    requests: List[TapoRequest]
