@@ -7,6 +7,7 @@ from typing import Callable, Any, List, cast
 from plugp100.api.hub.hub_device_tracker import HubConnectedDeviceTracker, HubDeviceEvent
 from plugp100.api.tapo_client import TapoClient, Json
 from plugp100.common.functional.either import Either, Right, Left
+from plugp100.requests.set_device_info.play_alarm_params import PlayAlarmParams
 from plugp100.requests.tapo_request import TapoRequest
 from plugp100.responses.child_device_list import ChildDeviceList
 from plugp100.responses.device_state import HubDeviceState
@@ -33,6 +34,13 @@ class HubDevice:
         @return: The login method is returning an Either type, which can either be True or an Exception.
         """
         return await self._api.login(self._address)
+
+    async def turn_alarm_on(self, alarm: PlayAlarmParams = None) -> Either[True, Exception]:
+        request = TapoRequest(method='play_alarm', params=alarm)
+        return (await self._api.execute_raw_request(request)).map(lambda _: True)
+
+    async def turn_alarm_off(self) -> Either[True, Exception]:
+        return (await self._api.execute_raw_request(TapoRequest(method='stop_alarm', params=None))).map(lambda _: True)
 
     async def get_state(self) -> Either[HubDeviceState, Exception]:
         """

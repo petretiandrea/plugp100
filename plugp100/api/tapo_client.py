@@ -65,6 +65,10 @@ class TapoClient:
 
         return handshake
 
+    async def execute_raw_request(self, request: 'TapoRequest') -> Either[Json, Exception]:
+        request.with_terminal_uuid(self.TERMINAL_UUID).with_request_time_millis(time())
+        return (await self._execute_with_passthrough(request, require_token=True)).map(lambda x: x.result)
+
     async def get_device_info(self) -> Either[Json, Exception]:
         """
         The function `get_device_info` sends a request to retrieve device information and returns the result or an
