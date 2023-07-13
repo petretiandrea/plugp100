@@ -2,8 +2,9 @@ import asyncio
 import logging
 from asyncio import iscoroutinefunction
 from logging import Logger
-from typing import Callable, Any, Optional, List
+from typing import Callable, Any, List, cast
 
+from plugp100.api.hub.hub_device_tracker import HubConnectedDeviceTracker, HubDeviceEvent
 from plugp100.api.tapo_client import TapoClient, Json
 from plugp100.common.functional.either import Either, Right, Left
 from plugp100.requests.tapo_request import TapoRequest
@@ -19,9 +20,10 @@ class HubDevice:
     def __init__(self, api: TapoClient, address: str, logger: Logger = None):
         self._api = api
         self._address = address
+        self._tracker = HubConnectedDeviceTracker(logger)
         self._is_tracking = False
-        self._tracking_task: Optional[asyncio.Task] = None
-        self._tracking_subscriptions: List[Callable[[ChildDeviceList], Any]] = []
+        self._tracking_tasks: List[asyncio.Task] = []
+        self._tracking_subscriptions: List[Callable[[HubDeviceEvent], Any]] = []
         self._logger = logger if logger is not None else logging.getLogger("HubDevice")
 
     async def login(self) -> Either[True, Exception]:
@@ -67,20 +69,24 @@ class HubDevice:
         @defaults to 10_000
         @type interval_millis: int (optional)
         """
-        if self._tracking_task is None:
+        if not self._is_tracking:
             self._is_tracking = True
-            self._tracking_task = asyncio.create_task(self._poll(interval_millis))
+            self._tracking_tasks = [
+                asyncio.create_task(self._poll(interval_millis)),
+                asyncio.create_task(self._poll_tracker())
+            ]
 
     def stop_tracking(self):
         """
         The function `stop_tracking` cancels a background task and sets the `is_observing` attribute to False.
         """
-        if self._tracking_task:
+        if self._is_tracking:
             self._is_tracking = False
-            self._tracking_task.cancel()
-            self._tracking_task = None
+            for task in self._tracking_tasks:
+                task.cancel()
+            self._tracking_tasks = []
 
-    def subscribe(self, callback: Callable[[ChildDeviceList], Any]) -> HubSubscription:
+    def subscribe(self, callback: Callable[[HubDeviceEvent], Any]) -> HubSubscription:
         """
         The `subscribe` function adds a callback function to the list of subscriptions and returns an unsubscribe function.
 
@@ -96,18 +102,23 @@ class HubDevice:
 
         return unsubscribe
 
-    def _emit(self, data: ChildDeviceList):
+    def _emit(self, state_change: HubDeviceEvent):
         for sub in self._tracking_subscriptions:
             if iscoroutinefunction(sub):
-                asyncio.create_task(sub(data))
+                asyncio.create_task(sub(state_change))
             else:
-                sub(data)
+                sub(state_change)
 
     async def _poll(self, interval_millis: int):
         while self._is_tracking:
             new_state = await self._api.get_child_device_list()
             if isinstance(new_state, Right):
-                self._emit(new_state.value)
+                await self._tracker.notify_state_update(cast(ChildDeviceList, new_state.value).get_device_ids())
             elif isinstance(new_state, Left):
                 self._logger.error(new_state.error)
             await asyncio.sleep(interval_millis / 1000)  # to seconds
+
+    async def _poll_tracker(self):
+        while self._is_tracking:
+            state_change = await self._tracker.get_next_state_change()
+            self._emit(state_change)
