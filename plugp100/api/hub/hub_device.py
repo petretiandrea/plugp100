@@ -46,6 +46,9 @@ class HubDevice:
     async def get_state_as_json(self) -> Either[Json, Exception]:
         return await self._api.get_device_info()
 
+    async def get_children(self) -> Either[ChildDeviceList, Exception]:
+        return await self._api.get_child_device_list()
+
     async def control_child(self, device_id: str, request: TapoRequest) -> Either[Json, Exception]:
         """
         The function `control_child` is an asynchronous method that takes a device ID and a TapoRequest object as
