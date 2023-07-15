@@ -1,8 +1,9 @@
 from dataclasses import dataclass
+from typing import Optional
 
 
 @dataclass
 class PlayAlarmParams(object):
-    alarm_duration: int
-    alarm_type: str
-    alarm_volume: str
+    alarm_duration: Optional[int] = None
+    alarm_type: Optional[str] = None
+    alarm_volume: Optional[str] = None

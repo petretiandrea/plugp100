@@ -7,6 +7,7 @@ from typing import Callable, Any, List, cast
 from plugp100.api.hub.hub_device_tracker import HubConnectedDeviceTracker, HubDeviceEvent
 from plugp100.api.tapo_client import TapoClient, Json
 from plugp100.common.functional.either import Either, Right, Left
+from plugp100.common.utils.json_utils import dataclass_encode_json
 from plugp100.requests.set_device_info.play_alarm_params import PlayAlarmParams
 from plugp100.requests.tapo_request import TapoRequest
 from plugp100.responses.child_device_list import ChildDeviceList
@@ -36,7 +37,7 @@ class HubDevice:
         return await self._api.login(self._address)
 
     async def turn_alarm_on(self, alarm: PlayAlarmParams = None) -> Either[True, Exception]:
-        request = TapoRequest(method='play_alarm', params=alarm)
+        request = TapoRequest(method='play_alarm', params=dataclass_encode_json(alarm))
         return (await self._api.execute_raw_request(request)).map(lambda _: True)
 
     async def turn_alarm_off(self) -> Either[True, Exception]:
