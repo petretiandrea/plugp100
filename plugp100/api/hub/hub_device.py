@@ -10,6 +10,7 @@ from plugp100.common.functional.either import Either, Right, Left
 from plugp100.common.utils.json_utils import dataclass_encode_json
 from plugp100.requests.set_device_info.play_alarm_params import PlayAlarmParams
 from plugp100.requests.tapo_request import TapoRequest
+from plugp100.responses.alarm_type_list import AlarmTypeList
 from plugp100.responses.child_device_list import ChildDeviceList
 from plugp100.responses.device_state import HubDeviceState
 
@@ -51,6 +52,10 @@ class HubDevice:
         object.
         """
         return (await self._api.get_device_info()) | HubDeviceState.try_from_json
+
+    async def get_supported_alarm_tones(self) -> Either[AlarmTypeList, Exception]:
+        return (await self._api.execute_raw_request(
+            TapoRequest(method="get_support_alarm_type_list", params=None))) | AlarmTypeList.try_from_json
 
     async def get_state_as_json(self) -> Either[Json, Exception]:
         return await self._api.get_device_info()
