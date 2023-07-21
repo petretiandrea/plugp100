@@ -30,19 +30,16 @@ class PowerStripDevice:
         """
         return (await self._api.get_device_info()) | PlugDeviceState.try_from_json
 
-    async def off(self) -> Either[True, Exception]:
-        """
-        The function `off` sets the device info to False using the `SetPlugInfoParams` class.
-        @return: an `Either` object, which can either be `True` or an `Exception`.
-        """
-        return await self._api.set_device_info(SetPlugInfoParams(False))
-
     async def get_children(self) -> Either[ChildDeviceList, Exception]:
         return await self._api.get_child_device_list()
 
-    async def on(self, device_id: str):
-        request = dataclass_encode_json(SetPlugInfoParams(device_on=False))
-        return await self._control_child(device_id, request)
+    async def on(self, child_device_id: str) -> Either[True, Exception]:
+        request = TapoRequest.set_device_info(dataclass_encode_json(SetPlugInfoParams(device_on=True)))
+        return (await self._control_child(child_device_id, request)).map(lambda _: True)
+
+    async def off(self, child_device_id: str) -> Either[True, Exception]:
+        request = TapoRequest.set_device_info(dataclass_encode_json(SetPlugInfoParams(device_on=False)))
+        return (await self._control_child(child_device_id, request)).map(lambda _: True)
 
     async def _control_child(self, device_id: str, request: TapoRequest) -> Either[Json, Exception]:
         return await self._api.control_child(device_id, request)

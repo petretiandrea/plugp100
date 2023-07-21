@@ -1,3 +1,4 @@
+import base64
 from dataclasses import dataclass
 from typing import Any, Set, Callable, List, TypeVar
 
@@ -28,17 +29,24 @@ class ChildDeviceList(object):
 @dataclass
 class PowerStripChild:
     brightness: int
+    device_id: str
     original_device_id: str
     overheat: str
     position: int
     slotNumber: int
+    device_on: bool
+    nickname: str
 
     @staticmethod
     def try_from_json(**kwargs):
         return PowerStripChild(
-            kwargs.get('brightness', 0),
-            kwargs.get('original_device_id', ''),
-            kwargs.get('overheat_status', 0),
-            kwargs.get('position', -1),
-            kwargs.get('slot_number', -1)
+            brightness=kwargs.get('brightness', 0),
+            device_id=kwargs.get('device_id', ''),
+            original_device_id=kwargs.get('original_device_id', ''),
+            overheat=kwargs.get('overheat_status', 0),
+            position=kwargs.get('position', -1),
+            slotNumber=kwargs.get('slot_number', -1),
+            device_on=kwargs.get('device_on', False),
+            nickname=base64.b64decode(kwargs["nickname"]).decode("UTF-8"),
+
         )

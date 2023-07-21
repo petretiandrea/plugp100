@@ -8,8 +8,8 @@ from plugp100.encryption.helpers import Base64str
 class KeyPair(object):
 
     @staticmethod
-    def create_key_pair() -> 'KeyPair':
-        private_key = rsa.generate_private_key(public_exponent=65537, key_size=1024)
+    def create_key_pair(key_size: int = 1024) -> 'KeyPair':
+        private_key = rsa.generate_private_key(public_exponent=65537, key_size=key_size)
         public_key = private_key.public_key()
 
         private_key_bytes = private_key.private_bytes(
