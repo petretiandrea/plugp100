@@ -6,4 +6,4 @@ devices:
   light: ""
   ledstrip: ""
   hub: ""
-  switch: ""
+  plug: ""

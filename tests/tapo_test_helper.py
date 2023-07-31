@@ -20,7 +20,7 @@ async def _test_expose_device_info(device_info: DeviceInfo, test: unittest.TestC
     test.assertIsNotNone(state.type)
 
 
-DeviceType = typing.Union['light', 'ledstrip', 'switch', 'hub']
+DeviceType = typing.Union['light', 'ledstrip', 'plug', 'hub']
 
 
 async def get_test_config(device_type: DeviceType) -> (str, str, str):
