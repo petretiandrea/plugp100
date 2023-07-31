@@ -60,7 +60,7 @@ setup_args = dict(
     long_description_content_type="text/markdown",
     long_description=README,
     license='GPL3',
-    packages=find_packages(),
+    packages=find_packages(exclude=("tests",)),
     author='@petretiandrea',
     author_email='petretiandrea@gmail.com',
     keywords=['Tapo', 'P100'],
