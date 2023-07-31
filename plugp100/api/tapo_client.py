@@ -1,4 +1,5 @@
 import logging
+import uuid
 from dataclasses import dataclass
 from time import time
 from typing import Optional, Any, cast
@@ -11,6 +12,7 @@ from plugp100.common.functional.either import Either, Right, Left
 from plugp100.common.utils.http_client import AsyncHttp
 from plugp100.common.utils.json_utils import dataclass_encode_json, Json
 from plugp100.requests.handshake_params import HandshakeParams
+from plugp100.requests.internal.snowflake_id import SnowflakeId
 from plugp100.requests.login_device import LoginDeviceParams
 from plugp100.requests.secure_passthrough_params import SecurePassthroughParams
 from plugp100.requests.tapo_request import TapoRequest, MultipleRequestParams
@@ -31,10 +33,10 @@ class Session:
     chiper: TpLinkCipher
     cookie_token: Optional[str]
     token: Optional[str]
+    terminal_uuid: str
 
 
 class TapoClient:
-    TERMINAL_UUID = "88-00-DE-AD-52-E1"
 
     def __init__(
             self,
@@ -46,6 +48,10 @@ class TapoClient:
         self._password = password
         self._http = AsyncHttp(aiohttp.ClientSession() if http_session is None else http_session)
         self._session = None
+        self._request_id_generator = SnowflakeId(1, 1)
+
+    async def close(self):
+        await self._http.close()
 
     async def login(self, url: str) -> Either[True, Exception]:
         """
@@ -66,7 +72,7 @@ class TapoClient:
         return handshake
 
     async def execute_raw_request(self, request: 'TapoRequest') -> Either[Json, Exception]:
-        request.with_terminal_uuid(self.TERMINAL_UUID).with_request_time_millis(time())
+        request.with_terminal_uuid(self._session.terminal_uuid).with_request_time_millis(round(time() * 1000))
         return (await self._execute_with_passthrough(request, require_token=True)).map(lambda x: x.result)
 
     async def get_device_info(self) -> Either[Json, Exception]:
@@ -130,8 +136,8 @@ class TapoClient:
         @return: an `Either` object that contains either a `True` value or an `Exception`.
         """
         request = TapoRequest.set_lighting_effect(light_effect) \
-            .with_terminal_uuid(self.TERMINAL_UUID) \
-            .with_request_time_millis(time())
+            .with_terminal_uuid(self._session.terminal_uuid) \
+            .with_request_time_millis(round(time() * 1000))
         response = await self._execute_with_passthrough(request, require_token=True)
         return response.map(lambda _: True)
 
@@ -142,8 +148,8 @@ class TapoClient:
         @return: an `Either` object, which can contain either a `ChildDeviceList` or an `Exception`.
         """
         request = TapoRequest.get_child_device_list() \
-            .with_terminal_uuid(self.TERMINAL_UUID) \
-            .with_request_time_millis(time())
+            .with_terminal_uuid(self._session.terminal_uuid) \
+            .with_request_time_millis(round(time() * 1000))
         response = await self._execute_with_passthrough(request, require_token=True)
         return response.map(lambda x: ChildDeviceList.try_from_json(**x.result))
 
@@ -154,8 +160,8 @@ class TapoClient:
         @return: an `Either` object, which can contain either a `Json` object or an `Exception`.
         """
         request = TapoRequest.get_child_device_component_list() \
-            .with_terminal_uuid(self.TERMINAL_UUID) \
-            .with_request_time_millis(time())
+            .with_terminal_uuid(self._session.terminal_uuid) \
+            .with_request_time_millis(round(time() * 1000))
         response = await self._execute_with_passthrough(request, require_token=True)
         return response.map(lambda x: x.result)
 
@@ -172,8 +178,8 @@ class TapoClient:
         @return: an instance of the `Either` class, which can contain either a `Json` object or an `Exception`.
         """
         multiple_request = TapoRequest.multiple_request(MultipleRequestParams([request])) \
-            .with_terminal_uuid(self.TERMINAL_UUID) \
-            .with_request_time_millis(time())
+            .with_terminal_uuid(self._session.terminal_uuid) \
+            .with_request_time_millis(round(time() * 1000))
         request = TapoRequest.control_child(child_id, multiple_request)
         response = await self._execute_with_passthrough(request, require_token=True)
         if isinstance(response, Right):
@@ -190,7 +196,7 @@ class TapoClient:
     async def _login_request(self, username: str, password: str) -> Either[str, Exception]:
         login_device_params = LoginDeviceParams(username, password)
         login_request = TapoRequest.login(login_device_params) \
-            .with_request_time_millis(time())
+            .with_request_time_millis(round(time() * 1000))
         response_as_dict = await self._execute_with_passthrough(login_request)
         return response_as_dict.map(lambda x: x.result['token'])
 
@@ -205,6 +211,7 @@ class TapoClient:
         logger.debug(f"Handshake params: {jsons.dumps(handshake_params)}")
 
         request = TapoRequest.handshake(handshake_params)
+
         request_body = jsons.loads(jsons.dumps(request))
         logger.debug(f"Request {request_body}")
 
@@ -221,7 +228,7 @@ class TapoClient:
             handshake_key = resp_dict['result']['key']
             tp_link_cipher = TpLinkCipherCryptography.create_from_keypair(handshake_key, key_pair)
 
-            self._session = Session(url, key_pair, tp_link_cipher, cookie_token, token=None)
+            self._session = Session(url, key_pair, tp_link_cipher, cookie_token, token=None, terminal_uuid=str(uuid.uuid4()))
             return Right(True)
         else:
             return response_or_error
@@ -231,6 +238,7 @@ class TapoClient:
             request: TapoRequest,
             require_token: bool = False
     ) -> Either[TapoResponse[Json], Exception]:
+        request.with_request_id(self._request_id_generator.generate_id()).with_terminal_uuid(self._session.terminal_uuid)
         encrypted_request = self._session.chiper.encrypt(jsons.dumps(request))
         passthrough_request = TapoRequest.secure_passthrough(SecurePassthroughParams(encrypted_request))
         request_body = jsons.loads(jsons.dumps(passthrough_request))
@@ -251,7 +259,7 @@ class TapoClient:
 
     async def _set_device_info(self, device_info: Json) -> Either[True, Exception]:
         request = TapoRequest.set_device_info(device_info) \
-            .with_terminal_uuid(self.TERMINAL_UUID) \
-            .with_request_time_millis(time())
+            .with_terminal_uuid(self._session.terminal_uuid) \
+            .with_request_time_millis(round(time() * 1000))
         response = await self._execute_with_passthrough(request, require_token=True)
         return response.map(lambda _: True)

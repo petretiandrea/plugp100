@@ -28,6 +28,9 @@ class AsyncHttp:
         ) as response:
             return await self._force_read_release(response)
 
+    async def close(self):
+        await self.session.close()
+
     async def _force_read_release(self, response):
         await response.read()
         await response.release()

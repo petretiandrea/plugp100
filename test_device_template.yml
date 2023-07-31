@@ -1,0 +1,9 @@
+credentials:
+  username: ""
+  password: ""
+
+devices:
+  light: ""
+  ledstrip: ""
+  hub: ""
+  switch: ""

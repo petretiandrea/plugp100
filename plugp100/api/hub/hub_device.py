@@ -38,7 +38,7 @@ class HubDevice:
         return await self._api.login(self._address)
 
     async def turn_alarm_on(self, alarm: PlayAlarmParams = None) -> Either[True, Exception]:
-        request = TapoRequest(method='play_alarm', params=dataclass_encode_json(alarm))
+        request = TapoRequest(method='play_alarm', params=dataclass_encode_json(alarm) if alarm is not None else None)
         return (await self._api.execute_raw_request(request)).map(lambda _: True)
 
     async def turn_alarm_off(self) -> Either[True, Exception]:

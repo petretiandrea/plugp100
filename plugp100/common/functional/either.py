@@ -1,12 +1,13 @@
 from abc import abstractmethod
 from functools import partial
 
-from typing import Callable, TypeVar, Generic
+from typing import Callable, TypeVar, Generic, Union
 
 TSource = TypeVar("TSource")
 TResult = TypeVar("TResult")
 TError = TypeVar("TError")
 TFold = TypeVar("TFold")
+
 
 # from OSlash library, copied it to avoid external dependencies and issues especially for migration to python 11
 
@@ -146,3 +147,14 @@ class Left(Either[TSource, TError]):
 
     def __str__(self) -> str:
         return "Left: %s" % self._error
+
+
+T = TypeVar("T")
+
+
+def value_or_raise(either: Either[T, Exception]) -> T:
+    value_or_error: Union[T, Exception] = either.fold(lambda x: x, lambda y: y)
+    if isinstance(value_or_error, Exception):
+        raise value_or_error
+    else:
+        return value_or_error

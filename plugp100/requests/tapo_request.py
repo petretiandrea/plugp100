@@ -76,6 +76,10 @@ class TapoRequest(object):
         self.method = method
         self.params = params
 
+    def with_request_id(self, request_id: int) -> 'TapoRequest':
+        self.requestID = request_id
+        return self
+
     def with_request_time_millis(self, t: float) -> 'TapoRequest':
         self.request_time_milis = t
         return self
