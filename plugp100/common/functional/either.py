@@ -1,7 +1,7 @@
 from abc import abstractmethod
 from functools import partial
 
-from typing import Callable, TypeVar, Generic, Union
+from typing import Callable, TypeVar, Generic, Union, Optional
 
 TSource = TypeVar("TSource")
 TResult = TypeVar("TResult")
@@ -52,6 +52,12 @@ class Either(Generic[TSource, TError]):
 
     def __or__(self, func):
         return self.bind(func)
+
+    def is_left(self) -> bool:
+        pass
+
+    def is_right(self) -> bool:
+        pass
 
 
 class Right(Either[TSource, TError]):
@@ -111,6 +117,12 @@ class Right(Either[TSource, TError]):
     def value(self):
         return self._value
 
+    def is_left(self) -> bool:
+        return False
+
+    def is_right(self) -> bool:
+        return True
+
 
 class Left(Either[TSource, TError]):
     """Represents a computation that has failed."""
@@ -147,6 +159,12 @@ class Left(Either[TSource, TError]):
 
     def __str__(self) -> str:
         return "Left: %s" % self._error
+
+    def is_left(self) -> bool:
+        return True
+
+    def is_right(self) -> bool:
+        return False
 
 
 T = TypeVar("T")

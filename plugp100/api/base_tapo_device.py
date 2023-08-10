@@ -11,13 +11,16 @@ class _BaseTapoDevice:
         self._api = api
         self._address = address
 
-    async def login(self, use_v2: bool = False) -> Either[True, Exception]:
+    async def login(self) -> Either[True, Exception]:
         """
         The function `login` attempts to log in to an API using a given address and returns either `True` if successful or
         an `Exception` if there is an error.
         @return: The login method is returning an Either type, which can either be True or an Exception.
         """
-        return await self._api.login(self._address, use_v2)
+        login_result = await self._api.login(self._address, use_v2=False)
+        if login_result.is_left():
+            return await self._api.login(self._address, use_v2=True)
+        return login_result
 
     async def get_device_usage(self) -> Either[DeviceUsageInfo, Exception]:
         return (await self._api.execute_raw_request(TapoRequest(method="get_device_usage", params=None))) | \

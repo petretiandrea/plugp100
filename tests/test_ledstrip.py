@@ -66,7 +66,7 @@ class LedStripTest(unittest.IsolatedAsyncioTestCase):
     async def test_should_set_brightness_of_light_effect(self):
         await self._device.on()
         await self._device.set_light_effect(LightEffect.aurora())
-        await sleep(5)
+        await sleep(2)
         await self._device.set_light_effect_brightness(LightEffect.aurora(), 40)
         state = value_or_raise(await self._device.get_state())
         self.assertEqual(40, state.brightness)
