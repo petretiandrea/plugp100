@@ -1,6 +1,8 @@
+import base64
 import logging
 import uuid
 from dataclasses import dataclass
+from hashlib import md5
 from time import time
 from typing import Optional, Any, cast
 
@@ -231,8 +233,8 @@ class TapoClient:
             handshake_key = resp_dict['result']['key']
             tp_link_cipher = TpLinkCipherCryptography.create_from_keypair(handshake_key, key_pair)
 
-            self._session = Session(url, key_pair, tp_link_cipher, cookie_token, token=None,
-                                    terminal_uuid=str(uuid.uuid4()))
+            terminal_uuid = base64.b64encode(md5(uuid.uuid4().bytes).digest()).decode("UTF-8")
+            self._session = Session(url, key_pair, tp_link_cipher, cookie_token, token=None, terminal_uuid=terminal_uuid)
             return Right(True)
         else:
             return response_or_error
