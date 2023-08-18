@@ -75,10 +75,12 @@ class SecurePassthroughTransport:
         assert session is not None
         request.with_request_id(self._request_id_generator.generate_id()) \
             .with_terminal_uuid(session.terminal_uuid)
-        encrypted_request = session.chiper.encrypt(jsons.dumps(request))
+        raw_request = jsons.dumps(request)
+        logger.debug(f"Raw request: {raw_request}")
+
+        encrypted_request = session.chiper.encrypt(raw_request)
         passthrough_request = TapoRequest.secure_passthrough(SecurePassthroughParams(encrypted_request))
         request_body = jsons.loads(jsons.dumps(passthrough_request))
-
         logger.debug(f"Request body: {request_body}")
 
         response_encrypted = await self._http.async_make_post_cookie(
@@ -89,6 +91,9 @@ class SecurePassthroughTransport:
         response_as_dict: dict = await response_encrypted.json(content_type=None)
         logger.debug(f"Device responded with: {response_as_dict}")
 
-        return TapoResponse.try_from_json(response_as_dict) \
+        response_json = TapoResponse.try_from_json(response_as_dict) \
             .map(lambda response: jsons.loads(session.chiper.decrypt(response.result['response']))) \
             .bind(lambda decrypted_response: TapoResponse.try_from_json(decrypted_response))
+        logger.debug(f"Decrypted response: {response_json}")
+
+        return response_json
