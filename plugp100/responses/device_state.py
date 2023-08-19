@@ -103,7 +103,6 @@ class DeviceInfo:
     device_id: str
     hardware_id: str
     oem_id: str
-    timezone: str
     firmware_version: str
     hardware_version: str
     ip: str
