@@ -3,7 +3,11 @@ import unittest
 from plugp100.api.plug_device import PlugDevice
 from plugp100.api.tapo_client import TapoClient
 from plugp100.common.functional.either import value_or_raise
-from tests.tapo_test_helper import _test_expose_device_info, get_test_config, _test_device_usage
+from tests.tapo_test_helper import (
+    _test_expose_device_info,
+    get_test_config,
+    _test_device_usage,
+)
 
 
 class PlugTest(unittest.IsolatedAsyncioTestCase):
@@ -36,4 +40,3 @@ class PlugTest(unittest.IsolatedAsyncioTestCase):
         await self._device.off()
         state = value_or_raise(await self._device.get_state())
         self.assertEqual(False, state.device_on)
-

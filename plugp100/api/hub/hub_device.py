@@ -5,7 +5,10 @@ from logging import Logger
 from typing import Callable, Any, List, cast
 
 from plugp100.api.base_tapo_device import _BaseTapoDevice
-from plugp100.api.hub.hub_device_tracker import HubConnectedDeviceTracker, HubDeviceEvent
+from plugp100.api.hub.hub_device_tracker import (
+    HubConnectedDeviceTracker,
+    HubDeviceEvent,
+)
 from plugp100.api.tapo_client import TapoClient, Json
 from plugp100.common.functional.either import Either, Right, Left
 from plugp100.common.utils.json_utils import dataclass_encode_json
@@ -20,7 +23,6 @@ HubSubscription = Callable[[], Any]
 
 # The HubDevice class is a blueprint for creating hub devices.
 class HubDevice(_BaseTapoDevice):
-
     def __init__(self, api: TapoClient, address: str, logger: Logger = None):
         super().__init__(api, address)
         self._tracker = HubConnectedDeviceTracker(logger)
@@ -29,12 +31,21 @@ class HubDevice(_BaseTapoDevice):
         self._tracking_subscriptions: List[Callable[[HubDeviceEvent], Any]] = []
         self._logger = logger if logger is not None else logging.getLogger("HubDevice")
 
-    async def turn_alarm_on(self, alarm: PlayAlarmParams = None) -> Either[True, Exception]:
-        request = TapoRequest(method='play_alarm', params=dataclass_encode_json(alarm) if alarm is not None else None)
+    async def turn_alarm_on(
+        self, alarm: PlayAlarmParams = None
+    ) -> Either[True, Exception]:
+        request = TapoRequest(
+            method="play_alarm",
+            params=dataclass_encode_json(alarm) if alarm is not None else None,
+        )
         return (await self._api.execute_raw_request(request)).map(lambda _: True)
 
     async def turn_alarm_off(self) -> Either[True, Exception]:
-        return (await self._api.execute_raw_request(TapoRequest(method='stop_alarm', params=None))).map(lambda _: True)
+        return (
+            await self._api.execute_raw_request(
+                TapoRequest(method="stop_alarm", params=None)
+            )
+        ).map(lambda _: True)
 
     async def get_state(self) -> Either[HubDeviceState, Exception]:
         """
@@ -46,8 +57,11 @@ class HubDevice(_BaseTapoDevice):
         return (await self._api.get_device_info()) | HubDeviceState.try_from_json
 
     async def get_supported_alarm_tones(self) -> Either[AlarmTypeList, Exception]:
-        return (await self._api.execute_raw_request(
-            TapoRequest(method="get_support_alarm_type_list", params=None))) | AlarmTypeList.try_from_json
+        return (
+            await self._api.execute_raw_request(
+                TapoRequest(method="get_support_alarm_type_list", params=None)
+            )
+        ) | AlarmTypeList.try_from_json
 
     async def get_state_as_json(self) -> Either[Json, Exception]:
         return await self._api.get_device_info()
@@ -55,7 +69,9 @@ class HubDevice(_BaseTapoDevice):
     async def get_children(self) -> Either[ChildDeviceList, Exception]:
         return await self._api.get_child_device_list()
 
-    async def control_child(self, device_id: str, request: TapoRequest) -> Either[Json, Exception]:
+    async def control_child(
+        self, device_id: str, request: TapoRequest
+    ) -> Either[Json, Exception]:
         """
         The function `control_child` is an asynchronous method that takes a device ID and a TapoRequest object as
         parameters, and it returns either a JSON response or an Exception.
@@ -82,7 +98,7 @@ class HubDevice(_BaseTapoDevice):
             self._is_tracking = True
             self._tracking_tasks = [
                 asyncio.create_task(self._poll(interval_millis)),
-                asyncio.create_task(self._poll_tracker())
+                asyncio.create_task(self._poll_tracker()),
             ]
 
     def stop_tracking(self):
@@ -122,7 +138,9 @@ class HubDevice(_BaseTapoDevice):
         while self._is_tracking:
             new_state = await self._api.get_child_device_list()
             if isinstance(new_state, Right):
-                await self._tracker.notify_state_update(cast(ChildDeviceList, new_state.value).get_device_ids())
+                await self._tracker.notify_state_update(
+                    cast(ChildDeviceList, new_state.value).get_device_ids()
+                )
             elif isinstance(new_state, Left):
                 self._logger.error(new_state.error)
             await asyncio.sleep(interval_millis / 1000)  # to seconds

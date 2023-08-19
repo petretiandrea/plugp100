@@ -10,7 +10,6 @@ logger = logging.getLogger(__name__)
 
 
 class TapoApiDiscover:
-
     @staticmethod
     async def is_tapo_device(address: str, session: aiohttp.ClientSession = None) -> bool:
         url = f"http://{address}/app"

@@ -5,27 +5,34 @@ from plugp100.api.light_effect import LightEffect
 
 
 class LightEffectPreset(enum.Enum):
-    BubblingCauldron = 'Bubbling Cauldron'
-    Aurora = 'Aurora'
-    CandyCane = 'CandyCane'
-    Christmas = 'Christmas'
-    Flicker = 'Flicker'
-    ChristmasLight = 'Grandma\'s Christmas Lights'
-    Hanukkah = 'Hanukkah'
-    HauntedMansion = 'Haunted Mansion'
-    Icicle = 'Icicle'
-    Lightning = 'Lightning'
-    Ocean = 'Ocean'
-    Rainbow = 'Rainbow'
-    Raindrop = 'Raindrop'
-    Spring = 'Spring'
-    Sunrise = 'Sunrise'
-    Sunset = 'Sunset'
-    Valentines = 'Valentines'
+    BubblingCauldron = "Bubbling Cauldron"
+    Aurora = "Aurora"
+    CandyCane = "CandyCane"
+    Christmas = "Christmas"
+    Flicker = "Flicker"
+    ChristmasLight = "Grandma's Christmas Lights"
+    Hanukkah = "Hanukkah"
+    HauntedMansion = "Haunted Mansion"
+    Icicle = "Icicle"
+    Lightning = "Lightning"
+    Ocean = "Ocean"
+    Rainbow = "Rainbow"
+    Raindrop = "Raindrop"
+    Spring = "Spring"
+    Sunrise = "Sunrise"
+    Sunset = "Sunset"
+    Valentines = "Valentines"
 
     @staticmethod
-    def from_name(name: str) -> Optional['LightEffectPreset']:
-        return next([member for member in LightEffectPreset if member.value.lower() == name.lower()], None)
+    def from_name(name: str) -> Optional["LightEffectPreset"]:
+        return next(
+            [
+                member
+                for member in LightEffectPreset
+                if member.value.lower() == name.lower()
+            ],
+            None,
+        )
 
     def to_effect(self) -> LightEffect:
         _preset_mapping = {

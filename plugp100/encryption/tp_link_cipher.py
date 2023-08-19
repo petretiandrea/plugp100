@@ -9,7 +9,6 @@ from .key_pair import KeyPair
 
 
 class TpLinkCipher:
-
     def encrypt(self, data) -> str:
         pass
 
@@ -18,9 +17,8 @@ class TpLinkCipher:
 
 
 class TpLinkCipherCryptography(TpLinkCipher):
-
     @staticmethod
-    def create_from_keypair(handshake_key: str, keypair: KeyPair) -> 'TpLinkCipher':
+    def create_from_keypair(handshake_key: str, keypair: KeyPair) -> "TpLinkCipher":
         handshake_key: bytes = base64.b64decode(handshake_key.encode("UTF-8"))
         private_key_data = base64.b64decode(keypair.get_private_key().encode("UTF-8"))
 
@@ -29,10 +27,7 @@ class TpLinkCipherCryptography(TpLinkCipher):
         if key_and_iv is None:
             raise ValueError("Decryption failed!")
 
-        return TpLinkCipherCryptography(
-            key_and_iv[:16],
-            key_and_iv[16:]
-        )
+        return TpLinkCipherCryptography(key_and_iv[:16], key_and_iv[16:])
 
     def __init__(self, key, iv):
         self.cipher = Cipher(algorithms.AES(key), modes.CBC(iv))
@@ -48,6 +43,9 @@ class TpLinkCipherCryptography(TpLinkCipher):
     def decrypt(self, data) -> str:
         decryptor = self.cipher.decryptor()
         unpadder = self.padding_strategy.unpadder()
-        decrypted = decryptor.update(base64.b64decode(data.encode("UTF-8"))) + decryptor.finalize()
+        decrypted = (
+            decryptor.update(base64.b64decode(data.encode("UTF-8")))
+            + decryptor.finalize()
+        )
         unpadded_data = unpadder.update(decrypted) + unpadder.finalize()
         return unpadded_data.decode("UTF-8")

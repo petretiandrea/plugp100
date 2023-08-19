@@ -14,9 +14,13 @@ class SnowflakeId:
 
     def __init__(self, worker_id, data_center_id):
         if worker_id > SnowflakeId.MAX_WORKER_ID or worker_id < 0:
-            raise ValueError(f"Worker ID can't be greater than {SnowflakeId.MAX_WORKER_ID} or less than 0")
+            raise ValueError(
+                f"Worker ID can't be greater than {SnowflakeId.MAX_WORKER_ID} or less than 0"
+            )
         if data_center_id > SnowflakeId.MAX_DATA_CENTER_ID or data_center_id < 0:
-            raise ValueError(f"Data center ID can't be greater than {SnowflakeId.MAX_DATA_CENTER_ID} or less than 0")
+            raise ValueError(
+                f"Data center ID can't be greater than {SnowflakeId.MAX_DATA_CENTER_ID} or less than 0"
+            )
 
         self.worker_id = worker_id
         self.data_center_id = data_center_id
@@ -43,10 +47,22 @@ class SnowflakeId:
         self.last_timestamp = timestamp
 
         # Generate and return the final ID
-        return ((timestamp - SnowflakeId.EPOCH) << (
-                    SnowflakeId.WORKER_ID_BITS + SnowflakeId.SEQUENCE_BITS + SnowflakeId.DATA_CENTER_ID_BITS)) | (
-                    self.data_center_id << (SnowflakeId.SEQUENCE_BITS + SnowflakeId.WORKER_ID_BITS)) | (
-                    self.worker_id << SnowflakeId.SEQUENCE_BITS) | self.sequence
+        return (
+            (
+                (timestamp - SnowflakeId.EPOCH)
+                << (
+                    SnowflakeId.WORKER_ID_BITS
+                    + SnowflakeId.SEQUENCE_BITS
+                    + SnowflakeId.DATA_CENTER_ID_BITS
+                )
+            )
+            | (
+                self.data_center_id
+                << (SnowflakeId.SEQUENCE_BITS + SnowflakeId.WORKER_ID_BITS)
+            )
+            | (self.worker_id << SnowflakeId.SEQUENCE_BITS)
+            | self.sequence
+        )
 
     def _current_millis(self):
         return round(time.time() * 1000)

@@ -9,11 +9,11 @@ class AlarmTypeList(object):
     tones: List[str]
 
     @staticmethod
-    def try_from_json(kwargs: dict[str, Any]) -> Either['AlarmTypeList', Exception]:
+    def try_from_json(kwargs: dict[str, Any]) -> Either["AlarmTypeList", Exception]:
         try:
             return Right(
                 AlarmTypeList(
-                    kwargs.get('alarm_type_list', []),
+                    kwargs.get("alarm_type_list", []),
                 )
             )
         except Exception as e:

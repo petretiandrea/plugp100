@@ -32,7 +32,6 @@ logger = logging.getLogger(__name__)
 
 
 class SecurePassthroughTransport:
-
     def __init__(self, http: AsyncHttp):
         self._http = http
         self._request_id_generator = SnowflakeId(1, 1)
@@ -58,42 +57,67 @@ class SecurePassthroughTransport:
         response_or_error = TapoResponse.try_from_json(resp_dict).map(lambda _: True)
 
         if isinstance(response_or_error, Right):
-            cookie_token = response.cookies.get('TP_SESSIONID').value
+            cookie_token = response.cookies.get("TP_SESSIONID").value
             logger.debug(f"Got TP_SESSIONID token: ...{cookie_token[5:]}")
 
             logger.debug("Decoding handshake key...")
-            handshake_key = resp_dict['result']['key']
-            tp_link_cipher = TpLinkCipherCryptography.create_from_keypair(handshake_key, key_pair)
+            handshake_key = resp_dict["result"]["key"]
+            tp_link_cipher = TpLinkCipherCryptography.create_from_keypair(
+                handshake_key, key_pair
+            )
 
-            terminal_uuid = base64.b64encode(md5(uuid.uuid4().bytes).digest()).decode("UTF-8")
-            return Right(Session(url, key_pair, tp_link_cipher, cookie_token, token=None,
-                                 terminal_uuid=terminal_uuid))
+            terminal_uuid = base64.b64encode(md5(uuid.uuid4().bytes).digest()).decode(
+                "UTF-8"
+            )
+            return Right(
+                Session(
+                    url,
+                    key_pair,
+                    tp_link_cipher,
+                    cookie_token,
+                    token=None,
+                    terminal_uuid=terminal_uuid,
+                )
+            )
         else:
             return Left(cast(Left, response_or_error).error)
 
     async def send(self, request: TapoRequest, session: Session):
         assert session is not None
-        request.with_request_id(self._request_id_generator.generate_id()) \
-            .with_terminal_uuid(session.terminal_uuid)
+        request.with_request_id(
+            self._request_id_generator.generate_id()
+        ).with_terminal_uuid(session.terminal_uuid)
         raw_request = jsons.dumps(request)
         logger.debug(f"Raw request: {raw_request}")
 
         encrypted_request = session.chiper.encrypt(raw_request)
-        passthrough_request = TapoRequest.secure_passthrough(SecurePassthroughParams(encrypted_request))
+        passthrough_request = TapoRequest.secure_passthrough(
+            SecurePassthroughParams(encrypted_request)
+        )
         request_body = jsons.loads(jsons.dumps(passthrough_request))
         logger.debug(f"Request body: {request_body}")
 
         response_encrypted = await self._http.async_make_post_cookie(
-            session.url if session.token is None else f"{session.url}?token={session.token}",
+            session.url
+            if session.token is None
+            else f"{session.url}?token={session.token}",
             request_body,
-            {'TP_SESSIONID': session.cookie_token}
+            {"TP_SESSIONID": session.cookie_token},
         )
         response_as_dict: dict = await response_encrypted.json(content_type=None)
         logger.debug(f"Device responded with: {response_as_dict}")
 
-        response_json = TapoResponse.try_from_json(response_as_dict) \
-            .map(lambda response: jsons.loads(session.chiper.decrypt(response.result['response']))) \
-            .bind(lambda decrypted_response: TapoResponse.try_from_json(decrypted_response))
+        response_json = (
+            TapoResponse.try_from_json(response_as_dict)
+            .map(
+                lambda response: jsons.loads(
+                    session.chiper.decrypt(response.result["response"])
+                )
+            )
+            .bind(
+                lambda decrypted_response: TapoResponse.try_from_json(decrypted_response)
+            )
+        )
         logger.debug(f"Decrypted response: {response_json}")
 
         return response_json

@@ -38,7 +38,7 @@ _error_message = {
     TapoError.ERR_LOGIN_FAILED: "Login failed",
     TapoError.ERR_HTTP_TRANSPORT_FAILED: "Http transport error",
     TapoError.ERR_MULTI_REQUEST_FAILED: "Multirequest failed",
-    TapoError.ERR_SESSION_TIMEOUT: "Session Timeout"
+    TapoError.ERR_SESSION_TIMEOUT: "Session Timeout",
 }
 
 
@@ -49,9 +49,14 @@ class TapoException(Exception):
     def from_error_code(error_code, msg: Optional[str]):
         try:
             tapo_error = TapoError(error_code)
-            return TapoException(error_code, f"Returned error_code: {tapo_error}: {_error_message[tapo_error]}")
+            return TapoException(
+                error_code,
+                f"Returned error_code: {tapo_error}: {_error_message[tapo_error]}",
+            )
         except ValueError:
-            return TapoException(error_code, f"Returned unknown error_code: {error_code}  msg: {msg}")
+            return TapoException(
+                error_code, f"Returned unknown error_code: {error_code}  msg: {msg}"
+            )
 
     def __init__(self, error_code, msg):
         super(TapoException, self).__init__(msg)

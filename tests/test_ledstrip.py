@@ -5,7 +5,11 @@ from plugp100.api.ledstrip_device import LedStripDevice
 from plugp100.api.light_effect import LightEffect
 from plugp100.api.tapo_client import TapoClient
 from plugp100.common.functional.either import value_or_raise
-from tests.tapo_test_helper import _test_expose_device_info, get_test_config, _test_device_usage
+from tests.tapo_test_helper import (
+    _test_expose_device_info,
+    get_test_config,
+    _test_device_usage,
+)
 
 
 class LedStripTest(unittest.IsolatedAsyncioTestCase):
@@ -61,7 +65,9 @@ class LedStripTest(unittest.IsolatedAsyncioTestCase):
         await self._device.set_light_effect(LightEffect.christmas_light())
         state = value_or_raise(await self._device.get_state())
         self.assertEqual(LightEffect.christmas_light().name, state.lighting_effect.name)
-        self.assertEqual(LightEffect.christmas_light().enable, state.lighting_effect.enable)
+        self.assertEqual(
+            LightEffect.christmas_light().enable, state.lighting_effect.enable
+        )
 
     async def test_should_set_brightness_of_light_effect(self):
         await self._device.on()

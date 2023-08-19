@@ -25,24 +25,26 @@ class S200BDeviceState:
     report_interval_seconds: int  # Seconds between each report
 
     @staticmethod
-    def try_from_json(kwargs: dict[str, Any]) -> Either['S200BDeviceState', Exception]:
+    def try_from_json(kwargs: dict[str, Any]) -> Either["S200BDeviceState", Exception]:
         try:
-            return Right(S200BDeviceState(
-                firmware_version=kwargs["fw_ver"],
-                hardware_version=kwargs["hw_ver"],
-                device_id=kwargs['device_id'],
-                parent_device_id=kwargs['parent_device_id'],
-                mac=kwargs["mac"],
-                type=kwargs["type"],
-                model=kwargs["model"],
-                status=kwargs.get("status", False),
-                rssi=kwargs.get("rssi", 0),
-                signal_level=kwargs.get("signal_level", 0),
-                at_low_battery=kwargs.get('at_low_battery', False),
-                nickname=base64.b64decode(kwargs["nickname"]).decode("UTF-8"),
-                last_onboarding_timestamp=kwargs.get('lastOnboardingTimestamp', 0),
-                report_interval_seconds=kwargs.get('report_interval', 0),
-            ))
+            return Right(
+                S200BDeviceState(
+                    firmware_version=kwargs["fw_ver"],
+                    hardware_version=kwargs["hw_ver"],
+                    device_id=kwargs["device_id"],
+                    parent_device_id=kwargs["parent_device_id"],
+                    mac=kwargs["mac"],
+                    type=kwargs["type"],
+                    model=kwargs["model"],
+                    status=kwargs.get("status", False),
+                    rssi=kwargs.get("rssi", 0),
+                    signal_level=kwargs.get("signal_level", 0),
+                    at_low_battery=kwargs.get("at_low_battery", False),
+                    nickname=base64.b64decode(kwargs["nickname"]).decode("UTF-8"),
+                    last_onboarding_timestamp=kwargs.get("lastOnboardingTimestamp", 0),
+                    report_interval_seconds=kwargs.get("report_interval", 0),
+                )
+            )
         except Exception as e:
             return Left(e)
 
@@ -52,9 +54,9 @@ class S200BDeviceState:
             if len(pieces) > 0:
                 return semantic_version.Version(pieces[0].strip())
             else:
-                return semantic_version.Version('0.0.0')
+                return semantic_version.Version("0.0.0")
         except ValueError:
-            return semantic_version.Version('0.0.0')
+            return semantic_version.Version("0.0.0")
 
 
 @dataclass
@@ -80,14 +82,12 @@ S200BEvent = Union[RotationEvent, SingleClickEvent, DoubleClickEvent]
 
 
 def parse_s200b_event(item: dict[str, Any]) -> S200BEvent:
-    event_type = item['event']
-    if event_type == 'singleClick':
-        return SingleClickEvent(item['id'], item['timestamp'])
-    elif event_type == 'doubleClick':
-        return DoubleClickEvent(item['id'], item['timestamp'])
+    event_type = item["event"]
+    if event_type == "singleClick":
+        return SingleClickEvent(item["id"], item["timestamp"])
+    elif event_type == "doubleClick":
+        return DoubleClickEvent(item["id"], item["timestamp"])
     else:
         return RotationEvent(
-            item.get('id'),
-            item.get('timestamp'),
-            item.get('params')['rotate_deg']
+            item.get("id"), item.get("timestamp"), item.get("params")["rotate_deg"]
         )

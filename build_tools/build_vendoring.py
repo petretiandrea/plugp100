@@ -6,16 +6,21 @@ import os
 import platform
 import sys
 
-from ci_build_utils import read_requirements_file, \
-    intersect_contains_string, get_requirement_name
+from ci_build_utils import (
+    read_requirements_file,
+    intersect_contains_string,
+    get_requirement_name,
+)
 
-REQUIREMENTS = read_requirements_file('requirements.txt')
+REQUIREMENTS = read_requirements_file("requirements.txt")
 
 
 def get_requirements_to_compile(requirements: [str], arch: str) -> [str]:
-    compile_file = f'vendor-{arch}.txt'
+    compile_file = f"vendor-{arch}.txt"
     if os.path.exists(compile_file):
-        return intersect_contains_string(requirements, read_requirements_file(compile_file))
+        return intersect_contains_string(
+            requirements, read_requirements_file(compile_file)
+        )
     else:
         return []
 
@@ -37,10 +42,14 @@ if __name__ == "__main__":
     if len(requirements_to_compile) > 0:
         print(f"Found {len(requirements_to_compile)} wheels to compile.")
         print("Building wheels...")
-        cache_dir_command = f'--cache-dir {pip_cache_dir}' if pip_cache_dir else ''
-        compile_wheels = f'--no-binary :all:'
+        cache_dir_command = f"--cache-dir {pip_cache_dir}" if pip_cache_dir else ""
+        compile_wheels = f"--no-binary :all:"
         for requirement in requirements_to_compile:
-            vendor_requirement_folder = os.path.join(vendor_wheels_folder, get_requirement_name(requirement))
-            os.system(f"{sys.executable} -m pip install {requirement} -t {vendor_requirement_folder} {compile_wheels} {cache_dir_command}")
+            vendor_requirement_folder = os.path.join(
+                vendor_wheels_folder, get_requirement_name(requirement)
+            )
+            os.system(
+                f"{sys.executable} -m pip install {requirement} -t {vendor_requirement_folder} {compile_wheels} {cache_dir_command}"
+            )
     else:
-        print('No requirements to vendor found.')
+        print("No requirements to vendor found.")

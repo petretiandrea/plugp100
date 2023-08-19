@@ -6,7 +6,6 @@ from plugp100.responses.device_usage_info import DeviceUsageInfo
 
 
 class _BaseTapoDevice:
-
     def __init__(self, api: TapoClient, address: str):
         self._api = api
         self._address = address
@@ -23,15 +22,20 @@ class _BaseTapoDevice:
         return login_result
 
     async def get_device_usage(self) -> Either[DeviceUsageInfo, Exception]:
-        return (await self._api.execute_raw_request(TapoRequest(method="get_device_usage", params=None))) | \
-               DeviceUsageInfo.try_from_json
+        return (
+            await self._api.execute_raw_request(
+                TapoRequest(method="get_device_usage", params=None)
+            )
+        ) | DeviceUsageInfo.try_from_json
 
     async def raw_command(self, method: str, params: Json) -> Either[Json, Exception]:
         """Execute raw command with given parameters.
 
         This is useful for testing new commands and payloads.
         """
-        return await self._api.execute_raw_request(TapoRequest(method=method, params=params))
+        return await self._api.execute_raw_request(
+            TapoRequest(method=method, params=params)
+        )
 
     async def get_state_as_json(self) -> Either[Json, Exception]:
         return await self._api.get_device_info()

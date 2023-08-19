@@ -11,6 +11,7 @@ TFold = TypeVar("TFold")
 
 # from OSlash library, copied it to avoid external dependencies and issues especially for migration to python 11
 
+
 class Either(Generic[TSource, TError]):
     """The Either Monad.
 
@@ -24,12 +25,15 @@ class Either(Generic[TSource, TError]):
 
     @classmethod
     @abstractmethod
-    def pure(cls, value: Callable[[TSource], TResult]) -> "Either[Callable[[TSource], TResult], TError]":
+    def pure(
+        cls, value: Callable[[TSource], TResult]
+    ) -> "Either[Callable[[TSource], TResult], TError]":
         raise NotImplementedError
 
     @abstractmethod
     def apply(
-            self: "Either[Callable[[TSource], TResult], TError]", something: "Either[TSource, TError]"
+        self: "Either[Callable[[TSource], TResult], TError]",
+        something: "Either[TSource, TError]",
     ) -> "Either[TResult, TError]":
         raise NotImplementedError
 
@@ -39,11 +43,15 @@ class Either(Generic[TSource, TError]):
         raise NotImplementedError
 
     @abstractmethod
-    def bind(self, func: Callable[[TSource], "Either[TResult, TError]"]) -> "Either[TResult, TError]":
+    def bind(
+        self, func: Callable[[TSource], "Either[TResult, TError]"]
+    ) -> "Either[TResult, TError]":
         raise NotImplementedError
 
     @abstractmethod
-    def fold(self, right: Callable[[TSource], TFold], left: Callable[[TError], TFold]) -> TFold:
+    def fold(
+        self, right: Callable[[TSource], TFold], left: Callable[[TError], TFold]
+    ) -> TFold:
         raise NotImplementedError
 
     @abstractmethod
@@ -77,11 +85,14 @@ class Right(Either[TSource, TError]):
     # ===================
 
     @classmethod
-    def pure(cls, value: Callable[[TSource], TResult]) -> "Right[Callable[[TSource], TResult], TError]":
+    def pure(
+        cls, value: Callable[[TSource], TResult]
+    ) -> "Right[Callable[[TSource], TResult], TError]":
         return Right(value)
 
     def apply(
-            self: "Right[Callable[[TSource], TResult], TError]", something: "Either[TSource, TError]"
+        self: "Right[Callable[[TSource], TResult], TError]",
+        something: "Either[TSource, TError]",
     ) -> "Either[TResult, TError]":
         def mapper(other_value):
             try:
@@ -98,10 +109,14 @@ class Right(Either[TSource, TError]):
     def unit(cls, value: TSource) -> "Right[TSource, TError]":
         return Right(value)
 
-    def bind(self, func: Callable[[TSource], Either[TResult, TError]]) -> Either[TResult, TError]:
+    def bind(
+        self, func: Callable[[TSource], Either[TResult, TError]]
+    ) -> Either[TResult, TError]:
         return func(self._value)
 
-    def fold(self, right: Callable[[TSource], TFold], left: Callable[[TError], TFold]) -> TFold:
+    def fold(
+        self, right: Callable[[TSource], TFold], left: Callable[[TError], TFold]
+    ) -> TFold:
         return right(self._value)
 
     # Operator Overloads
@@ -135,7 +150,9 @@ class Left(Either[TSource, TError]):
         return self._error
 
     @classmethod
-    def pure(cls, value: Callable[[TSource], TResult]) -> Either[Callable[[TSource], TResult], TError]:
+    def pure(
+        cls, value: Callable[[TSource], TResult]
+    ) -> Either[Callable[[TSource], TResult], TError]:
         return Right(value)
 
     def apply(self, something: Either) -> Either:
@@ -148,10 +165,14 @@ class Left(Either[TSource, TError]):
     def unit(cls, value: TSource):
         return Right(value)
 
-    def bind(self, func: Callable[[TSource], Either[TResult, TError]]) -> Either[TResult, TError]:
+    def bind(
+        self, func: Callable[[TSource], Either[TResult, TError]]
+    ) -> Either[TResult, TError]:
         return Left(self._error)
 
-    def fold(self, right: Callable[[TSource], TFold], left: Callable[[TError], TFold]) -> TFold:
+    def fold(
+        self, right: Callable[[TSource], TFold], left: Callable[[TError], TFold]
+    ) -> TFold:
         return left(self._error)
 
     def __eq__(self, other) -> bool:

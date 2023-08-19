@@ -26,25 +26,27 @@ class T100MotionSensorState:
     detected: bool
 
     @staticmethod
-    def from_json(kwargs: dict[str, Any]) -> Either['T100MotionSensorState', Exception]:
+    def from_json(kwargs: dict[str, Any]) -> Either["T100MotionSensorState", Exception]:
         try:
-            return Right(T100MotionSensorState(
-                firmware_version=kwargs["fw_ver"],
-                hardware_version=kwargs["hw_ver"],
-                device_id=kwargs['device_id'],
-                parent_device_id=kwargs['parent_device_id'],
-                mac=kwargs["mac"],
-                type=kwargs["type"],
-                model=kwargs["model"],
-                status=kwargs.get("status", False),
-                rssi=kwargs.get("rssi", 0),
-                signal_level=kwargs.get("signal_level", 0),
-                at_low_battery=kwargs.get('at_low_battery', False),
-                nickname=base64.b64decode(kwargs["nickname"]).decode("UTF-8"),
-                last_onboarding_timestamp=kwargs.get('lastOnboardingTimestamp', 0),
-                report_interval_seconds=kwargs.get('report_interval', 0),
-                detected=kwargs.get('detected'),
-            ))
+            return Right(
+                T100MotionSensorState(
+                    firmware_version=kwargs["fw_ver"],
+                    hardware_version=kwargs["hw_ver"],
+                    device_id=kwargs["device_id"],
+                    parent_device_id=kwargs["parent_device_id"],
+                    mac=kwargs["mac"],
+                    type=kwargs["type"],
+                    model=kwargs["model"],
+                    status=kwargs.get("status", False),
+                    rssi=kwargs.get("rssi", 0),
+                    signal_level=kwargs.get("signal_level", 0),
+                    at_low_battery=kwargs.get("at_low_battery", False),
+                    nickname=base64.b64decode(kwargs["nickname"]).decode("UTF-8"),
+                    last_onboarding_timestamp=kwargs.get("lastOnboardingTimestamp", 0),
+                    report_interval_seconds=kwargs.get("report_interval", 0),
+                    detected=kwargs.get("detected"),
+                )
+            )
         except Exception as e:
             return Left(e)
 
@@ -54,9 +56,9 @@ class T100MotionSensorState:
             if len(pieces) > 0:
                 return semantic_version.Version(pieces[0].strip())
             else:
-                return semantic_version.Version('0.0.0')
+                return semantic_version.Version("0.0.0")
         except ValueError:
-            return semantic_version.Version('0.0.0')
+            return semantic_version.Version("0.0.0")
 
 
 @dataclass
@@ -69,4 +71,4 @@ T100Event = MotionDetectedEvent
 
 
 def parse_t100_event(item: dict[str, Any]) -> T100Event:
-    return MotionDetectedEvent(item['id'], item['timestamp'])
+    return MotionDetectedEvent(item["id"], item["timestamp"])

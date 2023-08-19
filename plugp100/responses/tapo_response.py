@@ -15,11 +15,11 @@ class TapoResponse(Generic[T]):
     msg: Optional[str]
 
     @staticmethod
-    def try_from_json(json: dict[str, Any]) -> Either['TapoResponse[Json]', Exception]:
+    def try_from_json(json: dict[str, Any]) -> Either["TapoResponse[Json]", Exception]:
         response = TapoResponse(
-            json.get('error_code', -1),
-            json.get('result', {}),
-            json.get('msg', 'No message')
+            json.get("error_code", -1),
+            json.get("result", {}),
+            json.get("msg", "No message"),
         )
         if response.error_code == 0:
             return Right(response)

@@ -3,7 +3,11 @@ import unittest
 from plugp100.api.power_strip_device import PowerStripDevice
 from plugp100.api.tapo_client import TapoClient
 from plugp100.common.functional.either import value_or_raise
-from tests.tapo_test_helper import _test_expose_device_info, get_test_config, _test_device_usage
+from tests.tapo_test_helper import (
+    _test_expose_device_info,
+    get_test_config,
+    _test_device_usage,
+)
 
 
 class PowerStripTest(unittest.IsolatedAsyncioTestCase):
@@ -49,6 +53,6 @@ class PowerStripTest(unittest.IsolatedAsyncioTestCase):
         children = value_or_raise((await self._device.get_children()))
         for _, socket in children.items():
             self.assertIsNotNone(socket.nickname)
-            self.assertIsNot(socket.nickname, '')
+            self.assertIsNot(socket.nickname, "")
             self.assertIsNotNone(socket.device_id)
             self.assertIsNotNone(socket.original_device_id)

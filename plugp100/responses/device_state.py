@@ -14,23 +14,25 @@ class DeviceState:
 
 @dataclass
 class PlugDeviceState(DeviceState):
-    info: 'DeviceInfo'
+    info: "DeviceInfo"
     device_on: bool
 
     @staticmethod
-    def try_from_json(kwargs: dict[str, Any]) -> Either['PlugDeviceState', Exception]:
+    def try_from_json(kwargs: dict[str, Any]) -> Either["PlugDeviceState", Exception]:
         try:
-            return Right(PlugDeviceState(
-                info=DeviceInfo(**kwargs),
-                device_on=kwargs.get('device_on', False),
-            ))
+            return Right(
+                PlugDeviceState(
+                    info=DeviceInfo(**kwargs),
+                    device_on=kwargs.get("device_on", False),
+                )
+            )
         except Exception as e:
             return Left(e)
 
 
 @dataclass
 class LightDeviceState(DeviceState):
-    info: 'DeviceInfo'
+    info: "DeviceInfo"
     device_on: bool
     brightness: Optional[int]
     hue: Optional[int]
@@ -38,23 +40,25 @@ class LightDeviceState(DeviceState):
     color_temp: Optional[int]
 
     @staticmethod
-    def try_from_json(kwargs: dict[str, Any]) -> Either['LightDeviceState', Exception]:
+    def try_from_json(kwargs: dict[str, Any]) -> Either["LightDeviceState", Exception]:
         try:
-            return Right(LightDeviceState(
-                info=DeviceInfo(**kwargs),
-                device_on=kwargs.get('device_on', False),
-                brightness=kwargs.get('brightness', None),
-                hue=kwargs.get('hue', None),
-                saturation=kwargs.get('saturation', None),
-                color_temp=kwargs.get('color_temp', None)
-            ))
+            return Right(
+                LightDeviceState(
+                    info=DeviceInfo(**kwargs),
+                    device_on=kwargs.get("device_on", False),
+                    brightness=kwargs.get("brightness", None),
+                    hue=kwargs.get("hue", None),
+                    saturation=kwargs.get("saturation", None),
+                    color_temp=kwargs.get("color_temp", None),
+                )
+            )
         except Exception as e:
             return Left(e)
 
 
 @dataclass
 class LedStripDeviceState(DeviceState):
-    info: 'DeviceInfo'
+    info: "DeviceInfo"
     device_on: bool
     brightness: Optional[int]
     hue: Optional[int]
@@ -63,17 +67,21 @@ class LedStripDeviceState(DeviceState):
     lighting_effect: Optional[LightEffect]
 
     @staticmethod
-    def try_from_json(kwargs: dict[str, Any]) -> Either['LedStripDeviceState', Exception]:
+    def try_from_json(kwargs: dict[str, Any]) -> Either["LedStripDeviceState", Exception]:
         try:
-            return Right(LedStripDeviceState(
-                info=DeviceInfo(**kwargs),
-                device_on=kwargs.get('device_on', False),
-                brightness=kwargs.get('brightness', None),
-                hue=kwargs.get('hue', None),
-                saturation=kwargs.get('saturation', None),
-                color_temp=kwargs.get('color_temp', None),
-                lighting_effect=LightEffect(**kwargs.get('lighting_effect')) if 'lighting_effect' in kwargs else None
-            ))
+            return Right(
+                LedStripDeviceState(
+                    info=DeviceInfo(**kwargs),
+                    device_on=kwargs.get("device_on", False),
+                    brightness=kwargs.get("brightness", None),
+                    hue=kwargs.get("hue", None),
+                    saturation=kwargs.get("saturation", None),
+                    color_temp=kwargs.get("color_temp", None),
+                    lighting_effect=LightEffect(**kwargs.get("lighting_effect"))
+                    if "lighting_effect" in kwargs
+                    else None,
+                )
+            )
         except Exception as e:
             return Left(e)
 
@@ -94,7 +102,7 @@ class DeviceInfo:
     is_hardware_v2: bool = property(lambda self: self.hardware_version == "2.0")
 
     def __init__(self, **kwargs):
-        self.device_id = kwargs['device_id']
+        self.device_id = kwargs["device_id"]
         self.firmware_version = kwargs["fw_ver"]
         self.hardware_version = kwargs["hw_ver"]
         self.mac = kwargs["mac"]
@@ -104,7 +112,7 @@ class DeviceInfo:
         self.overheated = kwargs.get("overheated", False)
         self.signal_level = kwargs.get("signal_level", 0)
         self.rssi = kwargs.get("rssi", 0)
-        self.friendly_name = self.model if self.nickname == '' else self.nickname
+        self.friendly_name = self.model if self.nickname == "" else self.nickname
 
     def get_semantic_firmware_version(self) -> semantic_version.Version:
         pieces = self.firmware_version.split("Build")
@@ -112,22 +120,24 @@ class DeviceInfo:
             if len(pieces) > 0:
                 return semantic_version.Version(pieces[0].strip())
             else:
-                return semantic_version.Version('0.0.0')
+                return semantic_version.Version("0.0.0")
         except ValueError:
-            return semantic_version.Version('0.0.0')
+            return semantic_version.Version("0.0.0")
 
 
 @dataclass
 class HubDeviceState(DeviceState):
-    info: 'DeviceInfo'
+    info: "DeviceInfo"
     in_alarm: bool
 
     @staticmethod
-    def try_from_json(kwargs: dict[str, Any]) -> Either['HubDeviceState', Exception]:
+    def try_from_json(kwargs: dict[str, Any]) -> Either["HubDeviceState", Exception]:
         try:
-            return Right(HubDeviceState(
-                info=DeviceInfo(**kwargs),
-                in_alarm=kwargs.get('in_alarm', False),
-            ))
+            return Right(
+                HubDeviceState(
+                    info=DeviceInfo(**kwargs),
+                    in_alarm=kwargs.get("in_alarm", False),
+                )
+            )
         except Exception as e:
             return Left(e)

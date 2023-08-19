@@ -7,8 +7,8 @@ from plugp100.api.tapo_client import TapoClient
 
 async def main():
     # create generic tapo api
-    username = os.getenv('USERNAME', '<tapo_email>')
-    password = os.getenv('PASSWORD', '<tapo_password>')
+    username = os.getenv("USERNAME", "<tapo_email>")
+    password = os.getenv("PASSWORD", "<tapo_password>")
 
     client = TapoClient(username, password)
     await client.login("<tapo_device_ip>")

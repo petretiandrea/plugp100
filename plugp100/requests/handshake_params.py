@@ -7,4 +7,3 @@ class HandshakeParams:
 
     def __init__(self, key: str):
         self.key: str = f"-----BEGIN PUBLIC KEY-----\n{key}\n-----END PUBLIC KEY-----\n"
-

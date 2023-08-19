@@ -1,14 +1,17 @@
 from plugp100.api.base_tapo_device import _BaseTapoDevice
 from plugp100.api.tapo_client import TapoClient
 from plugp100.common.functional.either import Either
-from plugp100.requests.set_device_info.set_light_color_info_params import LightColorDeviceInfoParams
-from plugp100.requests.set_device_info.set_light_info_params import LightDeviceInfoParams
+from plugp100.requests.set_device_info.set_light_color_info_params import (
+    LightColorDeviceInfoParams,
+)
+from plugp100.requests.set_device_info.set_light_info_params import (
+    LightDeviceInfoParams,
+)
 from plugp100.requests.set_device_info.set_plug_info_params import SetPlugInfoParams
 from plugp100.responses.device_state import LightDeviceState
 
 
 class LightDevice(_BaseTapoDevice):
-
     def __init__(self, api: TapoClient, address: str):
         super().__init__(api, address)
 
@@ -45,9 +48,13 @@ class LightDevice(_BaseTapoDevice):
         @type brightness: int
         @return: an `Either` object, which can either be `True` or an `Exception`.
         """
-        return await self._api.set_device_info(LightDeviceInfoParams(brightness=brightness))
+        return await self._api.set_device_info(
+            LightDeviceInfoParams(brightness=brightness)
+        )
 
-    async def set_hue_saturation(self, hue: int, saturation: int) -> Either[True, Exception]:
+    async def set_hue_saturation(
+        self, hue: int, saturation: int
+    ) -> Either[True, Exception]:
         """
         The function sets the hue and saturation of a light device using the provided values.
 
@@ -62,9 +69,13 @@ class LightDevice(_BaseTapoDevice):
         @type saturation: int
         @return: an `Either` object, which can either be `True` or an `Exception`.
         """
-        return await self._api.set_device_info(LightColorDeviceInfoParams(hue=hue, saturation=saturation, color_temp=0))
+        return await self._api.set_device_info(
+            LightColorDeviceInfoParams(hue=hue, saturation=saturation, color_temp=0)
+        )
 
-    async def set_color_temperature(self, color_temperature: int) -> Either[True, Exception]:
+    async def set_color_temperature(
+        self, color_temperature: int
+    ) -> Either[True, Exception]:
         """
         The function sets the color temperature of a light device using the provided color temperature value.
 
@@ -74,4 +85,6 @@ class LightDevice(_BaseTapoDevice):
         @type color_temperature: int
         @return: an `Either` object, which can either be `True` or an `Exception`.
         """
-        return await self._api.set_device_info(LightColorDeviceInfoParams(color_temp=color_temperature))
+        return await self._api.set_device_info(
+            LightColorDeviceInfoParams(color_temp=color_temperature)
+        )

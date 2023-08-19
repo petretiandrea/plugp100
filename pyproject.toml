@@ -1,0 +1,3 @@
+[tool.black]
+line-length = 90
+target-versions = ["py310", "py311"]

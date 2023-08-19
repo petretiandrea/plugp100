@@ -3,7 +3,11 @@ import unittest
 from plugp100.api.hub.hub_device import HubDevice
 from plugp100.api.tapo_client import TapoClient
 from plugp100.common.functional.either import value_or_raise
-from tests.tapo_test_helper import _test_expose_device_info, get_test_config, _test_device_usage
+from tests.tapo_test_helper import (
+    _test_expose_device_info,
+    get_test_config,
+    _test_device_usage,
+)
 
 unittest.TestLoader.sortTestMethodsUsing = staticmethod(lambda x, y: -1)
 

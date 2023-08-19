@@ -9,12 +9,14 @@ def read_requirements_file(filename: str) -> [str]:
 
 
 def get_names_from_wheels(folder: str) -> [str]:
-    """ Generate a list like requirements.txt file of CI compiled wheels.
+    """Generate a list like requirements.txt file of CI compiled wheels.
     @param folder: The folder where compiled wheels are.
     @return: A list of pip dependencies names
     """
     wheel_files = os.listdir(folder)
-    return [get_name_from_wheel(os.path.basename(wheel_file)) for wheel_file in wheel_files]
+    return [
+        get_name_from_wheel(os.path.basename(wheel_file)) for wheel_file in wheel_files
+    ]
 
 
 def get_name_from_wheel(wheel_filename: str) -> str:
@@ -37,16 +39,17 @@ def merge_requirements(requirements: [str], to_merge_requirements: [str]) -> [st
     """
     merged = []
     for requirement in requirements:
-        to_merge = find_contains_substring(get_requirement_name(requirement), to_merge_requirements)
+        to_merge = find_contains_substring(
+            get_requirement_name(requirement), to_merge_requirements
+        )
         merged.append(to_merge if to_merge is not None else requirement)
     return merged
 
 
 def delete_requirements(requirements: [str], to_remove: [str]) -> [str]:
-    return list(filter(
-        lambda req: find_contains_substring(req, to_remove) is None,
-        requirements
-    ))
+    return list(
+        filter(lambda req: find_contains_substring(req, to_remove) is None, requirements)
+    )
 
 
 def find_contains_substring(substring: str, strings: [str]) -> Optional[str]:
@@ -55,10 +58,12 @@ def find_contains_substring(substring: str, strings: [str]) -> Optional[str]:
 
 
 def intersect_contains_string(strings1: [str], strings2: [str]) -> [str]:
-    return list(filter(
-        lambda requirement: any(string2 in requirement for string2 in strings2),
-        strings1
-    ))
+    return list(
+        filter(
+            lambda requirement: any(string2 in requirement for string2 in strings2),
+            strings1,
+        )
+    )
 
 
 def get_requirement_name(requirement: str) -> str:
@@ -69,8 +74,8 @@ def get_requirement_name(requirement: str) -> str:
 
 
 def requirements_filename_by_arch() -> str:
-    requirements_file = f'requirements-{platform.machine().lower()}.txt'
+    requirements_file = f"requirements-{platform.machine().lower()}.txt"
     if os.path.exists(requirements_file):
         return requirements_file
     else:
-        return 'requirements.txt'
+        return "requirements.txt"

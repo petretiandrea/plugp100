@@ -9,4 +9,3 @@ class LightColorDeviceInfoParams(object):
     hue: Optional[int] = None
     saturation: Optional[int] = None
     color_temp: Optional[int] = None
-

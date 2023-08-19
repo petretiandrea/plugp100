@@ -35,18 +35,18 @@ async def _test_device_usage(device_usage: DeviceUsageInfo, test: unittest.TestC
     test.assertIsNotNone(state.saved_power.past30_days)
 
 
-DeviceType = typing.Union['light', 'ledstrip', 'plug', 'hub', 'power_strip']
+DeviceType = typing.Union["light", "ledstrip", "plug", "hub", "power_strip"]
 
 
 async def get_test_config(device_type: DeviceType) -> (str, str, str):
     config = _load_file("../.local.devices.yml")
-    username = config['credentials']['username']
-    password = config['credentials']['password']
-    ip = config['devices'][device_type]
+    username = config["credentials"]["username"]
+    password = config["credentials"]["password"]
+    ip = config["devices"][device_type]
     return username, password, ip
 
 
 @functools.cache
 def _load_file(file_name: str):
-    with open(file_name, 'r') as config_file:
+    with open(file_name, "r") as config_file:
         return yaml.safe_load(config_file)

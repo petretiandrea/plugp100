@@ -8,7 +8,6 @@ from plugp100.responses.power_info import PowerInfo
 
 
 class PlugDevice(_BaseTapoDevice):
-
     def __init__(self, api: TapoClient, address: str):
         super().__init__(api, address)
 
