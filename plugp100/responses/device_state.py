@@ -24,7 +24,6 @@ class PlugDeviceState(DeviceState):
     auto_off: bool
     auto_off_time_remaining: int
 
-
     @staticmethod
     def try_from_json(kwargs: dict[str, Any]) -> Either["PlugDeviceState", Exception]:
         try:
@@ -32,12 +31,13 @@ class PlugDeviceState(DeviceState):
                 PlugDeviceState(
                     info=DeviceInfo(**kwargs),
                     device_on=kwargs.get("device_on", False),
-                power_protection_status=kwargs.get("power_protection_status"),
-                on_time=kwargs.get("on_time"),
-                auto_off=kwargs.get("auto_off_status") == "on",
-                auto_off_time_remaining=kwargs.get("auto_off_remain_time"),
-                default_states=kwargs.get("default_states")
-            ))
+                    power_protection_status=kwargs.get("power_protection_status"),
+                    on_time=kwargs.get("on_time"),
+                    auto_off=kwargs.get("auto_off_status") == "on",
+                    auto_off_time_remaining=kwargs.get("auto_off_remain_time"),
+                    default_states=kwargs.get("default_states"),
+                )
+            )
         except Exception as e:
             return Left(e)
 
@@ -117,7 +117,7 @@ class DeviceInfo:
     signal_level: int
     rssi: int
     friendly_name: str
-    
+
     # location data
     latitude: int
     longitude: int
@@ -129,8 +129,8 @@ class DeviceInfo:
 
     def __init__(self, **kwargs):
         self.device_id = kwargs["device_id"]
-        self.hardware_id = kwargs['hw_id']
-        self.oem_id = kwargs['oem_id']
+        self.hardware_id = kwargs["hw_id"]
+        self.oem_id = kwargs["oem_id"]
         self.firmware_version = kwargs["fw_ver"]
         self.hardware_version = kwargs["hw_ver"]
         self.mac = kwargs["mac"]
@@ -138,7 +138,7 @@ class DeviceInfo:
         self.model = kwargs["model"]
         self.type = kwargs["type"]
         self.overheated = kwargs.get("overheated", False)
-        self.ip = kwargs['ip']
+        self.ip = kwargs["ip"]
         self.ssid = base64.b64decode(kwargs["ssid"]).decode()
         self.signal_level = kwargs.get("signal_level", 0)
         self.rssi = kwargs.get("rssi", 0)
