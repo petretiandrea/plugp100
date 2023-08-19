@@ -12,7 +12,7 @@ class TimeInfo:
     region: str
 
     def local_time(self) -> datetime:
-        """Return datetime object using the given"""
+        """Return datetime object using the device-given timezone information."""
         # import zoneinfo here for python <3.9 compatibility
         from zoneinfo import ZoneInfo
 
