@@ -46,6 +46,13 @@ async def get_test_config(device_type: DeviceType) -> (str, str, str):
     return username, password, ip
 
 
+async def get_test_credentials() -> (str, str):
+    config = _load_file("../.local.devices.yml")
+    username = config['credentials']['username']
+    password = config['credentials']['password']
+    return username, password
+
+
 @functools.cache
 def _load_file(file_name: str):
     with open(file_name, 'r') as config_file:
