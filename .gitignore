@@ -132,6 +132,6 @@ dmypy.json
 .idea/
 
 requirements-*.txt
-!requirements-test.txt
+!requirements-dev.txt
 
 .local.devices.yml

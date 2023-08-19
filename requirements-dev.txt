@@ -1,0 +1,4 @@
+-r requirements-dev.txt
+pyyaml==6.0.1
+black==23.7.0
+pre-commit==3.3.3
