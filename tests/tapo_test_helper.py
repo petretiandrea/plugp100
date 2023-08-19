@@ -16,6 +16,7 @@ async def _test_expose_device_info(device_info: DeviceInfo, test: unittest.TestC
     test.assertIsNotNone(state.model)
     test.assertIsNotNone(state.get_semantic_firmware_version())
     test.assertIsNotNone(state.nickname)
+    test.assertIsNot(state.friendly_name, "")
     test.assertIsNotNone(state.overheated)
     test.assertIsNotNone(state.signal_level)
     test.assertIsNotNone(state.type)
@@ -34,7 +35,7 @@ async def _test_device_usage(device_usage: DeviceUsageInfo, test: unittest.TestC
     test.assertIsNotNone(state.saved_power.past30_days)
 
 
-DeviceType = typing.Union['light', 'ledstrip', 'plug', 'hub']
+DeviceType = typing.Union['light', 'ledstrip', 'plug', 'hub', 'power_strip']
 
 
 async def get_test_config(device_type: DeviceType) -> (str, str, str):

@@ -90,6 +90,7 @@ class DeviceInfo:
     overheated: bool
     signal_level: int
     rssi: int
+    friendly_name: str
     is_hardware_v2: bool = property(lambda self: self.hardware_version == "2.0")
 
     def __init__(self, **kwargs):
@@ -103,6 +104,7 @@ class DeviceInfo:
         self.overheated = kwargs.get("overheated", False)
         self.signal_level = kwargs.get("signal_level", 0)
         self.rssi = kwargs.get("rssi", 0)
+        self.friendly_name = self.model if self.nickname == '' else self.nickname
 
     def get_semantic_firmware_version(self) -> semantic_version.Version:
         pieces = self.firmware_version.split("Build")

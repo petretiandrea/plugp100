@@ -4,7 +4,7 @@ from plugp100.common.functional.either import Either
 from plugp100.common.utils.json_utils import dataclass_encode_json
 from plugp100.requests.set_device_info.set_plug_info_params import SetPlugInfoParams
 from plugp100.requests.tapo_request import TapoRequest
-from plugp100.responses.child_device_list import ChildDeviceList
+from plugp100.responses.child_device_list import PowerStripChild
 from plugp100.responses.device_state import PlugDeviceState
 
 
@@ -22,8 +22,9 @@ class PowerStripDevice(_BaseTapoDevice):
         """
         return (await self._api.get_device_info()) | PlugDeviceState.try_from_json
 
-    async def get_children(self) -> Either[ChildDeviceList, Exception]:
-        return await self._api.get_child_device_list()
+    async def get_children(self) -> Either[dict[str, PowerStripChild], Exception]:
+        return (await self._api.get_child_device_list()).map(lambda sub: sub.get_children(lambda x: PowerStripChild.try_from_json(**x)))\
+            .map(lambda x: {child.device_id: child for child in x})
 
     async def on(self, child_device_id: str) -> Either[True, Exception]:
         request = TapoRequest.set_device_info(dataclass_encode_json(SetPlugInfoParams(device_on=True)))
