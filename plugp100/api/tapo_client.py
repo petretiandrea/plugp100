@@ -200,7 +200,11 @@ class TapoClient:
             try:
                 responses = response.value.result["responseData"]["result"]["responses"]
                 if len(responses) > 0:
-                    return Right(responses[0]["result"])
+                    return (
+                        Right(responses[0]["result"])
+                        if "result" in responses[0]
+                        else Right(responses[0])
+                    )
                 else:
                     return Left(Exception("Empty responses from child"))
             except Exception as e:
