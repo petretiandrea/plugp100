@@ -39,8 +39,11 @@ class _BaseTapoDevice:
         )
 
     async def get_device_time(self) -> Either[TimeInfo, Exception]:
-        return (await self._api.execute_raw_request(TapoRequest(method="get_device_time", params=None))) | \
-                TimeInfo.try_from_json
+        return (
+            await self._api.execute_raw_request(
+                TapoRequest(method="get_device_time", params=None)
+            )
+        ) | TimeInfo.try_from_json
 
     async def get_state_as_json(self) -> Either[Json, Exception]:
         return await self._api.get_device_info()
