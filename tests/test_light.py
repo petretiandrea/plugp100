@@ -15,7 +15,7 @@ class LightTest(unittest.IsolatedAsyncioTestCase):
 
     async def asyncSetUp(self) -> None:
         credential, ip = await get_test_config(device_type="light")
-        self._api = TapoClient(credential, ip, protocol_type=TapoProtocolType.KLAP)
+        self._api = await TapoClient.connect(credential, ip)
         self._device = LightDevice(self._api)
 
     async def asyncTearDown(self):

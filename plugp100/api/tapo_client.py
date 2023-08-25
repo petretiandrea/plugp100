@@ -16,6 +16,7 @@ from plugp100.requests.tapo_request import TapoRequest, MultipleRequestParams
 from plugp100.responses.child_device_list import ChildDeviceList
 from plugp100.responses.energy_info import EnergyInfo
 from plugp100.responses.power_info import PowerInfo
+from plugp100.responses.tapo_exception import TapoException
 
 logger = logging.getLogger(__name__)
 
@@ -26,6 +27,37 @@ class TapoProtocolType(Enum):
 
 
 class TapoClient:
+    @staticmethod
+    async def connect(
+        auth_credential: AuthCredential,
+        ip_address: str,
+        http_session: Optional[aiohttp.ClientSession] = None,
+    ) -> "TapoClient":
+        # first try default protocol
+        api = TapoClient(
+            auth_credential,
+            ip_address,
+            TapoProtocolType.PASSTHROUGH,
+            http_session,
+            auto_recover_expired_session=True,
+        )
+        response = await api.execute_raw_request(
+            TapoRequest(method="component_nego", params=None)
+        )
+        if response.is_failure():
+            error = response.error()
+            if isinstance(error, TapoException) and error.error_code == 1003:
+                logger.warning("No default protocol work, using KLAP ;)")
+                await api.close()
+                return TapoClient(
+                    auth_credential,
+                    ip_address,
+                    TapoProtocolType.KLAP,
+                    http_session,
+                    auto_recover_expired_session=True,
+                )
+        return api
+
     def __init__(
         self,
         auth_credential: AuthCredential,
