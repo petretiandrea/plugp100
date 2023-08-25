@@ -12,8 +12,8 @@ from plugp100.responses.device_state import LightDeviceState
 
 
 class LightDevice(_BaseTapoDevice):
-    def __init__(self, api: TapoClient, address: str):
-        super().__init__(api, address)
+    def __init__(self, api: TapoClient):
+        super().__init__(api)
 
     async def get_state(self) -> Try[LightDeviceState]:
         """

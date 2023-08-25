@@ -7,12 +7,8 @@ from plugp100.responses.time_info import TimeInfo
 
 
 class _BaseTapoDevice:
-    def __init__(self, api: TapoClient, address: str):
+    def __init__(self, api: TapoClient):
         self._api = api
-        self._address = address
-
-    async def login(self) -> Try[True]:
-        return await self._api.login(self._address)
 
     async def get_device_usage(self) -> Try[DeviceUsageInfo]:
         """

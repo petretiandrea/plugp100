@@ -8,8 +8,8 @@ from plugp100.responses.power_info import PowerInfo
 
 
 class PlugDevice(_BaseTapoDevice):
-    def __init__(self, api: TapoClient, address: str):
-        super().__init__(api, address)
+    def __init__(self, api: TapoClient):
+        super().__init__(api)
 
     async def get_state(self) -> Try[PlugDeviceState]:
         """

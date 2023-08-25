@@ -23,8 +23,8 @@ HubSubscription = Callable[[], Any]
 
 # The HubDevice class is a blueprint for creating hub devices.
 class HubDevice(_BaseTapoDevice):
-    def __init__(self, api: TapoClient, address: str, logger: Logger = None):
-        super().__init__(api, address)
+    def __init__(self, api: TapoClient, logger: Logger = None):
+        super().__init__(api)
         self._tracker = HubConnectedDeviceTracker(logger)
         self._is_tracking = False
         self._tracking_tasks: List[asyncio.Task] = []

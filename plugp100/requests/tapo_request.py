@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from typing import TypeVar, Any, List
 
 from plugp100.api.light_effect import LightEffect
+from plugp100.common.credentials import AuthCredential
 from plugp100.requests.handshake_params import HandshakeParams
 from plugp100.requests.login_device import LoginDeviceParams, LoginDeviceParamsV2
 from plugp100.requests.secure_passthrough_params import SecurePassthroughParams
@@ -16,15 +17,12 @@ class TapoRequest(object):
         return TapoRequest(method="handshake", params=params)
 
     @staticmethod
-    def login(username: str, password: str) -> "TapoRequest":
+    def login(credential: AuthCredential, v2: bool = False) -> "TapoRequest":
         return TapoRequest(
-            method="login_device", params=LoginDeviceParams(username, password)
-        )
-
-    @staticmethod
-    def login_v2(username: str, password: str) -> "TapoRequest":
-        return TapoRequest(
-            method="login_device", params=LoginDeviceParamsV2(username, password)
+            method="login_device",
+            params=LoginDeviceParams(credential.username, credential.password)
+            if not v2
+            else LoginDeviceParamsV2(credential.username, credential.password),
         )
 
     @staticmethod

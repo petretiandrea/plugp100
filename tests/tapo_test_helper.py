@@ -4,6 +4,7 @@ import typing
 
 import yaml
 
+from plugp100.common.credentials import AuthCredential
 from plugp100.responses.device_state import DeviceInfo
 from plugp100.responses.device_usage_info import DeviceUsageInfo
 
@@ -43,7 +44,7 @@ async def get_test_config(device_type: DeviceType) -> (str, str, str):
     username = config["credentials"]["username"]
     password = config["credentials"]["password"]
     ip = config["devices"][device_type]
-    return username, password, ip
+    return AuthCredential(username, password), ip
 
 
 @functools.cache

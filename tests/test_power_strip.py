@@ -14,10 +14,9 @@ class PowerStripTest(unittest.IsolatedAsyncioTestCase):
     _api = None
 
     async def asyncSetUp(self) -> None:
-        username, password, ip = await get_test_config(device_type="power_strip")
-        self._api = TapoClient(username, password)
-        self._device = PowerStripDevice(self._api, ip)
-        await self._device.login()
+        credential, ip = await get_test_config(device_type="power_strip")
+        self._api = await TapoClient.connect(credential, ip)
+        self._device = PowerStripDevice(self._api)
 
     async def asyncTearDown(self):
         await self._api.close()
