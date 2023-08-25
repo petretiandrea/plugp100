@@ -112,7 +112,9 @@ class SecurePassthroughTransport:
     ) -> Try[TapoResponse[Json]]:
         request.with_request_id(
             self._request_id_generator.generate_id()
-        ).with_terminal_uuid(session.terminal_uuid)
+        ).with_request_time_millis(round(time.time() * 1000)).with_terminal_uuid(
+            session.terminal_uuid
+        )
         raw_request = jsons.dumps(request)
         logger.debug(f"Raw request: {raw_request}")
 

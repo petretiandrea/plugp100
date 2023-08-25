@@ -37,9 +37,6 @@ class KlapProtocol(TapoProtocol):
         self._auth_credential = auth_credential
         self._local_seed: Optional[bytes] = None
         self.local_auth_hash = self.generate_auth_hash(self._auth_credential)
-        self.local_auth_owner = KlapProtocol._md5(
-            self._auth_credential.username.encode()
-        ).hex()
         self._http_session = (
             aiohttp.ClientSession() if http_session is None else http_session
         )
@@ -48,11 +45,20 @@ class KlapProtocol(TapoProtocol):
     async def send_request(
         self, request: TapoRequest, retry: int = 3
     ) -> Try[TapoResponse[dict[str, Any]]]:
-        if self._klap_session is None or self._klap_session.session_id is None:
+        response = await self._send_request(request, retry)
+        if response.is_failure() and retry > 0:
+            return await self.send_request(request, retry - 1)
+        else:
+            return response
+
+    async def _send_request(
+        self, request: TapoRequest, retry: int = 1
+    ) -> Try[TapoResponse[dict[str, Any]]]:
+        if self._klap_session is None or not self._klap_session.handshake_complete:
             await self.perform_handshake()
 
-        if self._klap_session.chiper is None:
-            return Try.of(Exception("No encryption session"))
+        if not self._klap_session.handshake_complete:
+            return Try.of(Exception("Failed to completed handshake"))
 
         raw_request = jsons.dumps(request)
         payload, seq = self._klap_session.chiper.encrypt(raw_request)
@@ -65,7 +71,7 @@ class KlapProtocol(TapoProtocol):
         )
         if response.status != 200:
             logger.error(
-                f"Query failed after succesful authentication at {time.time()}.  Host is {self._host}, Retry count is {retry}, Sequence is {seq}, Response status is {response.status}, Request was {request}"
+                f"Query failed after succesful authentication at {time.time()}.  Host is {self._host}, Available attempts count is {retry}, Sequence is {seq}, Response status is {response.status}, Request was {request}"
             )
             if response.status == 403:
                 self._klap_session.invalidate()
@@ -216,17 +222,10 @@ class KlapProtocol(TapoProtocol):
 
     @staticmethod
     def generate_auth_hash(auth: AuthCredential):
-        """Generate an md5 auth hash for the protocol on the supplied credentials."""
         return KlapProtocol._sha256(
             KlapProtocol._sha1(auth.username.encode())
             + KlapProtocol._sha1(auth.password.encode())
         )
-
-    @staticmethod
-    def _md5(payload: bytes) -> bytes:
-        digest = hashes.Hash(hashes.MD5())
-        digest.update(payload)
-        return digest.finalize()
 
     @staticmethod
     def _sha1(payload: bytes) -> bytes:

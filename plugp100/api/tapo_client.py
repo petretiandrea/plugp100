@@ -39,7 +39,6 @@ class TapoClient:
             ip_address,
             TapoProtocolType.PASSTHROUGH,
             http_session,
-            auto_recover_expired_session=True,
         )
         response = await api.execute_raw_request(
             TapoRequest(method="component_nego", params=None)
@@ -47,14 +46,13 @@ class TapoClient:
         if response.is_failure():
             error = response.error()
             if isinstance(error, TapoException) and error.error_code == 1003:
-                logger.warning("No default protocol work, using KLAP ;)")
+                logger.warning("Default protocol not working, fallback to KLAP ;)")
                 await api.close()
                 return TapoClient(
                     auth_credential,
                     ip_address,
                     TapoProtocolType.KLAP,
                     http_session,
-                    auto_recover_expired_session=True,
                 )
         return api
 
@@ -64,7 +62,6 @@ class TapoClient:
         ip_address: str,
         protocol_type: TapoProtocolType = TapoProtocolType.PASSTHROUGH,
         http_session: Optional[aiohttp.ClientSession] = None,
-        auto_recover_expired_session: bool = False,
     ):
         self._protocol: TapoProtocol = (
             KlapProtocol(
@@ -77,7 +74,6 @@ class TapoClient:
                 auth_credential=auth_credential,
                 host=ip_address,
                 http_session=http_session,
-                auto_recover_expired_session=auto_recover_expired_session,
             )
         )
 
