@@ -13,7 +13,7 @@ import asyncio
 import os
 
 from plugp100.api.light_effect_preset import LightEffectPreset
-from plugp100.api.tapo_client import TapoClient
+from plugp100.api.tapo_client import TapoClient, AuthCredential
 
 
 async def main():
@@ -21,8 +21,8 @@ async def main():
     username = os.getenv('USERNAME', '<tapo_email>')
     password = os.getenv('PASSWORD', '<tapo_password>')
 
-    client = TapoClient(username, password)
-    await client.login("<tapo_device_ip>")
+    credential = AuthCredential(username, password)
+    client = await TapoClient.connect(credential, "<ip_address>")
 
     print(await client.get_device_info())
     print(await client.get_device_usage())
