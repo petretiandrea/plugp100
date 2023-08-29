@@ -1,7 +1,7 @@
 import unittest
 
 from plugp100.api.light_device import LightDevice
-from plugp100.api.tapo_client import TapoClient
+from plugp100.api.tapo_client import TapoClient, TapoProtocolType
 from tests.tapo_test_helper import (
     _test_expose_device_info,
     get_test_config,
@@ -15,7 +15,7 @@ class LightTest(unittest.IsolatedAsyncioTestCase):
 
     async def asyncSetUp(self) -> None:
         credential, ip = await get_test_config(device_type="light")
-        self._api = TapoClient(credential, ip)
+        self._api = await TapoClient.connect(credential, ip)
         self._device = LightDevice(self._api)
 
     async def asyncTearDown(self):

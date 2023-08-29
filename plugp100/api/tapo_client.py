@@ -1,4 +1,5 @@
 import logging
+from enum import Enum
 from time import time
 from typing import Optional, Any, cast
 
@@ -8,29 +9,72 @@ from plugp100.api.light_effect import LightEffect
 from plugp100.common.credentials import AuthCredential
 from plugp100.common.functional.tri import Try, Success, Failure
 from plugp100.common.utils.json_utils import dataclass_encode_json, Json
+from plugp100.protocol.klap_protocol import KlapProtocol
 from plugp100.protocol.passthrough_protocol import PassthroughProtocol
 from plugp100.protocol.tapo_protocol import TapoProtocol
 from plugp100.requests.tapo_request import TapoRequest, MultipleRequestParams
 from plugp100.responses.child_device_list import ChildDeviceList
 from plugp100.responses.energy_info import EnergyInfo
 from plugp100.responses.power_info import PowerInfo
+from plugp100.responses.tapo_exception import TapoException
 
 logger = logging.getLogger(__name__)
 
 
+class TapoProtocolType(Enum):
+    KLAP = 1
+    PASSTHROUGH = 2
+
+
 class TapoClient:
+    @staticmethod
+    async def connect(
+        auth_credential: AuthCredential,
+        ip_address: str,
+        http_session: Optional[aiohttp.ClientSession] = None,
+    ) -> "TapoClient":
+        # first try default protocol
+        api = TapoClient(
+            auth_credential,
+            ip_address,
+            TapoProtocolType.PASSTHROUGH,
+            http_session,
+        )
+        response = await api.execute_raw_request(
+            TapoRequest(method="component_nego", params=None)
+        )
+        if response.is_failure():
+            error = response.error()
+            if isinstance(error, TapoException) and error.error_code == 1003:
+                logger.warning("Default protocol not working, fallback to KLAP ;)")
+                await api.close()
+                return TapoClient(
+                    auth_credential,
+                    ip_address,
+                    TapoProtocolType.KLAP,
+                    http_session,
+                )
+        return api
+
     def __init__(
         self,
         auth_credential: AuthCredential,
         ip_address: str,
+        protocol_type: TapoProtocolType = TapoProtocolType.PASSTHROUGH,
         http_session: Optional[aiohttp.ClientSession] = None,
-        auto_recover_expired_session: bool = False,
     ):
-        self._protocol: TapoProtocol = PassthroughProtocol(
-            auth_credential=auth_credential,
-            host=ip_address,
-            http_session=http_session,
-            auto_recover_expired_session=auto_recover_expired_session,
+        self._protocol: TapoProtocol = (
+            KlapProtocol(
+                auth_credential=auth_credential,
+                host=ip_address,
+                http_session=http_session,
+            )
+            if protocol_type == TapoProtocolType.KLAP
+            else PassthroughProtocol(
+                auth_credential=auth_credential,
+                host=ip_address,
+                http_session=http_session,
+            )
         )
 
     async def close(self):

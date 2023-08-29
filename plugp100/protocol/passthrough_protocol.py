@@ -6,7 +6,7 @@ import aiohttp
 
 from plugp100.common.credentials import AuthCredential
 from plugp100.common.functional.tri import Try
-from plugp100.common.transport.securepassthrough_transport import (
+from plugp100.protocol.securepassthrough_transport import (
     Session,
     SecurePassthroughTransport,
 )
@@ -26,14 +26,12 @@ class PassthroughProtocol(TapoProtocol):
         host: str,
         port: Optional[int] = 80,
         http_session: Optional[aiohttp.ClientSession] = None,
-        auto_recover_expired_session: bool = False,
     ):
         super().__init__(host, port)
         self._url = f"http://{host}:{port}/app"
         self._http = AsyncHttp(
             aiohttp.ClientSession() if http_session is None else http_session
         )
-        self._auto_recover_expired_session = auto_recover_expired_session
         self._passthrough = SecurePassthroughTransport(self._http)
         self._session: Optional[Session] = None
         self._credential = auth_credential
@@ -41,55 +39,66 @@ class PassthroughProtocol(TapoProtocol):
     async def send_request(
         self, request: TapoRequest, retry: int = 3
     ) -> Try[TapoResponse[dict[str, Any]]]:
-        login_response = (
-            await self._login_with_version(retry=retry)
+        response = await self._send_request(request)
+        if retry > 0 and isinstance(response.error(), TapoException):
+            if response.error().error_code == TapoError.ERR_SESSION_TIMEOUT.value:
+                self._session.invalidate()
+                logger.warning(
+                    "Session timeout, invalidate it, retrying with new session"
+                )
+                return await self.send_request(request, retry - 1)
+            elif response.error().error_code == TapoError.ERR_DEVICE.value:
+                self._session.invalidate()
+                logger.warning(
+                    "Error device, probably exceeding rate limit, retrying with new session"
+                )
+                return await self.send_request(request, retry - 1)
+        return response
+
+    async def _send_request(
+        self, request: TapoRequest
+    ) -> Try[TapoResponse[dict[str, Any]]]:
+        login_session = (
+            await self._login_with_version(self._credential)
             if self._session is None or self._session.token is None
-            else Try.of(True)
+            else Try.of(self._session)
         )
-        if login_response.is_success():
+        if login_session.is_success():
+            self._session = login_session.get()
             request.with_terminal_uuid(
                 self._session.terminal_uuid
             ).with_request_time_millis(round(time() * 1000))
-            response = await self._passthrough.send(request, self._session)
-            if retry > 0 and isinstance(response.error(), TapoException):
-                if response.error().error_code == TapoError.ERR_SESSION_TIMEOUT.value:
-                    self._session.invalidate()
-                    logger.warning(
-                        "Session timeout, invalidate it, retrying with new session"
-                    )
-                    return await self.send_request(request, retry - 1)
-                elif response.error().error_code == TapoError.ERR_DEVICE.value:
-                    self._session.invalidate()
-                    logger.warning(
-                        "Error device, probably exceeding rate limit, retrying with new session"
-                    )
-                    return await self.send_request(request, retry - 1)
-            else:
-                return response
-        else:
-            return login_response
+            return await self._passthrough.send(request, self._session)
+        return login_session
 
     async def close(self):
         await self._http.close()
         self._session = None
 
     async def _login_with_version(
-        self, use_v2: bool = False, retry: int = 3
-    ) -> Try[True]:
+        self, credential: AuthCredential, use_v2: bool = False
+    ) -> Try[Session]:
         session_or_error = await self._passthrough.handshake(self._url)
-        if session_or_error.is_success():
-            self._session = session_or_error.get()
-            if not self._session.is_handshake_session_expired():
-                login_request = TapoRequest.login(
-                    self._credential, v2=use_v2
-                ).with_request_time_millis(round(time() * 1000))
-                token = (await self._passthrough.send(login_request, self._session)).map(
-                    lambda x: x.result["token"]
-                )
-                if token.is_success():
-                    self._session.token = token.get()
-                return token.map(lambda _: True)
+        if session_or_error.is_failure():
+            return session_or_error
+        else:
+            session = session_or_error.get()
+            if not session.is_handshake_session_expired():
+                login_request = TapoRequest.login(credential, v2=use_v2)
+                token_or_error = (
+                    await self._passthrough.send(login_request, session)
+                ).map(lambda x: x.result["token"])
+                if token_or_error.is_success():
+                    session.token = token_or_error.get()
+                    return Try.of(session)
+                elif use_v2:  # already try with v2, so propagate error and stop retry
+                    return token_or_error
+                else:
+                    return await self._login_with_version(credential, use_v2=use_v2)
             else:
-                return await self._login_with_version(use_v2=use_v2)
-
-        return session_or_error.map(lambda _: True)
+                Try.of(
+                    TapoException(
+                        TapoError.ERR_SESSION_TIMEOUT,
+                        "Detected handshake session timeout",
+                    )
+                )

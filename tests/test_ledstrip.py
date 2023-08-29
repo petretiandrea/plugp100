@@ -17,7 +17,7 @@ class LedStripTest(unittest.IsolatedAsyncioTestCase):
 
     async def asyncSetUp(self) -> None:
         credential, ip = await get_test_config(device_type="ledstrip")
-        self._api = TapoClient(credential, ip)
+        self._api = await TapoClient.connect(credential, ip)
         self._device = LedStripDevice(self._api)
 
     async def asyncTearDown(self):

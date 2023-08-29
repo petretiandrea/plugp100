@@ -21,7 +21,7 @@ class SensorT310Test(unittest.IsolatedAsyncioTestCase):
 
     async def asyncSetUp(self) -> None:
         credential, ip = await get_test_config(device_type="hub")
-        self._api = TapoClient(credential, ip)
+        self._api = await TapoClient.connect(credential, ip)
         self._hub = HubDevice(self._api)
         self._device = S200ButtonDevice(
             self._hub,
@@ -45,7 +45,7 @@ class SensorT310Test(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(state.status, "online")
 
     async def test_should_get_temperature_humidity_records(self):
-        logs = (await self._device.get_event_logs(10)).get_or_raise()
+        logs = (await self._device.get_event_logs(100)).get_or_raise()
         single_click_logs = list(
             filter(lambda x: isinstance(x, SingleClickEvent), logs.events)
         )
