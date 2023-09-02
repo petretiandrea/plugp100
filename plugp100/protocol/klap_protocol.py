@@ -58,7 +58,7 @@ class KlapProtocol(TapoProtocol):
             await self.perform_handshake()
 
         if not self._klap_session.handshake_complete:
-            return Try.of(Exception("Failed to completed handshake"))
+            return Failure(Exception("Failed to completed handshake"))
 
         raw_request = jsons.dumps(request)
         payload, seq = self._klap_session.chiper.encrypt(raw_request)
@@ -75,7 +75,7 @@ class KlapProtocol(TapoProtocol):
             )
             if response.status == 403:
                 self._klap_session.invalidate()
-                return Try.of(Exception("Forbidden error after completing handshake"))
+                return Failure(Exception("Forbidden error after completing handshake"))
             else:
                 return Try.of(
                     Exception(

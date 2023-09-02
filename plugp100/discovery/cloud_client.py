@@ -4,7 +4,7 @@ from typing import List, Optional, Any, cast
 
 import aiohttp
 
-from plugp100.common.functional.tri import Try
+from plugp100.common.functional.tri import Try, Failure
 from plugp100.common.utils.http_client import AsyncHttp
 from plugp100.responses.tapo_response import TapoResponse
 
@@ -43,7 +43,7 @@ class CloudClient:
             if json and json.get("error_code", -1) == 0:
                 return Try.of(json.get("result").get("token"))
             elif json and "msg" in json:
-                return Try.of(Exception(json.get("msg")))
+                return Failure(Exception(json.get("msg")))
         except Exception as e:
             return Try.of(e)
 
