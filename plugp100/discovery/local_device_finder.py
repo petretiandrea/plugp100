@@ -52,7 +52,7 @@ class LocalDeviceFinder:
 
             return devices
         except Exception as e:
-            logger.warning(f"Failed to scan network {network}", e)
+            logger.warning("Failed to scan network %s error: %s", network, str(e))
             return []
 
     @staticmethod
@@ -95,7 +95,7 @@ class LocalDeviceFinder:
                 return Try.of(received[ARP].psrc)
             return Try.of(None)
         except Exception as e:
-            logger.warning(f"Failed to scan network {network}", e)
+            logger.warning("Failed to scan network %s error: %s", network, str(e))
             return Failure(e)
 
     # async def get_subnets(self) -> list[str]:
