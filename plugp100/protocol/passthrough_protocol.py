@@ -76,7 +76,7 @@ class PassthroughProtocol(TapoProtocol):
         self._session = None
 
     async def _login_with_version(
-        self, credential: AuthCredential, use_v2: bool = False
+        self, credential: AuthCredential, is_trying_v2: bool = False
     ) -> Try[Session]:
         session_or_error = await self._passthrough.handshake(self._url)
         if session_or_error.is_failure():
@@ -84,17 +84,17 @@ class PassthroughProtocol(TapoProtocol):
         else:
             session = session_or_error.get()
             if not session.is_handshake_session_expired():
-                login_request = TapoRequest.login(credential, v2=use_v2)
+                login_request = TapoRequest.login(credential, v2=is_trying_v2)
                 token_or_error = (
                     await self._passthrough.send(login_request, session)
                 ).map(lambda x: x.result["token"])
                 if token_or_error.is_success():
                     session.token = token_or_error.get()
                     return Try.of(session)
-                elif use_v2:  # already try with v2, so propagate error and stop retry
+                elif is_trying_v2 is False:
+                    return await self._login_with_version(credential, is_trying_v2=True)
+                else:  # already try with v2, so propagate error and stop retry
                     return token_or_error
-                else:
-                    return await self._login_with_version(credential, use_v2=use_v2)
             else:
                 Try.of(
                     TapoException(
