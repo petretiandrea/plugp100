@@ -57,7 +57,7 @@ jobs:
 #    needs: [ build_vendoring_wheels ]
 
     steps:
-      - uses: actions/checkout@v3.6.0
+      - uses: actions/checkout@v4.1.0
 #      - name: "Retrieve compiled requirements"
 #        uses: actions/download-artifact@v3
 #        with:
