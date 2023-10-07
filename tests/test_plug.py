@@ -1,11 +1,11 @@
 import unittest
 
 from plugp100.api.plug_device import PlugDevice
-from plugp100.api.tapo_client import TapoClient
 from tests.tapo_test_helper import (
     _test_expose_device_info,
     get_test_config,
     _test_device_usage,
+    get_initialized_client,
 )
 
 
@@ -15,7 +15,7 @@ class PlugTest(unittest.IsolatedAsyncioTestCase):
 
     async def asyncSetUp(self) -> None:
         credential, ip = await get_test_config(device_type="plug")
-        self._api = await TapoClient.connect(credential, ip)
+        self._api = await get_initialized_client(credential, ip)
         self._device = PlugDevice(self._api)
 
     async def asyncTearDown(self):

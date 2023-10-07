@@ -55,10 +55,11 @@ class KlapProtocol(TapoProtocol):
         self, request: TapoRequest, retry: int = 1
     ) -> Try[TapoResponse[dict[str, Any]]]:
         if self._klap_session is None or not self._klap_session.handshake_complete:
-            await self.perform_handshake()
-
-        if not self._klap_session.handshake_complete:
-            return Failure(Exception("Failed to completed handshake"))
+            new_session = await self.perform_handshake()
+            if new_session.is_success():
+                self._klap_session = new_session.get()
+            else:
+                return Failure(new_session.error())
 
         raw_request = jsons.dumps(request)
         payload, seq = self._klap_session.chiper.encrypt(raw_request)
@@ -93,7 +94,9 @@ class KlapProtocol(TapoProtocol):
         self._klap_session.invalidate()
         await self._http_session.close()
 
-    async def perform_handshake(self, new_local_seed: Optional[bytes] = None):
+    async def perform_handshake(
+        self, new_local_seed: Optional[bytes] = None
+    ) -> Try["KlapSession"]:
         logger.debug("[KLAP] Starting handshake with %s", self._host)
         seeds = await self.perform_handshake1(new_local_seed)
         if seeds.is_success():
@@ -102,8 +105,9 @@ class KlapProtocol(TapoProtocol):
                 self._local_seed, remote_seed, auth_hash
             )
             if session.is_success():
-                self._klap_session = session.get()
-        logger.debug("[KLAP] Handshake with %s complete", self._host)
+                logger.debug("[KLAP] Handshake with %s complete", self._host)
+            return session
+        return Failure(seeds.error())
 
     async def perform_handshake1(
         self, new_local_seed: Optional[bytes] = None

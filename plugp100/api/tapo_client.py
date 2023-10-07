@@ -24,63 +24,50 @@ logger = logging.getLogger(__name__)
 class TapoProtocolType(Enum):
     KLAP = 1
     PASSTHROUGH = 2
+    AUTO = 3
 
 
 class TapoClient:
-    @staticmethod
-    async def connect(
-        auth_credential: AuthCredential,
-        ip_address: str,
-        http_session: Optional[aiohttp.ClientSession] = None,
-    ) -> "TapoClient":
-        # first try default protocol
-        api = TapoClient(
-            auth_credential,
-            ip_address,
-            TapoProtocolType.PASSTHROUGH,
-            http_session,
-        )
-        response = await api.execute_raw_request(
-            TapoRequest(method="component_nego", params=None)
-        )
-        if response.is_failure():
-            error = response.error()
-            if isinstance(error, TapoException) and error.error_code == 1003:
-                logger.warning("Default protocol not working, fallback to KLAP ;)")
-                await api.close()
-                return TapoClient(
-                    auth_credential,
-                    ip_address,
-                    TapoProtocolType.KLAP,
-                    http_session,
-                )
-        return api
-
     def __init__(
         self,
         auth_credential: AuthCredential,
         ip_address: str,
-        protocol_type: TapoProtocolType = TapoProtocolType.PASSTHROUGH,
+        port: Optional[int] = 80,
         http_session: Optional[aiohttp.ClientSession] = None,
+        protocol_type: TapoProtocolType = TapoProtocolType.AUTO,
     ):
-        self._protocol: TapoProtocol = (
-            KlapProtocol(
-                auth_credential=auth_credential,
-                host=ip_address,
-                http_session=http_session,
+        self._auth_credential = auth_credential
+        self._ip_address = ip_address
+        self._port = port
+        self._http_session = http_session
+        self._protocol_type = protocol_type
+        self._protocol: Optional[TapoProtocol] = None
+
+    async def initialize(self):
+        if self._protocol_type == TapoProtocolType.KLAP:
+            self._protocol = KlapProtocol(
+                auth_credential=self._auth_credential,
+                host=self._ip_address,
+                port=self._port,
+                http_session=self._http_session,
             )
-            if protocol_type == TapoProtocolType.KLAP
-            else PassthroughProtocol(
-                auth_credential=auth_credential,
-                host=ip_address,
-                http_session=http_session,
+        elif self._protocol_type == TapoProtocolType.PASSTHROUGH:
+            self._protocol = PassthroughProtocol(
+                auth_credential=self._auth_credential,
+                host=self._ip_address,
+                port=self._port,
+                http_session=self._http_session,
             )
-        )
+        else:
+            await self._guess_protocol()
 
     async def close(self):
         await self._protocol.close()
 
     async def execute_raw_request(self, request: "TapoRequest") -> Try[Json]:
+        assert (
+            self._protocol is not None
+        ), "You must initialize client before send requests"
         return (await self._protocol.send_request(request)).map(lambda x: x.result)
 
     async def get_device_info(self) -> Try[Json]:
@@ -89,6 +76,9 @@ class TapoClient:
         exception.
         @return: an `Either` object that contains either a `Json` object or an `Exception`.
         """
+        assert (
+            self._protocol is not None
+        ), "You must initialize client before send requests"
         get_info_request = TapoRequest.get_device_info()
         return (await self._protocol.send_request(get_info_request)).map(
             lambda x: x.result
@@ -100,6 +90,9 @@ class TapoClient:
         or an exception.
         @return: an `Either` type, which can either contain an `EnergyInfo` object or an `Exception` object.
         """
+        assert (
+            self._protocol is not None
+        ), "You must initialize client before send requests"
         get_energy_request = TapoRequest.get_energy_usage()
         response = await self._protocol.send_request(get_energy_request)
         return response.map(lambda x: EnergyInfo(x.result))
@@ -110,11 +103,14 @@ class TapoClient:
         `PowerInfo` object, or an `Exception` if an error occurs.
         @return: an `Either` object that contains either a `PowerInfo` object or an `Exception`.
         """
+        assert (
+            self._protocol is not None
+        ), "You must initialize client before send requests"
         get_current_power = TapoRequest.get_current_power()
         response = await self._protocol.send_request(get_current_power)
         return response.map(lambda x: PowerInfo(x.result))
 
-    async def set_device_info(self, device_info: Any) -> Try[True]:
+    async def set_device_info(self, device_info: Any) -> Try[bool]:
         """
         The function `set_device_info` encodes the `device_info` object into JSON format and returns either `True` or an
         `Exception`.
@@ -125,7 +121,7 @@ class TapoClient:
         """
         return await self._set_device_info(dataclass_encode_json(device_info))
 
-    async def set_lighting_effect(self, light_effect: LightEffect) -> Try[True]:
+    async def set_lighting_effect(self, light_effect: LightEffect) -> Try[bool]:
         """
         The function `set_lighting_effect` sets a lighting effect for a device and returns either `True` or an exception.
 
@@ -134,6 +130,9 @@ class TapoClient:
         @type light_effect: LightEffect
         @return: an `Either` object that contains either a `True` value or an `Exception`.
         """
+        assert (
+            self._protocol is not None
+        ), "You must initialize client before send requests"
         response = await self._protocol.send_request(
             TapoRequest.set_lighting_effect(light_effect)
         )
@@ -145,6 +144,9 @@ class TapoClient:
         an exception.
         @return: an `Either` object, which can contain either a `ChildDeviceList` or an `Exception`.
         """
+        assert (
+            self._protocol is not None
+        ), "You must initialize client before send requests"
         request = TapoRequest.get_child_device_list()
         return (await self._protocol.send_request(request)).map(
             lambda x: ChildDeviceList.try_from_json(**x.result)
@@ -156,6 +158,9 @@ class TapoClient:
         returns either the JSON response or an exception.
         @return: an `Either` object, which can contain either a `Json` object or an `Exception`.
         """
+        assert (
+            self._protocol is not None
+        ), "You must initialize client before send requests"
         request = TapoRequest.get_child_device_component_list()
         return (await self._protocol.send_request(request)).map(lambda x: x.result)
 
@@ -171,6 +176,9 @@ class TapoClient:
         @type request: TapoRequest
         @return: an instance of the `Either` class, which can contain either a `Json` object or an `Exception`.
         """
+        assert (
+            self._protocol is not None
+        ), "You must initialize client before send requests"
         multiple_request = TapoRequest.multiple_request(
             MultipleRequestParams([request])
         ).with_request_time_millis(round(time() * 1000))
@@ -191,8 +199,34 @@ class TapoClient:
                 return Failure(e)
         return cast(Failure, response)
 
-    async def _set_device_info(self, device_info: Json) -> Try[True]:
+    async def _set_device_info(self, device_info: Json) -> Try[bool]:
+        assert (
+            self._protocol is not None
+        ), "You must initialize client before send requests"
         response = await self._protocol.send_request(
             TapoRequest.set_device_info(device_info)
         )
         return response.map(lambda _: True)
+
+    async def _guess_protocol(self):
+        self._protocol = PassthroughProtocol(
+            auth_credential=self._auth_credential,
+            host=self._ip_address,
+            port=self._port,
+            http_session=self._http_session,
+        )
+        response = await self.execute_raw_request(
+            TapoRequest(method="component_nego", params=None)
+        )
+        if response.is_failure():
+            error = response.error()
+            if isinstance(error, TapoException) and error.error_code == 1003:
+                logger.warning("Default protocol not working, fallback to KLAP ;)")
+                self._protocol = KlapProtocol(
+                    auth_credential=self._auth_credential,
+                    host=self._ip_address,
+                    port=self._port,
+                    http_session=self._http_session,
+                )
+            else:
+                raise error

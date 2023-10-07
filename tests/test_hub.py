@@ -6,6 +6,7 @@ from tests.tapo_test_helper import (
     _test_expose_device_info,
     get_test_config,
     _test_device_usage,
+    get_initialized_client,
 )
 
 unittest.TestLoader.sortTestMethodsUsing = staticmethod(lambda x, y: -1)
@@ -17,7 +18,7 @@ class HubTest(unittest.IsolatedAsyncioTestCase):
 
     async def asyncSetUp(self) -> None:
         credential, ip = await get_test_config(device_type="hub")
-        self._api = await TapoClient.connect(credential, ip)
+        self._api = await get_initialized_client(credential, ip)
         self._device = HubDevice(self._api)
 
     async def asyncTearDown(self):

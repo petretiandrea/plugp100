@@ -31,14 +31,14 @@ class HubDevice(_BaseTapoDevice):
         self._tracking_subscriptions: List[Callable[[HubDeviceEvent], Any]] = []
         self._logger = logger if logger is not None else logging.getLogger("HubDevice")
 
-    async def turn_alarm_on(self, alarm: PlayAlarmParams = None) -> Try[True]:
+    async def turn_alarm_on(self, alarm: PlayAlarmParams = None) -> Try[bool]:
         request = TapoRequest(
             method="play_alarm",
             params=dataclass_encode_json(alarm) if alarm is not None else None,
         )
         return (await self._api.execute_raw_request(request)).map(lambda _: True)
 
-    async def turn_alarm_off(self) -> Try[True]:
+    async def turn_alarm_off(self) -> Try[bool]:
         return (
             await self._api.execute_raw_request(
                 TapoRequest(method="stop_alarm", params=None)

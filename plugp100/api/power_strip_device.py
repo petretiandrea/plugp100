@@ -30,13 +30,13 @@ class PowerStripDevice(_BaseTapoDevice):
             .map(lambda x: {child.device_id: child for child in x})
         )
 
-    async def on(self, child_device_id: str) -> Try[True]:
+    async def on(self, child_device_id: str) -> Try[bool]:
         request = TapoRequest.set_device_info(
             dataclass_encode_json(SetPlugInfoParams(device_on=True))
         )
         return (await self._control_child(child_device_id, request)).map(lambda _: True)
 
-    async def off(self, child_device_id: str) -> Try[True]:
+    async def off(self, child_device_id: str) -> Try[bool]:
         request = TapoRequest.set_device_info(
             dataclass_encode_json(SetPlugInfoParams(device_on=False))
         )

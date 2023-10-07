@@ -6,6 +6,7 @@ from plugp100.api.tapo_client import TapoClient
 from plugp100.responses.hub_childs.t31x_device_state import TemperatureUnit
 from tests.tapo_test_helper import (
     get_test_config,
+    get_initialized_client,
 )
 
 unittest.TestLoader.sortTestMethodsUsing = staticmethod(lambda x, y: -1)
@@ -18,7 +19,7 @@ class SensorT310Test(unittest.IsolatedAsyncioTestCase):
 
     async def asyncSetUp(self) -> None:
         credential, ip = await get_test_config(device_type="hub")
-        self._api = await TapoClient.connect(credential, ip)
+        self._api = await get_initialized_client(credential, ip)
         self._hub = HubDevice(self._api)
         self._device = T31Device(
             self._hub,

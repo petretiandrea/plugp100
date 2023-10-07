@@ -9,6 +9,7 @@ from plugp100.responses.hub_childs.s200b_device_state import (
 )
 from tests.tapo_test_helper import (
     get_test_config,
+    get_initialized_client,
 )
 
 unittest.TestLoader.sortTestMethodsUsing = staticmethod(lambda x, y: -1)
@@ -21,7 +22,7 @@ class SensorT310Test(unittest.IsolatedAsyncioTestCase):
 
     async def asyncSetUp(self) -> None:
         credential, ip = await get_test_config(device_type="hub")
-        self._api = await TapoClient.connect(credential, ip)
+        self._api = await get_initialized_client(credential, ip)
         self._hub = HubDevice(self._api)
         self._device = S200ButtonDevice(
             self._hub,
@@ -44,7 +45,7 @@ class SensorT310Test(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(state.at_low_battery, False)
         self.assertEqual(state.status, "online")
 
-    async def test_should_get_temperature_humidity_records(self):
+    async def test_should_get_button_events(self):
         logs = (await self._device.get_event_logs(100)).get_or_raise()
         single_click_logs = list(
             filter(lambda x: isinstance(x, SingleClickEvent), logs.events)

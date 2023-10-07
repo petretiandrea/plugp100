@@ -1,8 +1,10 @@
 import asyncio
 import os
 
+from plugp100.api.hub.hub_device import HubDevice
 from plugp100.api.light_effect_preset import LightEffectPreset
 from plugp100.api.tapo_client import TapoClient
+from plugp100.common.credentials import AuthCredential
 
 
 async def main():
@@ -10,8 +12,9 @@ async def main():
     username = os.getenv("USERNAME", "<tapo_email>")
     password = os.getenv("PASSWORD", "<tapo_password>")
 
-    client = TapoClient(username, password)
-    await client.login("<tapo_device_ip>")
+    credentials = AuthCredential(username, password)
+    client = TapoClient(credentials, "<tapo_device_ip>")
+    await client.initialize()
 
     print(await client.get_device_info())
     print(await client.get_energy_usage())
@@ -23,6 +26,11 @@ async def main():
     # plug = PlugDevice(TapoClient(username, password), "<tapo_device_ip>")
     # light = LightDevice(TapoClient(username, password), "<tapo_device_ip>")
     # ledstrip = LedStripDevice(TapoClient(username, password), "<tapo_device_ip>")
+
+    # - hub example
+    # hub = HubDevice(client)
+    # print(await hub.get_children())
+    # print(await hub.get_state_as_json())
 
 
 if __name__ == "__main__":

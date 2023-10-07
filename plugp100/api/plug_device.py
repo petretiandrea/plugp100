@@ -20,14 +20,14 @@ class PlugDevice(_BaseTapoDevice):
         """
         return (await self._api.get_device_info()).flat_map(PlugDeviceState.try_from_json)
 
-    async def on(self) -> Try[True]:
+    async def on(self) -> Try[bool]:
         """
         The function `on` sets the device info to True using the `SetPlugInfoParams` class.
         @return: an instance of the `Either` class, which can hold either a `True` value or an `Exception` object.
         """
         return await self._api.set_device_info(SetPlugInfoParams(True))
 
-    async def off(self) -> Try[True]:
+    async def off(self) -> Try[bool]:
         """
         The function `off` sets the device info to False using the `SetPlugInfoParams` class.
         @return: an `Either` object, which can either be `True` or an `Exception`.
