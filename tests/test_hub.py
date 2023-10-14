@@ -1,7 +1,6 @@
 import unittest
 
 from plugp100.api.hub.hub_device import HubDevice
-from plugp100.api.tapo_client import TapoClient
 from tests.tapo_test_helper import (
     _test_expose_device_info,
     get_test_config,
@@ -50,3 +49,9 @@ class HubTest(unittest.IsolatedAsyncioTestCase):
     async def test_should_get_children(self):
         state = (await self._device.get_children()).get_or_raise()
         self.assertTrue(len(state.get_device_ids()) > 0)
+
+    async def test_should_get_base_children_info(self):
+        children = (
+            (await self._device.get_children()).get_or_raise().get_children_base_info()
+        )
+        self.assertTrue(len(children) > 0)

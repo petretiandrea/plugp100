@@ -1,8 +1,7 @@
 import unittest
 
+from plugp100.api.hub.hub_child_device import create_hub_child_device
 from plugp100.api.hub.hub_device import HubDevice
-from plugp100.api.hub.s200b_device import S200ButtonDevice
-from plugp100.api.tapo_client import TapoClient
 from plugp100.responses.hub_childs.s200b_device_state import (
     SingleClickEvent,
     RotationEvent,
@@ -24,9 +23,9 @@ class SensorT310Test(unittest.IsolatedAsyncioTestCase):
         credential, ip = await get_test_config(device_type="hub")
         self._api = await get_initialized_client(credential, ip)
         self._hub = HubDevice(self._api)
-        self._device = S200ButtonDevice(
+        self._device = create_hub_child_device(
             self._hub,
-            (await self._hub.get_children()).get_or_raise().find_device("S200B").pop(),
+            (await self._hub.get_children()).get_or_raise().find_device("S200B"),
         )
 
     async def asyncTearDown(self):
@@ -34,16 +33,16 @@ class SensorT310Test(unittest.IsolatedAsyncioTestCase):
 
     async def test_should_get_state(self):
         state = (await self._device.get_device_info()).get_or_raise()
-        self.assertIsNotNone(state.parent_device_id)
-        self.assertIsNotNone(state.device_id)
-        self.assertIsNotNone(state.mac)
-        self.assertIsNotNone(state.rssi)
-        self.assertIsNotNone(state.model)
-        self.assertIsNotNone(state.get_semantic_firmware_version())
-        self.assertIsNotNone(state.nickname)
+        self.assertIsNotNone(state.base_info.parent_device_id)
+        self.assertIsNotNone(state.base_info.device_id)
+        self.assertIsNotNone(state.base_info.mac)
+        self.assertIsNotNone(state.base_info.rssi)
+        self.assertIsNotNone(state.base_info.model)
+        self.assertIsNotNone(state.base_info.get_semantic_firmware_version())
+        self.assertIsNotNone(state.base_info.nickname)
         self.assertIsNotNone(state.report_interval_seconds)
-        self.assertEqual(state.at_low_battery, False)
-        self.assertEqual(state.status, "online")
+        self.assertEqual(state.base_info.at_low_battery, False)
+        self.assertEqual(state.base_info.status, "online")
 
     async def test_should_get_button_events(self):
         logs = (await self._device.get_event_logs(100)).get_or_raise()
