@@ -1,12 +1,10 @@
-import base64
 import enum
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
 
-import semantic_version
-
 from plugp100.common.functional.tri import Try
+from plugp100.responses.hub_childs.hub_child_base_info import HubChildBaseInfo
 
 
 class TemperatureUnit(enum.Enum):
@@ -16,19 +14,7 @@ class TemperatureUnit(enum.Enum):
 
 @dataclass
 class T31DeviceState:
-    hardware_version: str
-    firmware_version: str
-    device_id: str
-    parent_device_id: str
-    mac: str
-    type: str
-    model: str
-    status: str
-    rssi: int
-    signal_level: int
-    at_low_battery: bool
-    nickname: str
-    last_onboarding_timestamp: int
+    base_info: HubChildBaseInfo
     report_interval_seconds: int  # Seconds between each report
 
     current_humidity: int
@@ -41,22 +27,14 @@ class T31DeviceState:
 
     @staticmethod
     def from_json(kwargs: dict[str, Any]) -> Try["T31DeviceState"]:
-        return Try.of(lambda: T31DeviceState(**kwargs))
+        return HubChildBaseInfo.from_json(kwargs).flat_map(
+            lambda base_info: Try.of(
+                lambda: T31DeviceState(**kwargs, base_info=base_info)
+            )
+        )
 
     def __init__(self, **kwargs):
-        self.firmware_version = kwargs["fw_ver"]
-        self.hardware_version = kwargs["hw_ver"]
-        self.device_id = kwargs["device_id"]
-        self.parent_device_id = kwargs["parent_device_id"]
-        self.mac = kwargs["mac"]
-        self.type = kwargs["type"]
-        self.model = kwargs["model"]
-        self.status = kwargs.get("status", False)
-        self.rssi = kwargs.get("rssi", 0)
-        self.signal_level = kwargs.get("signal_level", 0)
-        self.at_low_battery = kwargs.get("at_low_battery", False)
-        self.nickname = base64.b64decode(kwargs["nickname"]).decode("UTF-8")
-        self.last_onboarding_timestamp = kwargs.get("lastOnboardingTimestamp", 0)
+        self.base_info = kwargs["base_info"]
         self.report_interval_seconds = kwargs.get("report_interval", 0)
         self.current_humidity = kwargs.get("current_humidity")
         self.current_humidity_exception = kwargs.get("current_humidity_exception")
@@ -70,16 +48,6 @@ class T31DeviceState:
             ].__iter__(),
             TemperatureUnit.CELSIUS,
         )
-
-    def get_semantic_firmware_version(self) -> semantic_version.Version:
-        pieces = self.firmware_version.split("Build")
-        try:
-            if len(pieces) > 0:
-                return semantic_version.Version(pieces[0].strip())
-            else:
-                return semantic_version.Version("0.0.0")
-        except ValueError:
-            return semantic_version.Version("0.0.0")
 
 
 @dataclass

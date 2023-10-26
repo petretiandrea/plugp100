@@ -2,6 +2,8 @@ import base64
 from dataclasses import dataclass
 from typing import Any, Set, Callable, List, TypeVar
 
+from plugp100.responses.hub_childs.hub_child_base_info import HubChildBaseInfo
+
 Child = TypeVar("Child")
 
 
@@ -26,16 +28,28 @@ class ChildDeviceList(object):
             if child.get("device_id", None) is not None
         }
 
-    def find_device(self, model_like: str) -> Set[str]:
-        return {
-            child.get("device_id")
-            for child in self.child_device_list
-            if child.get("device_id", None) is not None
-            and model_like.lower() in child.get("model", "").lower()
-        }
+    def find_device(self, model_like: str) -> dict[str, Any]:
+        return next(
+            (
+                child
+                for child in self.child_device_list
+                if child.get("device_id", None) is not None
+                and model_like.lower() in child.get("model", "").lower()
+            ),
+        )
 
     def get_children(self, parse: Callable[[dict[str, Any]], Child]) -> List[Child]:
         return list(map(lambda x: parse(x), self.child_device_list))
+
+    def get_children_base_info(self) -> List[HubChildBaseInfo]:
+        return list(
+            filter(
+                lambda x: x is not None,
+                self.get_children(
+                    lambda x: HubChildBaseInfo.from_json(x).get_or_else(None)
+                ),
+            )
+        )
 
 
 @dataclass
