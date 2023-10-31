@@ -1,23 +1,19 @@
-import ipaddress
-import logging
-import struct
-import sys
-import zlib
-import json
 import base64
-import socket
 import io
-import select
-import base64
-import os
+import json
+import logging
+import socket
+import struct
 import time
+import zlib
+from typing import Optional, Generator
 
+import select
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa, padding
-from plugp100.encryption.tp_link_cipher import TpLinkCipherCryptography
 
-from typing import Optional, Generator
+from plugp100.encryption.tp_link_cipher import TpLinkCipherCryptography
 
 logger = logging.getLogger(__name__)
 
@@ -161,15 +157,15 @@ class TapoDeviceFinder:
         sock.setsockopt(socket.IPPROTO_IP, socket.IP_TTL, 5)
         sock.sendto(packet, (broadcast, 20002))
         eprint("packet sent", packet)
-        pollerObject = select.poll()
-        pollerObject.register(sock, select.POLLIN)
         before = time.time()
         while True:
-            fdVsEvent = pollerObject.poll(100)  # 0.1 sec
-            if fdVsEvent:
-                handshake_packet, addr = sock.recvfrom(2048)
-                eprint("received", addr, handshake_packet)
+            rlist, _, _ = select.select(
+                [sock], [], [], 0.1
+            )  # Check for readability without blocking
+            if sock in rlist:
                 try:
+                    handshake_packet, addr = sock.recvfrom(2048)
+                    eprint("received", addr, handshake_packet)
                     handshake_json = extract_payload_from_package_json(handshake_packet)
                     if handshake_json["error_code"]:
                         continue
