@@ -65,7 +65,7 @@ class HubDevice(_BaseTapoDevice):
         return await self._api.get_device_info()
 
     async def get_children(self) -> Try[ChildDeviceList]:
-        return await self._api.get_child_device_list()
+        return await self._api.get_child_device_list(all_pages=True)
 
     async def control_child(self, device_id: str, request: TapoRequest) -> Try[Json]:
         """

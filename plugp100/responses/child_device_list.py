@@ -51,6 +51,17 @@ class ChildDeviceList(object):
             )
         )
 
+    def get_next_index(self) -> int:
+        return self.start_index + len(self.child_device_list) + 1
+
+    def has_next(self) -> bool:
+        return self.get_next_index() < self.sum
+
+    def merge(self, other: "ChildDeviceList") -> "ChildDeviceList":
+        for other_child in other.child_device_list:
+            self.child_device_list.append(other_child)
+        return self
+
 
 @dataclass
 class PowerStripChild:

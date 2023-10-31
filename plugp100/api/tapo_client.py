@@ -138,7 +138,7 @@ class TapoClient:
         )
         return response.map(lambda _: True)
 
-    async def get_child_device_list(self) -> Try[ChildDeviceList]:
+    async def get_child_device_list(self, all_pages: bool = True) -> Try[ChildDeviceList]:
         """
         The function `get_child_device_list` retrieves a list of child devices asynchronously and returns either the list or
         an exception.
@@ -147,10 +147,27 @@ class TapoClient:
         assert (
             self._protocol is not None
         ), "You must initialize client before send requests"
-        request = TapoRequest.get_child_device_list()
-        return (await self._protocol.send_request(request)).map(
+        request = TapoRequest.get_child_device_list(0)
+        response = (await self._protocol.send_request(request)).map(
             lambda x: ChildDeviceList.try_from_json(**x.result)
         )
+
+        if all_pages and response.is_success():
+            return await self._get_all_pagination(response.get())
+
+        return response
+
+    async def _get_all_pagination(self, head: ChildDeviceList) -> Try[ChildDeviceList]:
+        current_head = Try.of(head)
+        while current_head.map(lambda x: x.has_next()).get_or_else(False):
+            previous_head = current_head.get()
+            request = TapoRequest.get_child_device_list(previous_head.get_next_index())
+            current_head = (
+                (await self._protocol.send_request(request))
+                .map(lambda x: ChildDeviceList.try_from_json(**x.result))
+                .map(lambda x: previous_head.merge(x))
+            )
+        return current_head
 
     async def get_child_device_component_list(self) -> Try[Json]:
         """

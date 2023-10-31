@@ -54,8 +54,10 @@ class TapoRequest(object):
         return TapoRequest(method="set_lighting_effect", params=effect.as_dict())
 
     @staticmethod
-    def get_child_device_list() -> "TapoRequest":
-        return TapoRequest(method="get_child_device_list", params=None)
+    def get_child_device_list(start_index: int = 0) -> "TapoRequest":
+        return TapoRequest(
+            method="get_child_device_list", params=PaginationParams(start_index)
+        )
 
     @staticmethod
     def get_child_device_component_list() -> "TapoRequest":
@@ -112,3 +114,8 @@ class ControlChildParams:
 @dataclass
 class MultipleRequestParams:
     requests: List[TapoRequest]
+
+
+@dataclass
+class PaginationParams:
+    start_index: int
