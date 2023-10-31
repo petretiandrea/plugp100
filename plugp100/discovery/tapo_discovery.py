@@ -1,19 +1,21 @@
-import base64
-import io
-import json
 import logging
-import socket
 import struct
-import time
 import zlib
-from typing import Optional, Generator
-
+import json
+import base64
+import socket
+import io
 import select
+import base64
+import time
+import psutil
+
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa, padding
-
 from plugp100.encryption.tp_link_cipher import TpLinkCipherCryptography
+
+from typing import Optional, Generator
 
 logger = logging.getLogger(__name__)
 
@@ -131,6 +133,25 @@ def process_encrypted_handshake(response):
 
 class TapoDeviceFinder:
     @staticmethod
+    def get_host_ipv4_addresses() -> list[str]:
+        """
+        Helper function to retrieve all IPv4 addresses of the current host.
+        Returns:
+           a generator with the IPv4 addresses of the host.
+        """
+        for interface, snics in psutil.net_if_addrs().items():
+            for snic in snics:
+                if snic.family != socket.AF_INET:
+                    continue
+
+                # link-local must be excluded, otherwise we face the following error on Windows:
+                # OSError: [WinError 10049] The requested address is not valid in its context
+                if snic.address.startswith("169.254."):
+                    continue
+
+                yield snic.address
+
+    @staticmethod
     def scan(
         timeout: Optional[int] = 5,
         broadcast: Optional[str] = "255.255.255.255",
@@ -151,21 +172,27 @@ class TapoDeviceFinder:
         packet = build_packet_for_payload_json(
             {"params": {"rsa_key": OUR_PUBLIC_KEY_PEM}}, PKT_ONBOARD_REQUEST
         )
-        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)  # UDP
-        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-        sock.setsockopt(socket.IPPROTO_IP, socket.IP_TTL, 5)
-        sock.sendto(packet, (broadcast, 20002))
-        eprint("packet sent", packet)
+
+        inputs = []
+        outputs = []
+        for host_address in TapoDeviceFinder.get_host_ipv4_addresses():
+            sock = socket.socket(
+                socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP
+            )  # UDP
+            sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+            sock.setsockopt(socket.IPPROTO_IP, socket.IP_TTL, 5)
+            sock.bind((host_address, 0))
+            sock.sendto(packet, (broadcast, 20002))
+            inputs.append(sock)
+        eprint("packets sent", packet)
         before = time.time()
         while True:
-            rlist, _, _ = select.select(
-                [sock], [], [], 0.1
-            )  # Check for readability without blocking
-            if sock in rlist:
+            readable, writable, exceptional = select.select(inputs, outputs, inputs, 0.1)
+            for s in readable:
+                handshake_packet, addr = s.recvfrom(2048)
+                eprint("received", addr, handshake_packet)
                 try:
-                    handshake_packet, addr = sock.recvfrom(2048)
-                    eprint("received", addr, handshake_packet)
                     handshake_json = extract_payload_from_package_json(handshake_packet)
                     if handshake_json["error_code"]:
                         continue
@@ -187,7 +214,9 @@ class TapoDeviceFinder:
             now = time.time()
             if now - before > timeout:
                 break
-        sock.close()
+        # and close them all:
+        for sock in inputs:
+            sock.close()
 
     @staticmethod
     def classify(
