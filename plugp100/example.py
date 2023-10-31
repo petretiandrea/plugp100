@@ -1,13 +1,16 @@
 import asyncio
 import os
 
-from plugp100.api.hub.hub_device import HubDevice
 from plugp100.api.light_effect_preset import LightEffectPreset
 from plugp100.api.tapo_client import TapoClient
 from plugp100.common.credentials import AuthCredential
+from plugp100.discovery.tapo_discovery import TapoDeviceFinder
 
 
 async def main():
+    print("Scanning network...")
+    print(TapoDeviceFinder.classify(TapoDeviceFinder.scan(5)))
+
     # create generic tapo api
     username = os.getenv("USERNAME", "<tapo_email>")
     password = os.getenv("PASSWORD", "<tapo_password>")
@@ -22,7 +25,6 @@ async def main():
     print(await client.get_child_device_list())
     print(await client.get_child_device_component_list())
     print(await client.set_lighting_effect(LightEffectPreset.Aurora.to_effect()))
-
     # plug = PlugDevice(TapoClient(username, password), "<tapo_device_ip>")
     # light = LightDevice(TapoClient(username, password), "<tapo_device_ip>")
     # ledstrip = LedStripDevice(TapoClient(username, password), "<tapo_device_ip>")
