@@ -21,6 +21,9 @@ class StateTracker(Generic[State, StateChange]):
     async def get_next_state_change(self) -> StateChange:
         return await self._change_queue.get()
 
+    def get_last_state(self) -> Optional[State]:
+        return self._last_state
+
     async def notify_state_update(self, new_state: State):
         changes = self._compute_state_changes(new_state, self._last_state)
         self._last_state = new_state

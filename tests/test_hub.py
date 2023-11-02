@@ -1,3 +1,4 @@
+import asyncio
 import unittest
 
 from plugp100.api.hub.hub_device import HubDevice
@@ -18,7 +19,7 @@ class HubTest(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self) -> None:
         credential, ip = await get_test_config(device_type="hub")
         self._api = await get_initialized_client(credential, ip)
-        self._device = HubDevice(self._api)
+        self._device = HubDevice(self._api, subscription_polling_interval_millis=5000)
 
     async def asyncTearDown(self):
         await self._api.close()
@@ -55,3 +56,8 @@ class HubTest(unittest.IsolatedAsyncioTestCase):
             (await self._device.get_children()).get_or_raise().get_children_base_info()
         )
         self.assertTrue(len(children) > 0)
+
+    async def test_should_subscribe_to_association_changes(self):
+        unsub = self._device.subscribe_device_association(lambda x: print(x))
+        await asyncio.sleep(10)
+        unsub()
