@@ -7,9 +7,11 @@ from plugp100.responses.hub_childs.hub_child_base_info import HubChildBaseInfo
 
 from plugp100.common.functional.tri import Try
 
+
 class TRVState(Enum):
     HEATING = "heating"
     OFF = ""
+
 
 @dataclass
 class KE100DeviceState:
@@ -23,14 +25,13 @@ class KE100DeviceState:
     temperature_offset: int
     min_control_temperature: int
     max_control_temperature: int
-    
+
     battery_percentage: int
     frost_protection_on: bool
     child_protection: bool
 
     @staticmethod
     def from_json(kwargs: "dict[str, Any]") -> Try["KE100DeviceState"]:
-    
         return HubChildBaseInfo.from_json(kwargs).flat_map(
             lambda base_info: Try.of(
                 lambda: KE100DeviceState(**kwargs, base_info=base_info)
@@ -59,8 +60,8 @@ class KE100DeviceState:
             [
                 member
                 for member in TRVState
-                if kwargs.get("trv_states") and member.value == kwargs.get("trv_states")[0]
+                if kwargs.get("trv_states")
+                and member.value == kwargs.get("trv_states")[0]
             ].__iter__(),
             None,
         )
-

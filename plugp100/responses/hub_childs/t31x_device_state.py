@@ -7,6 +7,7 @@ from plugp100.common.functional.tri import Try
 from plugp100.responses.hub_childs.hub_child_base_info import HubChildBaseInfo
 from plugp100.responses.temperature_unit import TemperatureUnit
 
+
 @dataclass
 class T31DeviceState:
     base_info: HubChildBaseInfo

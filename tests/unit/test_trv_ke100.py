@@ -7,9 +7,7 @@ from plugp100.api.hub.ke100_device import KE100Device
 from plugp100.common.utils.json_utils import dataclass_encode_json
 from plugp100.common.functional.tri import Try
 from plugp100.responses.temperature_unit import TemperatureUnit
-from plugp100.responses.hub_childs.ke100_device_state import (
-    TRVState
-)
+from plugp100.responses.hub_childs.ke100_device_state import TRVState
 from plugp100.requests.set_device_info.set_trv_info_params import TRVDeviceInfoParams
 from plugp100.requests.tapo_request import TapoRequest
 
@@ -53,9 +51,11 @@ device_info = json.loads(
         "avatar": "kasa_trv", 
         "child_protection": false, 
         "region": "Europe/London"}
-    """)
-class TRVKE100Test(unittest.IsolatedAsyncioTestCase):
+    """
+)
 
+
+class TRVKE100Test(unittest.IsolatedAsyncioTestCase):
     async def test_should_get_state(self):
         hub.control_child.return_value = Try.of(device_info)
         state = (await ke100_device.get_device_state()).get_or_raise()
@@ -80,59 +80,53 @@ class TRVKE100Test(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(state.base_info.at_low_battery, False)
 
     async def test_should_set_target_temp(self):
-        result = (await ke100_device.set_target_temp({'temperature': 24})) \
-            .get_or_raise()
+        result = (await ke100_device.set_target_temp({"temperature": 24})).get_or_raise()
         call_args = hub.control_child.call_args
 
         self.assertEqual(call_args[0][0], device_id)
-        self.assertEqual(call_args[0][1].params, {'target_temp': 24})
+        self.assertEqual(call_args[0][1].params, {"target_temp": 24})
         self.assertTrue(result)
 
     async def test_should_set_temp_offset(self):
-        result = (await ke100_device.set_temp_offset(-5)) \
-            .get_or_raise()
+        result = (await ke100_device.set_temp_offset(-5)).get_or_raise()
         call_args = hub.control_child.call_args
 
         self.assertEqual(call_args[0][0], device_id)
-        self.assertEqual(call_args[0][1].params, {'temp_offset': -5})
+        self.assertEqual(call_args[0][1].params, {"temp_offset": -5})
         self.assertTrue(result)
-    
+
     async def test_should_set_frost_protection_on(self):
-        result = (await ke100_device.set_frost_protection_on()) \
-            .get_or_raise()
+        result = (await ke100_device.set_frost_protection_on()).get_or_raise()
         call_args = hub.control_child.call_args
 
         self.assertEqual(call_args[0][0], device_id)
-        self.assertEqual(call_args[0][1].params, {'frost_protection_on': True})
+        self.assertEqual(call_args[0][1].params, {"frost_protection_on": True})
         self.assertTrue(result)
 
     async def test_should_set_frost_protection_off(self):
-        result = (await ke100_device.set_frost_protection_off()) \
-            .get_or_raise()
+        result = (await ke100_device.set_frost_protection_off()).get_or_raise()
         call_args = hub.control_child.call_args
 
         self.assertEqual(call_args[0][0], device_id)
-        self.assertEqual(call_args[0][1].params, {'frost_protection_on': False})
+        self.assertEqual(call_args[0][1].params, {"frost_protection_on": False})
         self.assertTrue(result)
-    
+
     async def test_should_set_child_protection_on(self):
-        result = (await ke100_device.set_child_protection_on()) \
-            .get_or_raise()
+        result = (await ke100_device.set_child_protection_on()).get_or_raise()
         call_args = hub.control_child.call_args
 
         self.assertEqual(call_args[0][0], device_id)
-        self.assertEqual(call_args[0][1].params, {'child_protection': True})
+        self.assertEqual(call_args[0][1].params, {"child_protection": True})
         self.assertTrue(result)
-    
+
     async def test_should_set_child_protection_off(self):
-        result = (await ke100_device.set_child_protection_off()) \
-            .get_or_raise()
+        result = (await ke100_device.set_child_protection_off()).get_or_raise()
         call_args = hub.control_child.call_args
 
         self.assertEqual(call_args[0][0], device_id)
-        self.assertEqual(call_args[0][1].params, {'child_protection': False})
+        self.assertEqual(call_args[0][1].params, {"child_protection": False})
         self.assertTrue(result)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

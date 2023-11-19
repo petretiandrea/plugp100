@@ -5,9 +5,8 @@ from plugp100.common.functional.tri import Try
 from plugp100.common.utils.json_utils import dataclass_encode_json
 from plugp100.requests.set_device_info.set_trv_info_params import TRVDeviceInfoParams
 from plugp100.requests.tapo_request import TapoRequest
-from plugp100.responses.hub_childs.ke100_device_state import (
-    KE100DeviceState
-)
+from plugp100.responses.hub_childs.ke100_device_state import KE100DeviceState
+
 
 class KE100Device:
     def __init__(self, hub: HubDevice, device_id: str):
@@ -19,28 +18,32 @@ class KE100Device:
             await self._hub.control_child(self._device_id, TapoRequest.get_device_info())
         ).flat_map(KE100DeviceState.from_json)
 
-    def set_target_temp(self,  kwargs: Any) -> Try[bool]:
-        return self.send_trv_control_request(TRVDeviceInfoParams(target_temp=kwargs['temperature']))
-    
-    def set_temp_offset(self,  value: int) -> Try[bool]:
+    def set_target_temp(self, kwargs: Any) -> Try[bool]:
+        return self.send_trv_control_request(
+            TRVDeviceInfoParams(target_temp=kwargs["temperature"])
+        )
+
+    def set_temp_offset(self, value: int) -> Try[bool]:
         return self.send_trv_control_request(TRVDeviceInfoParams(temp_offset=value))
-    
+
     def set_frost_protection_on(self) -> Try[bool]:
-        return self.send_trv_control_request(TRVDeviceInfoParams(frost_protection_on=True))
-    
+        return self.send_trv_control_request(
+            TRVDeviceInfoParams(frost_protection_on=True)
+        )
+
     def set_frost_protection_off(self) -> Try[bool]:
-        return self.send_trv_control_request(TRVDeviceInfoParams(frost_protection_on=False))
-    
+        return self.send_trv_control_request(
+            TRVDeviceInfoParams(frost_protection_on=False)
+        )
+
     def set_child_protection_on(self) -> Try[bool]:
         return self.send_trv_control_request(TRVDeviceInfoParams(child_protection=True))
-    
+
     def set_child_protection_off(self) -> Try[bool]:
         return self.send_trv_control_request(TRVDeviceInfoParams(child_protection=False))
-    
+
     async def send_trv_control_request(self, params: TRVDeviceInfoParams) -> Try[bool]:
-        request = TapoRequest.set_device_info(
-            dataclass_encode_json(params)
-        )
+        request = TapoRequest.set_device_info(dataclass_encode_json(params))
         return (await self._hub.control_child(self._device_id, request)).map(
             lambda _: True
         )

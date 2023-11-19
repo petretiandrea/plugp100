@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from typing import Optional
 
+
 @dataclass
 class TRVDeviceInfoParams(object):
     target_temp: Optional[float] = None
