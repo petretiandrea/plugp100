@@ -5,11 +5,7 @@ from typing import Any
 
 from plugp100.common.functional.tri import Try
 from plugp100.responses.hub_childs.hub_child_base_info import HubChildBaseInfo
-
-
-class TemperatureUnit(enum.Enum):
-    CELSIUS = "celsius"
-    FAHRENHEIT = "fahrenheit"
+from plugp100.responses.temperature_unit import TemperatureUnit
 
 
 @dataclass

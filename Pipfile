@@ -1,0 +1,18 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+certifi = ">=2021.5.30"
+jsons = ">=1.6.3"
+requests = ">=2.27.1"
+aiohttp = ">=3.8.1"
+semantic-version = "==2.10.0"
+cryptography = ">=38.0.3"
+scapy = ">=2.5.0"
+
+[dev-packages]
+
+[requires]
+python_version = "3.11"
