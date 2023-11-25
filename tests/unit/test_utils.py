@@ -7,11 +7,9 @@ from plugp100.responses.tapo_response import TapoResponse
 
 
 def wrap_as_tapo_response(result) -> Try[TapoResponse[dict[str, Any]]]:
-    return TapoResponse.try_from_json({
-        "error_code": 0,
-        "result": result.__dict__,
-        "msg": ""
-    })
+    return TapoResponse.try_from_json(
+        {"error_code": 0, "result": result.__dict__, "msg": ""}
+    )
 
 
 def generate_random_children(partition_size: int, total: int) -> List[ChildDeviceList]:

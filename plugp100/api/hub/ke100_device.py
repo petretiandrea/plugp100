@@ -37,10 +37,14 @@ class KE100Device:
         )
 
     async def set_child_protection_on(self) -> Try[bool]:
-        return await self.send_trv_control_request(TRVDeviceInfoParams(child_protection=True))
+        return await self.send_trv_control_request(
+            TRVDeviceInfoParams(child_protection=True)
+        )
 
     async def set_child_protection_off(self) -> Try[bool]:
-        return await self.send_trv_control_request(TRVDeviceInfoParams(child_protection=False))
+        return await self.send_trv_control_request(
+            TRVDeviceInfoParams(child_protection=False)
+        )
 
     async def send_trv_control_request(self, params: TRVDeviceInfoParams) -> Try[bool]:
         request = TapoRequest.set_device_info(dataclass_encode_json(params))

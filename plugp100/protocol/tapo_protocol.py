@@ -7,7 +7,6 @@ from plugp100.responses.tapo_response import TapoResponse
 
 
 class TapoProtocol(abc.ABC):
-
     @abc.abstractmethod
     async def send_request(
         self, request: TapoRequest, retry: int = 3
