@@ -16,7 +16,7 @@ async def main():
     password = os.getenv("PASSWORD", "<tapo_password>")
 
     credentials = AuthCredential(username, password)
-    client = TapoClient(credentials, "<tapo_device_ip>")
+    client = TapoClient.create(credentials, "<tapo_device_ip>")
     await client.initialize()
 
     print(await client.get_device_info())

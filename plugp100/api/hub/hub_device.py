@@ -25,7 +25,7 @@ class HubDevice(_BaseTapoDevice):
     def __init__(
         self,
         api: TapoClient,
-        subscription_polling_interval_millis: int,
+        subscription_polling_interval_millis: int = 5000,
         logger: Logger = None,
     ):
         super().__init__(api)

@@ -28,43 +28,45 @@ class TapoProtocolType(Enum):
 
 
 class TapoClient:
+    @staticmethod
+    def create(
+        credential: AuthCredential,
+        address: str,
+        port: int = 80,
+        is_https: bool = False,
+        http_session: Optional[aiohttp.ClientSession] = None,
+        protocol_type: TapoProtocolType = TapoProtocolType.AUTO,
+    ) -> "TapoClient":
+        url = f"{'https' if is_https else 'http'}://{address}:{port}/app"
+        protocol = None
+        if protocol_type == TapoProtocolType.KLAP:
+            protocol = KlapProtocol(
+                auth_credential=credential,
+                url=url,
+                http_session=http_session,
+            )
+        elif protocol_type == TapoProtocolType.PASSTHROUGH:
+            protocol = PassthroughProtocol(
+                auth_credential=credential,
+                url=url,
+                http_session=http_session,
+            )
+        return TapoClient(credential, url, protocol, http_session)
 
     def __init__(
         self,
         auth_credential: AuthCredential,
-        ip_address: str,
-        port: Optional[int] = 80,
-        is_https: bool = False,
+        url: str,
         protocol: TapoProtocol = TapoProtocol,
         http_session: Optional[aiohttp.ClientSession] = None,
-        protocol_type: TapoProtocolType = TapoProtocolType.AUTO,
     ):
         self._auth_credential = auth_credential
-        self._ip_address = ip_address
-        self._port = port
-        self._is_https = is_https
+        self._url = url
         self._http_session = http_session
-        self._protocol_type = protocol_type
-        self._protocol: Optional[TapoProtocol] = None
-        self._url = f"${'https' if self._is_https else 'http'}://{self._ip_address}:{self._port}/app"
-        self._protocol = protocol
+        self._protocol: Optional[TapoProtocol] = protocol
 
     async def initialize(self):
-        if self._protocol is not None:
-            return
-        if self._protocol_type == TapoProtocolType.KLAP:
-            self._protocol = KlapProtocol(
-                auth_credential=self._auth_credential,
-                url=self._url,
-                http_session=self._http_session,
-            )
-        elif self._protocol_type == TapoProtocolType.PASSTHROUGH:
-            self._protocol = PassthroughProtocol(
-                auth_credential=self._auth_credential,
-                url=self._url,
-                http_session=self._http_session,
-            )
-        else:
+        if self._protocol is None:
             await self._guess_protocol()
 
     async def close(self):
@@ -75,6 +77,11 @@ class TapoClient:
             self._protocol is not None
         ), "You must initialize client before send requests"
         return (await self._protocol.send_request(request)).map(lambda x: x.result)
+
+    async def get_component_negotiation(self) -> Try[Json]:
+        return await self.execute_raw_request(
+            TapoRequest(method="component_nego", params=None)
+        )
 
     async def get_device_info(self) -> Try[Json]:
         """

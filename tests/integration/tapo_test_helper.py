@@ -41,7 +41,7 @@ DeviceType = typing.Union["light", "ledstrip", "plug", "hub", "power_strip"]
 
 
 async def get_test_config(device_type: DeviceType) -> (AuthCredential, str):
-    config = _load_file("../.local.devices.yml")
+    config = _load_file("../../.local.devices.yml")
     username = config["credentials"]["username"]
     password = config["credentials"]["password"]
     ip = config["devices"][device_type]
@@ -49,7 +49,7 @@ async def get_test_config(device_type: DeviceType) -> (AuthCredential, str):
 
 
 async def get_initialized_client(credential: AuthCredential, ip: str) -> TapoClient:
-    client = TapoClient(credential, ip)
+    client = TapoClient.create(credential, ip)
     await client.initialize()
     return client
 

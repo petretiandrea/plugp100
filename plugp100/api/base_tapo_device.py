@@ -38,3 +38,6 @@ class _BaseTapoDevice:
 
     async def get_state_as_json(self) -> Try[Json]:
         return await self._api.get_device_info()
+
+    async def get_component_negotiation(self) -> Try[Json]:
+        return await self._api.get_component_negotiation()
