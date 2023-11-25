@@ -7,13 +7,6 @@ from plugp100.responses.tapo_response import TapoResponse
 
 
 class TapoProtocol(abc.ABC):
-    def __init__(
-        self,
-        host: str,
-        port: Optional[int] = 80,
-    ):
-        self._host = host
-        self._port = port
 
     @abc.abstractmethod
     async def send_request(

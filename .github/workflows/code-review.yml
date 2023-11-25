@@ -9,8 +9,13 @@ jobs:
       - uses: actions/setup-python@v4
         with:
           python-version: '3.x'
-      - run: |
+      - name: "Install python requirements"
+        run: |
           python -m pip install --upgrade pip
           pip install -r requirements-dev.txt
-      - run: |
+      - name: "Check style"
+        run: |
           black --check --verbose .
+      - name: "Test code"
+        run: |
+          python -m unittest discover -s tests/unit

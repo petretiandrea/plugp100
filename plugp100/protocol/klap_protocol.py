@@ -7,6 +7,7 @@ from typing import Any, Optional, Tuple, Union
 
 import aiohttp
 import jsons
+import urllib3
 from aiohttp import ClientResponse
 from cryptography.hazmat.primitives import hashes, padding
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
@@ -28,12 +29,11 @@ class KlapProtocol(TapoProtocol):
     def __init__(
         self,
         auth_credential: AuthCredential,
-        host: str,
-        port: Optional[int] = 80,
+        url: str,
         http_session: Optional[aiohttp.ClientSession] = None,
     ):
-        super().__init__(host, port)
-        self._base_url = f"http://{self._host}:{self._port}/app"
+        super().__init__()
+        self._base_url = url
         self._auth_credential = auth_credential
         self._local_seed: Optional[bytes] = None
         self.local_auth_hash = self.generate_auth_hash(self._auth_credential)
@@ -41,6 +41,7 @@ class KlapProtocol(TapoProtocol):
             aiohttp.ClientSession() if http_session is None else http_session
         )
         self._klap_session: Optional[KlapSession] = None
+        self._host = urllib3.get_host(self._base_url)
 
     async def send_request(
         self, request: TapoRequest, retry: int = 3
@@ -78,7 +79,7 @@ class KlapProtocol(TapoProtocol):
                 self._klap_session.invalidate()
                 return Failure(Exception("Forbidden error after completing handshake"))
             else:
-                return Try.of(
+                return Failure(
                     Exception(
                         "Device %s error code %d with seq %d"
                         % (self._host, response.status, seq)
@@ -126,7 +127,7 @@ class KlapProtocol(TapoProtocol):
         response, response_data = await self.session_post(url, data=self._local_seed)
 
         if response.status != 200:
-            return Try.of(
+            return Failure(
                 Exception(
                     "Device fail to respond to handshake1 with %d" % response.status
                 )
@@ -211,11 +212,11 @@ class KlapProtocol(TapoProtocol):
             url, data=payload, cookies=self._klap_session.get_cookies()
         )
         logger.debug(
-            f"Handshake2 posted {time.time()}.  Host is {self._host}, Response status is {response.status}, Request was {payload!r}"
+            f"Handshake2 posted {time.time()}. Host is {self._host}, Response status is {response.status}, Request was {payload!r}"
         )
         if response.status != 200:
             self._klap_session.invalidate()
-            return Try.of(
+            return Failure(
                 Exception("Device responded with %d to handshake2" % response.status)
             )
         else:

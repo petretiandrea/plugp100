@@ -2,7 +2,7 @@ import unittest
 
 from plugp100.api.hub.hub_child_device import create_hub_child_device
 from plugp100.api.hub.hub_device import HubDevice
-from tests.tapo_test_helper import (
+from tests.integration.tapo_test_helper import (
     get_test_config,
     get_initialized_client,
 )

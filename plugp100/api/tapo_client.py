@@ -28,34 +28,40 @@ class TapoProtocolType(Enum):
 
 
 class TapoClient:
+
     def __init__(
         self,
         auth_credential: AuthCredential,
         ip_address: str,
         port: Optional[int] = 80,
+        is_https: bool = False,
+        protocol: TapoProtocol = TapoProtocol,
         http_session: Optional[aiohttp.ClientSession] = None,
         protocol_type: TapoProtocolType = TapoProtocolType.AUTO,
     ):
         self._auth_credential = auth_credential
         self._ip_address = ip_address
         self._port = port
+        self._is_https = is_https
         self._http_session = http_session
         self._protocol_type = protocol_type
         self._protocol: Optional[TapoProtocol] = None
+        self._url = f"${'https' if self._is_https else 'http'}://{self._ip_address}:{self._port}/app"
+        self._protocol = protocol
 
     async def initialize(self):
+        if self._protocol is not None:
+            return
         if self._protocol_type == TapoProtocolType.KLAP:
             self._protocol = KlapProtocol(
                 auth_credential=self._auth_credential,
-                host=self._ip_address,
-                port=self._port,
+                url=self._url,
                 http_session=self._http_session,
             )
         elif self._protocol_type == TapoProtocolType.PASSTHROUGH:
             self._protocol = PassthroughProtocol(
                 auth_credential=self._auth_credential,
-                host=self._ip_address,
-                port=self._port,
+                url=self._url,
                 http_session=self._http_session,
             )
         else:
@@ -228,8 +234,7 @@ class TapoClient:
     async def _guess_protocol(self):
         self._protocol = PassthroughProtocol(
             auth_credential=self._auth_credential,
-            host=self._ip_address,
-            port=self._port,
+            url=self._url,
             http_session=self._http_session,
         )
         response = await self.execute_raw_request(
@@ -241,8 +246,7 @@ class TapoClient:
                 logger.warning("Default protocol not working, fallback to KLAP ;)")
                 self._protocol = KlapProtocol(
                     auth_credential=self._auth_credential,
-                    host=self._ip_address,
-                    port=self._port,
+                    url=self._url,
                     http_session=self._http_session,
                 )
             else:

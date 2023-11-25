@@ -1,8 +1,7 @@
 import unittest
 
 from plugp100.api.power_strip_device import PowerStripDevice
-from plugp100.api.tapo_client import TapoClient
-from tests.tapo_test_helper import (
+from tests.integration.tapo_test_helper import (
     _test_expose_device_info,
     get_test_config,
     _test_device_usage,

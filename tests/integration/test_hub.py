@@ -2,7 +2,7 @@ import asyncio
 import unittest
 
 from plugp100.api.hub.hub_device import HubDevice
-from tests.tapo_test_helper import (
+from tests.integration.tapo_test_helper import (
     _test_expose_device_info,
     get_test_config,
     _test_device_usage,

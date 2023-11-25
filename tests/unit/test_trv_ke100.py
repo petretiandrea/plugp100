@@ -1,16 +1,12 @@
-import unittest
 import json
-from unittest.mock import Mock, AsyncMock
+import unittest
+from unittest.mock import AsyncMock
 
 from plugp100.api.hub.hub_device import HubDevice
 from plugp100.api.hub.ke100_device import KE100Device
-from plugp100.common.utils.json_utils import dataclass_encode_json
 from plugp100.common.functional.tri import Try
-from plugp100.responses.temperature_unit import TemperatureUnit
 from plugp100.responses.hub_childs.ke100_device_state import TRVState
-from plugp100.requests.set_device_info.set_trv_info_params import TRVDeviceInfoParams
-from plugp100.requests.tapo_request import TapoRequest
-
+from plugp100.responses.temperature_unit import TemperatureUnit
 
 hub = AsyncMock(HubDevice)
 device_id = "38018301SAS1234ZAD"

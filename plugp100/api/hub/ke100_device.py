@@ -18,29 +18,29 @@ class KE100Device:
             await self._hub.control_child(self._device_id, TapoRequest.get_device_info())
         ).flat_map(KE100DeviceState.from_json)
 
-    def set_target_temp(self, kwargs: Any) -> Try[bool]:
-        return self.send_trv_control_request(
+    async def set_target_temp(self, kwargs: Any) -> Try[bool]:
+        return await self.send_trv_control_request(
             TRVDeviceInfoParams(target_temp=kwargs["temperature"])
         )
 
-    def set_temp_offset(self, value: int) -> Try[bool]:
-        return self.send_trv_control_request(TRVDeviceInfoParams(temp_offset=value))
+    async def set_temp_offset(self, value: int) -> Try[bool]:
+        return await self.send_trv_control_request(TRVDeviceInfoParams(temp_offset=value))
 
-    def set_frost_protection_on(self) -> Try[bool]:
-        return self.send_trv_control_request(
+    async def set_frost_protection_on(self) -> Try[bool]:
+        return await self.send_trv_control_request(
             TRVDeviceInfoParams(frost_protection_on=True)
         )
 
-    def set_frost_protection_off(self) -> Try[bool]:
-        return self.send_trv_control_request(
+    async def set_frost_protection_off(self) -> Try[bool]:
+        return await self.send_trv_control_request(
             TRVDeviceInfoParams(frost_protection_on=False)
         )
 
-    def set_child_protection_on(self) -> Try[bool]:
-        return self.send_trv_control_request(TRVDeviceInfoParams(child_protection=True))
+    async def set_child_protection_on(self) -> Try[bool]:
+        return await self.send_trv_control_request(TRVDeviceInfoParams(child_protection=True))
 
-    def set_child_protection_off(self) -> Try[bool]:
-        return self.send_trv_control_request(TRVDeviceInfoParams(child_protection=False))
+    async def set_child_protection_off(self) -> Try[bool]:
+        return await self.send_trv_control_request(TRVDeviceInfoParams(child_protection=False))
 
     async def send_trv_control_request(self, params: TRVDeviceInfoParams) -> Try[bool]:
         request = TapoRequest.set_device_info(dataclass_encode_json(params))

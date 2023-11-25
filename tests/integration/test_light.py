@@ -1,10 +1,7 @@
 import unittest
-from asyncio import sleep
 
-from plugp100.api.ledstrip_device import LedStripDevice
-from plugp100.api.light_effect import LightEffect
-from plugp100.api.tapo_client import TapoClient
-from tests.tapo_test_helper import (
+from plugp100.api.light_device import LightDevice
+from tests.integration.tapo_test_helper import (
     _test_expose_device_info,
     get_test_config,
     _test_device_usage,
@@ -12,14 +9,14 @@ from tests.tapo_test_helper import (
 )
 
 
-class LedStripTest(unittest.IsolatedAsyncioTestCase):
+class LightTest(unittest.IsolatedAsyncioTestCase):
     _device = None
     _api = None
 
     async def asyncSetUp(self) -> None:
-        credential, ip = await get_test_config(device_type="ledstrip")
+        credential, ip = await get_test_config(device_type="light")
         self._api = await get_initialized_client(credential, ip)
-        self._device = LedStripDevice(self._api)
+        self._device = LightDevice(self._api)
 
     async def asyncTearDown(self):
         await self._api.close()
@@ -58,21 +55,3 @@ class LedStripTest(unittest.IsolatedAsyncioTestCase):
         await self._device.set_color_temperature(2780)
         state = (await self._device.get_state()).get_or_raise()
         self.assertEqual(2780, state.color_temp)
-
-    async def test_should_set_light_effect(self):
-        await self._device.on()
-        await self._device.set_light_effect(LightEffect.christmas_light())
-        state = (await self._device.get_state()).get_or_raise()
-        self.assertEqual(LightEffect.christmas_light().name, state.lighting_effect.name)
-        self.assertEqual(
-            LightEffect.christmas_light().enable, state.lighting_effect.enable
-        )
-
-    async def test_should_set_brightness_of_light_effect(self):
-        await self._device.on()
-        await self._device.set_light_effect(LightEffect.aurora())
-        await sleep(2)
-        await self._device.set_light_effect_brightness(LightEffect.aurora(), 40)
-        state = (await self._device.get_state()).get_or_raise()
-        self.assertEqual(40, state.brightness)
-        self.assertEqual(LightEffect.aurora().name, state.lighting_effect.name)

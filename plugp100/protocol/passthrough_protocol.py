@@ -23,12 +23,11 @@ class PassthroughProtocol(TapoProtocol):
     def __init__(
         self,
         auth_credential: AuthCredential,
-        host: str,
-        port: Optional[int] = 80,
+        url: str,
         http_session: Optional[aiohttp.ClientSession] = None,
     ):
-        super().__init__(host, port)
-        self._url = f"http://{host}:{port}/app"
+        super().__init__()
+        self._url = url
         self._http = AsyncHttp(
             aiohttp.ClientSession() if http_session is None else http_session
         )

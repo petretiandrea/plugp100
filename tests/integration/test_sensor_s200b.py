@@ -7,7 +7,7 @@ from plugp100.responses.hub_childs.s200b_device_state import (
     SingleClickEvent,
     RotationEvent,
 )
-from tests.tapo_test_helper import (
+from tests.integration.tapo_test_helper import (
     get_test_config,
     get_initialized_client,
 )
