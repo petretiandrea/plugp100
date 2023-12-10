@@ -20,7 +20,7 @@ HubDeviceEvent = Union[DeviceAdded, DeviceRemoved]
 
 class HubConnectedDeviceTracker(StateTracker[Set[str], HubDeviceEvent]):
     def __init__(self, logger: Logger = None):
-        super().__init__(logger)
+        super().__init__({}, logger)
 
     def _compute_state_changes(
         self, new_state: Set[str], last_state: Optional[Set[str]]

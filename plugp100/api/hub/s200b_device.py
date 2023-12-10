@@ -88,7 +88,7 @@ class S200ButtonDevice:
 
 class _EventLogsStateTracker(StateTracker[TriggerLogResponse[S200BEvent], S200BEvent]):
     def __init__(self, debounce_millis: int, logger: Logger = None):
-        super().__init__(logger)
+        super().__init__(logger=logger)
         self._debounce_millis = debounce_millis
 
     def _compute_state_changes(

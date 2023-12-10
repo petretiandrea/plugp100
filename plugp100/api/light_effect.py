@@ -6,9 +6,9 @@ from typing import Optional, List
 class LightEffect:
     id: str
     name: str
-    brightness: int
     display_colors: List[List[int]]
     enable: int
+    brightness: int = (100,)
     bAdjusted: Optional[int] = None
     brightness_range: List[int] = dataclasses.field(default_factory=list)
     backgrounds: List[List[int]] = dataclasses.field(default_factory=list)
