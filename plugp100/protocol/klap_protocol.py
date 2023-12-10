@@ -76,7 +76,8 @@ class KlapProtocol(TapoProtocol):
                 f"Query failed after succesful authentication at {time.time()}.  Host is {self._host}, Available attempts count is {retry}, Sequence is {seq}, Response status is {response.status}, Request was {request}"
             )
             if response.status == 403:
-                self._klap_session.invalidate()
+                if self._klap_session is not None:
+                    self._klap_session.invalidate()
                 return Failure(Exception("Forbidden error after completing handshake"))
             else:
                 return Failure(
@@ -92,7 +93,8 @@ class KlapProtocol(TapoProtocol):
             return TapoResponse.try_from_json(decrypted_response)
 
     async def close(self):
-        self._klap_session.invalidate()
+        if self._klap_session is not None:
+            self._klap_session.invalidate()
         await self._http_session.close()
 
     async def perform_handshake(
@@ -215,7 +217,8 @@ class KlapProtocol(TapoProtocol):
             f"Handshake2 posted {time.time()}. Host is {self._host}, Response status is {response.status}, Request was {payload!r}"
         )
         if response.status != 200:
-            self._klap_session.invalidate()
+            if self._klap_session is not None:
+                self._klap_session.invalidate()
             return Failure(
                 Exception("Device responded with %d to handshake2" % response.status)
             )
