@@ -8,8 +8,8 @@ StateChange = TypeVar("StateChange")
 
 
 class StateTracker(Generic[State, StateChange]):
-    def __init__(self, logger: Logger = None):
-        self._last_state: Optional[State] = None
+    def __init__(self, initial_state: Optional[State] = None, logger: Logger = None):
+        self._last_state: Optional[State] = initial_state
         self._change_queue = asyncio.Queue()
         self._logger = logger if logger is not None else logging.getLogger("StateTracker")
 
