@@ -50,7 +50,6 @@ async def get_test_config(device_type: DeviceType) -> (AuthCredential, str):
 
 async def get_initialized_client(credential: AuthCredential, ip: str) -> TapoClient:
     client = TapoClient.create(credential, ip)
-    await client.initialize()
     return client
 
 
