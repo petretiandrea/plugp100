@@ -6,17 +6,18 @@ from typing import Optional, Any, cast
 import aiohttp
 
 from plugp100.api.light_effect import LightEffect
-from plugp100.common import Try, Success, Failure, AuthCredential
-from plugp100.common.utils.json_utils import dataclass_encode_json, Json
-from plugp100.protocol import KlapProtocol, PassthroughProtocol, TapoProtocol
-from plugp100.requests import TapoRequest, MultipleRequestParams
-from plugp100.responses import (
-    ChildDeviceList,
-    Components,
-    EnergyInfo,
-    PowerInfo,
-    TapoException,
-)
+from plugp100.common.credentials import AuthCredential
+from plugp100.common.functional.tri import Try, Failure, Success
+from plugp100.common.utils.json_utils import Json, dataclass_encode_json
+from plugp100.protocol.klap_protocol import KlapProtocol
+from plugp100.protocol.passthrough_protocol import PassthroughProtocol
+from plugp100.protocol.tapo_protocol import TapoProtocol
+from plugp100.requests.tapo_request import TapoRequest, MultipleRequestParams
+from plugp100.responses.child_device_list import ChildDeviceList
+from plugp100.responses.components import Components
+from plugp100.responses.energy_info import EnergyInfo
+from plugp100.responses.power_info import PowerInfo
+from plugp100.responses.tapo_exception import TapoException
 
 logger = logging.getLogger(__name__)
 

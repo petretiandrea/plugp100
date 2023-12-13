@@ -1,5 +1,5 @@
 import abc
-from typing import Optional, Any
+from typing import Any
 
 from plugp100.common.functional.tri import Try
 from plugp100.requests.tapo_request import TapoRequest

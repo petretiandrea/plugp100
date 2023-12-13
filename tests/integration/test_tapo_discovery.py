@@ -1,8 +1,7 @@
-import unittest
 import socket
 import threading
-import json
-import base64
+import unittest
+
 import select
 
 from plugp100.discovery.tapo_discovery import (

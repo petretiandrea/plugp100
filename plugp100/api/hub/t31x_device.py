@@ -1,8 +1,12 @@
 from plugp100.api.hub.hub_device import HubDevice
 
 from plugp100.common.functional.tri import Try
-from plugp100.requests import TapoRequest
-from plugp100.responses import T31DeviceState, TemperatureHumidityRecordsRaw, Components
+from plugp100.requests.tapo_request import TapoRequest
+from plugp100.responses.components import Components
+from plugp100.responses.hub_childs.t31x_device_state import (
+    T31DeviceState,
+    TemperatureHumidityRecordsRaw,
+)
 
 
 class T31Device:

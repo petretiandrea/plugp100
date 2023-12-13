@@ -2,8 +2,11 @@ from plugp100.api.base_tapo_device import _BaseTapoDevice
 from plugp100.api.tapo_client import TapoClient, Json
 from plugp100.common.functional.tri import Try
 from plugp100.common.utils.json_utils import dataclass_encode_json
-from plugp100.requests import TapoRequest, SetPlugInfoParams
-from plugp100.responses import Components, PowerStripChild, PlugDeviceState
+from plugp100.requests.set_device_info.set_plug_info_params import SetPlugInfoParams
+from plugp100.requests.tapo_request import TapoRequest
+from plugp100.responses.child_device_list import PowerStripChild
+from plugp100.responses.components import Components
+from plugp100.responses.device_state import PlugDeviceState
 
 
 class PowerStripDevice(_BaseTapoDevice):

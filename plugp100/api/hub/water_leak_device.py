@@ -1,7 +1,7 @@
 from plugp100.api.hub.hub_device import HubDevice
 from plugp100.common.functional.tri import Try
-from plugp100.requests import TapoRequest
-from plugp100.responses import LeakDeviceState
+from plugp100.requests.tapo_request import TapoRequest
+from plugp100.responses.hub_childs.leak_device_state import LeakDeviceState
 
 
 class WaterLeakSensor:

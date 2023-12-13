@@ -1,8 +1,9 @@
 import asyncio
 import os
 
-from plugp100.api import TapoClient, LightEffectPreset
-from plugp100.common import AuthCredential
+from plugp100.api.light_effect_preset import LightEffectPreset
+from plugp100.api.tapo_client import TapoClient
+from plugp100.common.credentials import AuthCredential
 from plugp100.discovery.tapo_discovery import TapoDeviceFinder
 
 
