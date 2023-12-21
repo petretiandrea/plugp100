@@ -135,3 +135,5 @@ requirements-*.txt
 !requirements-dev.txt
 
 .local.devices.yml
+
+**/local_run.py
