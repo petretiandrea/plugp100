@@ -107,7 +107,7 @@ class DeviceInfo:
     overheated: bool
 
     # wifi
-    ssid: str
+    ssid: Optional[str]
     signal_level: int
     rssi: int
     friendly_name: str
@@ -134,7 +134,9 @@ class DeviceInfo:
         self.type = kwargs["type"]
         self.overheated = kwargs.get("overheated", False)
         self.ip = kwargs.get("ip")
-        self.ssid = base64.b64decode(kwargs["ssid"]).decode()
+        self.ssid = (
+            base64.b64decode(kwargs["ssid"]).decode() if "ssid" in kwargs else None
+        )
         self.signal_level = kwargs.get("signal_level", 0)
         self.rssi = kwargs.get("rssi", 0)
         self.friendly_name = self.model if self.nickname == "" else self.nickname
