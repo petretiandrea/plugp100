@@ -4,12 +4,24 @@ import os
 from plugp100.api.light_effect_preset import LightEffectPreset
 from plugp100.api.tapo_client import TapoClient
 from plugp100.common.credentials import AuthCredential
-from plugp100.discovery.tapo_discovery import TapoDeviceFinder
+from plugp100.discovery.arp_lookup import ArpLookup
+from plugp100.discovery.tapo_discovery import TapoDiscovery
 
 
 async def main():
     print("Scanning network...")
-    print(TapoDeviceFinder.classify(TapoDeviceFinder.scan(5)))
+    discovered_devices = list(TapoDiscovery.scan(5))
+    for x in discovered_devices:
+        print(x)
+
+    if len(discovered_devices) > 0:
+        print("Trying to lookup with mac address")
+        lookup = await ArpLookup.lookup(
+            discovered_devices[0].mac.replace("-", ":"),
+            "192.168.1.0/24",
+            promiscuos_mode=False,
+        )
+        print(lookup)
 
     # create generic tapo api
     username = os.getenv("USERNAME", "<tapo_email>")
