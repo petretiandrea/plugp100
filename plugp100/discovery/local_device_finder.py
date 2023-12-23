@@ -98,23 +98,6 @@ class LocalDeviceFinder:
             logger.warning("Failed to scan network %s error: %s", network, str(e))
             return Failure(e)
 
-    # async def get_subnets(self) -> list[str]:
-    #     subnets = []
-    #     interfaces = netifaces.interfaces()
-    #     for interface in interfaces:
-    #         addrs = netifaces.ifaddresses(interface)
-    #         if netifaces.AF_INET in addrs:
-    #             for addr_info in addrs[netifaces.AF_INET]:
-    #                 local_ip = addr_info["addr"]
-    #                 netmask = addr_info["mask"]
-    #                 local_ip = ipaddress.IPv4Address(local_ip)
-    #                 netmask = ipaddress.IPv4Address(netmask)
-    #                 subnet_length = sum(bit == '1' for bit in bin(int(netmask))[2:])
-    #                 if subnet_length > 0:
-    #                     subnets.append(ipaddress.ip_network(f"{local_ip.compressed}/{subnet_length}", False).compressed)
-    #
-    #     return subnets
-
     @staticmethod
     def _estimate_timeout(network: str) -> int:
         network = ipaddress.IPv4Network(network, strict=False)

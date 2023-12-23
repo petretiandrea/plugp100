@@ -4,12 +4,13 @@ import os
 from plugp100.api.light_effect_preset import LightEffectPreset
 from plugp100.api.tapo_client import TapoClient
 from plugp100.common.credentials import AuthCredential
-from plugp100.discovery.tapo_discovery import TapoDeviceFinder
+from plugp100.discovery.tapo_discovery import TapoDiscovery
 
 
 async def main():
     print("Scanning network...")
-    print(TapoDeviceFinder.classify(TapoDeviceFinder.scan(5)))
+    for x in list(TapoDiscovery.scan(5)):
+        print(x)
 
     # create generic tapo api
     username = os.getenv("USERNAME", "<tapo_email>")
