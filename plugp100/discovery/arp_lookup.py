@@ -13,51 +13,13 @@ from plugp100.common.functional.tri import Try, Failure
 logger = logging.getLogger(__name__)
 
 
-class LocalDeviceFinder:
+class ArpLookup:
     @staticmethod
-    async def scan_network(
-        network: str, timeout: Optional[int] = None
-    ) -> list[dict[str, str]]:
-        """
-        Scan the provided network to discover devices and their corresponding IP and MAC addresses using ARP requests.
-        Args:
-            network (str): The network IP range to scan, e.g., "192.168.1.0/24".
-            timeout: (Optional[int]): Timeout to wait for ARP response
-        Returns:
-            list[dict[str, str]]: A list of dictionaries, each containing information about a discovered device.
-                                  Each dictionary has two keys: "ip" for the IP address and "mac" for the MAC address.
-        Note:
-            This function disables promiscuous mode, sends ARP requests to the specified network, and captures responses
-            to identify devices on the network. It constructs ARP packets using the Scapy library.
-        Example:
-            network = "192.168.1.0/24"
-            devices = LocalDeviceFinder.scan_network(network)
-            for device in devices:
-                print(f"IP: {device['ip']}, MAC: {device['mac']}")
-        """
-        try:
-            arp_request = Ether(dst="ff:ff:ff:ff:ff:ff") / ARP(pdst=network)
-            timeout = (
-                LocalDeviceFinder._estimate_timeout(network)
-                if timeout is None
-                else timeout
-            )
-            result, _ = await asyncio.get_event_loop().run_in_executor(
-                None,
-                functools.partial(srp, arp_request, timeout=timeout, verbose=False),
-            )
-            devices = []
-            for sent, received in result:
-                devices.append({"ip": received[ARP].psrc, "mac": received[ARP].hwsrc})
-
-            return devices
-        except Exception as e:
-            logger.warning("Failed to scan network %s error: %s", network, str(e))
-            return []
-
-    @staticmethod
-    async def scan_one(
-        mac: str, network: str, timeout: Optional[int] = None
+    async def lookup(
+        mac: str,
+        network: str,
+        timeout: Optional[int] = None,
+        allow_promiscuous: bool = True,
     ) -> Try[Optional[str]]:
         """
         Perform an ARP scan on a network to find the IP address associated with a given MAC address.
@@ -81,12 +43,11 @@ class LocalDeviceFinder:
                 print(f"No IP address found for {target_mac}")
         """
         try:
+            from scapy.all import conf as scapyconf
+
+            scapyconf.sniff_promisc = 1 if allow_promiscuous else 0
             arp_request = Ether(dst=mac) / ARP(pdst=network)
-            timeout = (
-                LocalDeviceFinder._estimate_timeout(network)
-                if timeout is None
-                else timeout
-            )
+            timeout = ArpLookup._estimate_timeout(network) if timeout is None else timeout
             result, _ = await asyncio.get_event_loop().run_in_executor(
                 None,
                 functools.partial(srp, arp_request, timeout=timeout, verbose=False),
