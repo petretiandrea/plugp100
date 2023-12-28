@@ -173,8 +173,8 @@ class KlapProtocol(TapoProtocol):
             )
             if blank_seed_auth_hash == server_hash:
                 logger.debug(
-                    "Server response doesn't match our expected hash on ip %s but an authentication with blank credentials matched"
-                    % self._host
+                    "Server response doesn't match our expected hash on ip %s but an authentication with blank credentials matched",
+                    self._host
                 )
                 return Try.of((remote_seed, blank_auth_hash))
             else:
@@ -195,13 +195,13 @@ class KlapProtocol(TapoProtocol):
                 else:
                     self._klap_session = None
                     logger.debug(
-                        "Server response doesn't match our challenge on ip %s"
-                        % self._host
+                        "Server response doesn't match our challenge on ip %s",
+                        self._host
                     )
                     return Failure(
                         Exception(
-                            "Server response doesn't match our challenge on ip %s"
-                            % self._host
+                            "Server response doesn't match our challenge on ip %s",
+                            self._host
                         )
                     )
 
