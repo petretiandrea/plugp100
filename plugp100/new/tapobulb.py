@@ -5,11 +5,12 @@ from plugp100.api.light_effect import LightEffect
 from plugp100.api.tapo_client import TapoClient
 from plugp100.common.functional.tri import Try, Failure
 from plugp100.new.device_type import DeviceType
-from plugp100.new.tapodevice import TapoDevice
+from plugp100.new.tapodevice import AbstractTapoDevice
 from plugp100.requests.set_device_info.set_light_color_info_params import (
     LightColorDeviceInfoParams,
 )
 from plugp100.requests.set_device_info.set_light_info_params import LightDeviceInfoParams
+from plugp100.requests.set_device_info.set_plug_info_params import SetPlugInfoParams
 from plugp100.responses.device_state import LedStripDeviceState, LightDeviceState
 
 
@@ -19,7 +20,7 @@ class HS:
     saturation: int
 
 
-class TapoBulb(TapoDevice):
+class TapoBulb(AbstractTapoDevice):
     def __init__(self, host: str, port: Optional[int], client: TapoClient):
         super().__init__(host, port, client, DeviceType.Bulb)
         self._is_led_strip = None
@@ -46,12 +47,15 @@ class TapoBulb(TapoDevice):
         return self.components.has("color")
 
     @property
-    def is_color_temp_range(self) -> bool:
+    def is_color_temperature(self) -> bool:
         return self.components.has("color_temperature")
 
     @property
     def color_temp_range(self) -> Tuple[int, int]:
-        return self._internal_state.color_temp_range
+        if temp_range := self._internal_state.color_temp_range is not None:
+            return temp_range
+        else:
+            return 2500, 6500
 
     @property
     def has_effect(self) -> bool:
@@ -59,7 +63,10 @@ class TapoBulb(TapoDevice):
 
     @property
     def effect(self) -> Optional[LightEffect]:
-        return self._internal_state.lighting_effect
+        if self.has_effect:
+            return self._internal_state.lighting_effect
+        else:
+            return None
 
     @property
     def color_temp(self) -> Optional[int]:
@@ -111,3 +118,9 @@ class TapoBulb(TapoDevice):
             return await self.client.set_lighting_effect(effect)
         else:
             return Failure(Exception("Setting brightness of effect not supported"))
+
+    async def turn_on(self):
+        return await self.client.set_device_info(SetPlugInfoParams(True))
+
+    async def turn_off(self):
+        return await self.client.set_device_info(SetPlugInfoParams(False))

@@ -2,13 +2,13 @@ from typing import Optional
 
 from plugp100.api.tapo_client import TapoClient
 from plugp100.new.device_type import DeviceType
-from plugp100.new.tapodevice import TapoDevice
+from plugp100.new.tapodevice import AbstractTapoDevice
 from plugp100.requests.set_device_info.set_plug_info_params import SetPlugInfoParams
 from plugp100.responses.energy_info import EnergyInfo
 from plugp100.responses.power_info import PowerInfo
 
 
-class TapoPlug(TapoDevice):
+class TapoPlug(AbstractTapoDevice):
     def __init__(self, host: str, port: Optional[int], client: TapoClient):
         super().__init__(host, port, client, DeviceType.Plug)
 
@@ -24,10 +24,6 @@ class TapoPlug(TapoDevice):
             self._additional_data["power_info"] = (
                 power_info.value if power_info.is_success() else None
             )
-
-        # if self.components.has('control_child'):
-        #     children = (await self.client.get_child_device_list()).get_or_raise()
-        #     self._additional_data["child"] = children
 
     async def turn_on(self):
         return await self.client.set_device_info(SetPlugInfoParams(True))

@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from logging import Logger
 from typing import Union, List, Set, Optional
 
-from plugp100.common.state_tracker import StateTracker
+from plugp100.new.event_polling.state_tracker import StateTracker
 
 
 @dataclass

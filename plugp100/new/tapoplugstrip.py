@@ -4,7 +4,7 @@ from typing import Optional, List
 from plugp100.api.tapo_client import TapoClient
 from plugp100.common.utils.json_utils import dataclass_encode_json
 from plugp100.new.device_type import DeviceType
-from plugp100.new.tapodevice import TapoDevice
+from plugp100.new.tapodevice import AbstractTapoDevice
 from plugp100.requests.set_device_info.set_plug_info_params import SetPlugInfoParams
 from plugp100.requests.tapo_request import TapoRequest
 from plugp100.responses.child_device_list import PowerStripChild
@@ -14,7 +14,7 @@ from plugp100.responses.device_state import DeviceInfo
 _LOGGER = logging.getLogger("TapoPlugStrip")
 
 
-class TapoPlugStrip(TapoDevice):
+class TapoPlugStrip(AbstractTapoDevice):
     def __init__(self, host: str, port: Optional[int], client: TapoClient):
         super().__init__(host, port, client, DeviceType.PlugStrip)
         self._children_socket = []
@@ -39,32 +39,30 @@ class TapoPlugStrip(TapoDevice):
         return self._children_socket
 
 
-class TapoStripSocket(TapoDevice):
+class TapoStripSocket(AbstractTapoDevice):
     def __init__(self, parent: TapoPlugStrip, child_id: str):
         super().__init__(parent.host, parent.port, parent.client, DeviceType.Plug)
         self.child_id = child_id
         self._parent_info = parent.device_info
 
     async def update(self):
-        if self._last_update is None:
-            _LOGGER.info("Getting first update")
-            state = (
-                await self.client.control_child(
-                    child_id=self.child_id, request=TapoRequest.get_device_info()
-                )
-            ).get_or_raise()
-            self._last_update = {
-                "device_info": DeviceInfo(
-                    **{
-                        **state,
-                        "overheated": False
-                        if state.get("overheat_status") == "normal"
-                        else True,
-                    }
-                ),
-                "state": state,
-                "components": Components({}),
-            }
+        state = (
+            await self.client.control_child(
+                child_id=self.child_id, request=TapoRequest.get_device_info()
+            )
+        ).get_or_raise()
+        self._last_update = {
+            "device_info": DeviceInfo(
+                **{
+                    **state,
+                    "overheated": False
+                    if state.get("overheat_status") == "normal"
+                    else True,
+                }
+            ),
+            "state": state,
+            "components": Components({}),
+        }
 
     async def turn_on(self):
         request = TapoRequest.set_device_info(

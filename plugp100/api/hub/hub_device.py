@@ -9,7 +9,7 @@ from plugp100.api.hub.hub_device_tracker import (
 )
 from plugp100.api.tapo_client import TapoClient, Json
 from plugp100.common.functional.tri import Try
-from plugp100.common.poll_tracker import PollTracker, PollSubscription
+from plugp100.new.event_polling.poll_tracker import PollTracker, PollSubscription
 from plugp100.common.utils.json_utils import dataclass_encode_json
 from plugp100.requests.set_device_info.play_alarm_params import PlayAlarmParams
 from plugp100.requests.tapo_request import TapoRequest

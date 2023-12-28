@@ -3,7 +3,7 @@ from asyncio import iscoroutinefunction
 from logging import Logger
 from typing import TypeVar, List, Callable, Any, Generic, Optional
 
-from plugp100.common.state_tracker import StateTracker
+from plugp100.new.event_polling.state_tracker import StateTracker
 
 State = TypeVar("State")
 StateChange = TypeVar("StateChange")

@@ -1,11 +1,11 @@
-from plugp100.api.hub.hub_device import HubDevice
 from plugp100.common.functional.tri import Try
+from plugp100.new.tapohub import TapoHub
 from plugp100.requests.tapo_request import TapoRequest
 from plugp100.responses.hub_childs.leak_device_state import LeakDeviceState
 
 
 class WaterLeakSensor:
-    def __init__(self, hub: HubDevice, device_id: str):
+    def __init__(self, hub: TapoHub, device_id: str):
         self._hub = hub
         self._device_id = device_id
 

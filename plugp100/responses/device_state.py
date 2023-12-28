@@ -47,9 +47,11 @@ class LightDeviceState(DeviceState):
     hue: Optional[int]
     saturation: Optional[int]
     color_temp: Optional[int]
+    color_temp_range: Optional[tuple[int, int]]
 
     @staticmethod
     def try_from_json(kwargs: dict[str, Any]) -> Try["LightDeviceState"]:
+        color_temp_range = tuple(kwargs.get("color_temp_range", []))
         return Try.of(
             lambda: LightDeviceState(
                 info=DeviceInfo(**kwargs),
@@ -58,6 +60,7 @@ class LightDeviceState(DeviceState):
                 hue=kwargs.get("hue", None),
                 saturation=kwargs.get("saturation", None),
                 color_temp=kwargs.get("color_temp", None),
+                color_temp_range=None if color_temp_range == () else color_temp_range,
             )
         )
 

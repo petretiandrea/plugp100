@@ -1,5 +1,7 @@
+import abc
 import logging
-from typing import Optional, Type, Any
+from abc import abstractmethod
+from typing import Optional
 
 from plugp100.api.tapo_client import TapoClient
 from plugp100.new.device_type import DeviceType
@@ -9,7 +11,53 @@ from plugp100.responses.device_state import DeviceInfo
 _LOGGER = logging.getLogger("TapoDevice")
 
 
-class TapoDevice:
+class TapoDevice(abc.ABC):
+    @property
+    @abstractmethod
+    def device_info(self) -> DeviceInfo:
+        pass
+
+    @property
+    @abstractmethod
+    def components(self) -> Components:
+        pass
+
+    @property
+    @abstractmethod
+    def nickname(self) -> str:
+        pass
+
+    @property
+    @abstractmethod
+    def mac(self) -> str:
+        pass
+
+    @property
+    @abstractmethod
+    def model(self) -> str:
+        pass
+
+    @property
+    @abstractmethod
+    def device_id(self) -> str:
+        pass
+
+    @property
+    @abstractmethod
+    def device_type(self) -> DeviceType:
+        pass
+
+    @property
+    @abstractmethod
+    def overheated(self) -> bool:
+        pass
+
+    @abstractmethod
+    async def update(self):
+        pass
+
+
+class AbstractTapoDevice(TapoDevice):
     def __init__(
         self,
         host: str,
@@ -20,23 +68,21 @@ class TapoDevice:
         self.host = host
         self.port = port
         self.client = client
-        self._last_update = None
+        self._last_update = {}
         self._device_type = device_type
         self._additional_data = {}
 
     async def update(self):
-        if self._last_update is None:
-            _LOGGER.info("Getting first update")
-            response = (await self.client.get_device_info()).get_or_raise()
-            response_component = (
-                await self.client.get_component_negotiation()
-            ).get_or_raise()
-            self._last_update = {
-                "device_info": DeviceInfo(**response),
-                "components": response_component,
-                "state": response,
-            }
-
+        if "components" not in self._last_update:
+            components = (await self.client.get_component_negotiation()).get_or_raise()
+        else:
+            components = self._last_update["components"]
+        response = (await self.client.get_device_info()).get_or_raise()
+        self._last_update = {
+            "device_info": DeviceInfo(**response),
+            "components": components,
+            "state": response,
+        }
         # update other modules
 
     @property

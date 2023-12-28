@@ -10,7 +10,8 @@ from plugp100.protocol.passthrough_protocol import PassthroughProtocol
 from plugp100.requests.tapo_request import TapoRequest
 from plugp100.responses.tapo_exception import TapoException
 from .tapobulb import TapoBulb
-from .tapodevice import TapoDevice
+from .tapodevice import AbstractTapoDevice, TapoDevice
+from .tapohub import TapoHub
 from .tapoplug import TapoPlug
 from .tapoplugstrip import TapoPlugStrip
 from ..api.tapo_client import TapoClient
@@ -60,12 +61,12 @@ async def _get_client_and_info(
 
 def _get_device_class_from_info(device_info: dict[str, Any]) -> Type[TapoDevice]:
     info = DeviceInfo(**device_info)
-    type = info.type.upper()
+    device_type = info.type.upper()
     model = info.model.lower()
-    if type == "SMART.TAPOPLUG":
+    if device_type == "SMART.TAPOPLUG":
         return TapoPlugStrip if "p300" in model else TapoPlug
-    elif type == "SMART.TAPOBULB":
+    elif device_type == "SMART.TAPOBULB":
         return TapoBulb
-    elif type == "SMART.":
-        pass
-    return TapoDevice
+    elif device_type == "SMART.TAPOHUB":
+        return TapoHub
+    return AbstractTapoDevice

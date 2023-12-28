@@ -1,12 +1,12 @@
 from typing import Union, Optional, Any
 
 from plugp100.api.hub.hub_device import HubDevice
-from plugp100.api.hub.s200b_device import S200ButtonDevice
-from plugp100.api.hub.switch_child_device import SwitchChildDevice
-from plugp100.api.hub.t100_device import T100MotionSensor
-from plugp100.api.hub.t110_device import T110SmartDoor
-from plugp100.api.hub.water_leak_device import WaterLeakSensor
-from plugp100.api.hub.t31x_device import T31Device
+from plugp100.new.s200b_device import S200ButtonDevice
+from plugp100.new.switch_child_device import SwitchChildDevice
+from plugp100.new.t100_device import T100MotionSensor
+from plugp100.new.t110_device import T110SmartDoor
+from plugp100.new.water_leak_device import WaterLeakSensor
+from plugp100.new.t31x_device import T31Device
 
 HubChildDevice = Union[
     T100MotionSensor,
