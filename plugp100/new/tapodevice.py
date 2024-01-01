@@ -119,7 +119,7 @@ class AbstractTapoDevice(TapoDevice):
         return self.device_info.overheated
 
     def __repr__(self):
-        if self._last_update is None:
+        if self._last_update == {}:
             return f"<{self.device_type} at {self.host} - update() needed>"
         return (
             f"<{self._device_type} model {self.model} at {self.host}"
