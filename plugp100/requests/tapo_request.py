@@ -85,6 +85,10 @@ class TapoRequest(object):
     def component_negotiation() -> "TapoRequest":
         return TapoRequest(method="component_nego", params=None)
 
+    @staticmethod
+    def set_device_countdown_rule(params: dict[str, Any]) -> "TapoRequest":
+        return TapoRequest(method="add_countdown_rule", params=params)
+
     def __init__(self, method: str, params):
         self.method = method
         self.params = params

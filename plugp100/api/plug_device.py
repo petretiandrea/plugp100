@@ -2,6 +2,7 @@ from plugp100.api.base_tapo_device import _BaseTapoDevice
 from plugp100.api.tapo_client import TapoClient
 from plugp100.common.functional.tri import Try
 from plugp100.requests.set_device_info.set_plug_info_params import SetPlugInfoParams
+from plugp100.requests.set_device_info.set_plug_countdown_rule_params  import SetPlugCountdownRuleParams
 from plugp100.responses.device_state import PlugDeviceState
 from plugp100.responses.energy_info import EnergyInfo
 from plugp100.responses.power_info import PowerInfo
@@ -49,3 +50,25 @@ class PlugDevice(_BaseTapoDevice):
         @return: an instance of the `Either` class, which can contain either a `PowerInfo` object or an `Exception` object.
         """
         return await self._api.get_current_power()
+
+    async def on_countdown_rule(self, delay: int, enable: bool = True) -> Try(bool):
+        """
+        The function `on_countdown_rule` sets a countdown to turn the device `on` with delay
+            using the `SetPlugCountdownRuleParams` class.
+        @param delay: The `delay` parameter sets the delay or countdown length in seconds before the new state is applied
+        @return: an `Either` object, which can either be `True` or an `Exception`.
+        """
+        return await self._api.set_device_countdown_rule(
+            SetPlugCountdownRuleParams(desired_states={"on": True}, delay=delay, enable=enable)
+        )
+
+    async def off_countdown_rule(self, delay: int, enable: bool = True) -> Try(bool):
+        """
+        The function `off_countdown_rule` sets a countdown to turn the device `off` with delay
+            using the `SetPlugCountdownRuleParams` class.
+        @param delay: The `delay` parameter sets the delay or countdown length in seconds before the new state is applied
+        @return: an `Either` object, which can either be `True` or an `Exception`.
+        """
+        return await self._api.set_device_countdown_rule(
+            SetPlugCountdownRuleParams(desired_states={"on": False}, delay=delay)
+        )
