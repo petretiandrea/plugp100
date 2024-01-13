@@ -136,6 +136,20 @@ class TapoClient:
         )
         return response.map(lambda _: True)
 
+    async def set_device_countdown_rule(self, countdown_rule: Any) -> Try[bool]:
+        """
+        The function `set_device_countdown_rule` sets a delay countdown to turn a device on or off
+            and returns either `True` or an exception.
+
+        @param countdown_rule: The `countdown_rule` parameter is an object that contains information about a countdown rule
+            to turn a device on or off with a delay. It is passed to the `set_device_countdown_rule` method as an argument
+        @return: an `Either` object that contains either a `True` value or an `Exception`.
+        """
+        response = await self.execute_raw_request(
+            TapoRequest.set_device_countdown_rule(dataclass_encode_json(countdown_rule))
+        )
+        return response.map(lambda _: True)
+
     async def get_child_device_list(self, all_pages: bool = True) -> Try[ChildDeviceList]:
         """
         The function `get_child_device_list` retrieves a list of child devices asynchronously and returns either the list or
