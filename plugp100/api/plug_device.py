@@ -51,7 +51,7 @@ class PlugDevice(_BaseTapoDevice):
         """
         return await self._api.get_current_power()
 
-    async def on_countdown_rule(self, delay: int, enable: bool = True) -> Try(bool):
+    async def on_countdown_rule(self, delay: int) -> Try(bool):
         """
         The function `on_countdown_rule` sets a countdown to turn the device `on` with delay
             using the `SetPlugCountdownRuleParams` class.
@@ -59,10 +59,10 @@ class PlugDevice(_BaseTapoDevice):
         @return: an `Either` object, which can either be `True` or an `Exception`.
         """
         return await self._api.set_device_countdown_rule(
-            SetPlugCountdownRuleParams(desired_states={"on": True}, delay=delay, enable=enable)
+            SetPlugCountdownRuleParams(desired_states={"on": True}, delay=delay)
         )
 
-    async def off_countdown_rule(self, delay: int, enable: bool = True) -> Try(bool):
+    async def off_countdown_rule(self, delay: int) -> Try(bool):
         """
         The function `off_countdown_rule` sets a countdown to turn the device `off` with delay
             using the `SetPlugCountdownRuleParams` class.
