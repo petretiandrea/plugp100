@@ -8,6 +8,10 @@ on:
     branches:
       - main
 
+permissions:
+  pull-requests: write
+  statuses: write
+
 jobs:
   validate-pr-title:
     name: Validate PR title
