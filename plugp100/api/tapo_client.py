@@ -222,7 +222,7 @@ class TapoClient:
         if response.is_failure():
             error = response.error()
             if isinstance(error, TapoException) and error.error_code == 1003:
-                logger.warning("Default protocol not working, fallback to KLAP ;)")
+                logger.info("Default protocol not working, fallback to KLAP ;)")
                 self._protocol = KlapProtocol(
                     auth_credential=self._auth_credential,
                     url=self._url,

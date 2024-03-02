@@ -19,7 +19,7 @@ async def main():
         lookup = await ArpLookup.lookup(
             discovered_devices[0].mac.replace("-", ":"),
             "192.168.1.0/24",
-            promiscuos_mode=False,
+            allow_promiscuous=False,
         )
         print(lookup)
 

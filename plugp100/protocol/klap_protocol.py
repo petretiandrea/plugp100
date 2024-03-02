@@ -88,7 +88,7 @@ class KlapProtocol(TapoProtocol):
                 )
         else:
             decrypted_response = jsons.loads(
-                self._klap_session.chiper.decrypt(response_data)
+                self._klap_session.chiper.decrypt(response_data, seq)
             )
             return TapoResponse.try_from_json(decrypted_response)
 
@@ -188,20 +188,17 @@ class KlapProtocol(TapoProtocol):
                 if kasa_setup_seed_auth_hash == server_hash:
                     self.local_auth_hash = kasa_setup_auth_hash
                     logger.debug(
-                        "Server response doesn't match our expected hash on ip %s but an authentication with kasa setup credentials matched",
-                        self._host,
+                        f"Server response doesn't match our expected hash on ip {self._host} but an authentication with kasa setup credentials matched"
                     )
                     return Try.of((remote_seed, kasa_setup_auth_hash))
                 else:
                     self._klap_session = None
                     logger.debug(
-                        "Server response doesn't match our challenge on ip %s"
-                        % self._host
+                        f"Server response doesn't match our challenge on ip {self._host}"
                     )
                     return Failure(
                         Exception(
-                            "Server response doesn't match our challenge on ip %s"
-                            % self._host
+                            f"Server response doesn't match our challenge on ip {self._host}"
                         )
                     )
 
@@ -307,7 +304,7 @@ class KlapChiper:
             msg = msg.encode("utf-8")
         assert type(msg) == bytes
 
-        cipher = Cipher(algorithms.AES(self._key), modes.CBC(self._iv_seq()))
+        cipher = Cipher(algorithms.AES(self._key), modes.CBC(self._iv_seq(self._seq)))
         encryptor = cipher.encryptor()
         padder = padding.PKCS7(128).padder()
         padded_data = padder.update(msg) + padder.finalize()
@@ -319,10 +316,10 @@ class KlapChiper:
 
         return signature + ciphertext, self._seq
 
-    def decrypt(self, msg: bytes):
+    def decrypt(self, msg: bytes, seq: int):
         """Decrypt the data."""
 
-        cipher = Cipher(algorithms.AES(self._key), modes.CBC(self._iv_seq()))
+        cipher = Cipher(algorithms.AES(self._key), modes.CBC(self._iv_seq(seq)))
         decryptor = cipher.decryptor()
         dp = decryptor.update(msg[32:]) + decryptor.finalize()
         unpadder = padding.PKCS7(128).unpadder()
@@ -347,8 +344,7 @@ class KlapChiper:
         payload = b"ldk" + local_seed + remote_seed + user_hash
         return hashlib.sha256(payload).digest()[:28]
 
-    def _iv_seq(self):
-        seq = self._seq.to_bytes(4, "big", signed=True)
-        iv = self._iv + seq
+    def _iv_seq(self, seq: int):
+        iv = self._iv + seq.to_bytes(4, "big", signed=True)
         assert len(iv) == 16
         return iv
