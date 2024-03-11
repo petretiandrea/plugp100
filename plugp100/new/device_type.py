@@ -9,6 +9,7 @@ class DeviceType(Enum):
     PlugStrip = "plugStrip"
     Bulb = "bulb"
     Hub = "hub"
+    Sensor = "sensor"
     Unknown = "unknown"
 
     @staticmethod

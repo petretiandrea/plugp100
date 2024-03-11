@@ -1,3 +1,4 @@
+import asyncio
 import base64
 import json
 import logging
@@ -71,10 +72,24 @@ class TapoDiscovery:
         sock.close()
 
     @staticmethod
-    def scan(
+    async def scan(
         timeout: Optional[int] = 5,
         broadcast: Optional[str] = "255.255.255.255",
         port: int = 20002,
-    ) -> Generator[DiscoveredDevice, None, None]:
-        for x in TapoDiscovery(broadcast, port, timeout)._scan():
-            yield DiscoveredDevice.from_dict(x)
+    ) -> list[DiscoveredDevice]:
+        loop = asyncio.get_event_loop()
+        devices_found = await loop.run_in_executor(
+            None,
+            lambda: list(TapoDiscovery(broadcast, port, timeout)._scan()),
+        )
+        print(devices_found)
+        return [DiscoveredDevice.from_dict(x) for x in devices_found]
+
+    @staticmethod
+    async def single_scan(
+        ip: str,
+        timeout: Optional[int] = 5,
+        port: int = 20002,
+    ) -> Optional[DiscoveredDevice]:
+        devices_found = await TapoDiscovery.scan(timeout, ip, port)
+        return devices_found[0] if len(devices_found) > 0 else None

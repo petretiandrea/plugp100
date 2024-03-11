@@ -333,7 +333,7 @@ class S200ButtonDevice(TapoHubChildDevice):
     _DEFAULT_POLLING_PAGE_SIZE = 5
 
     def __init__(
-        self, hub: TapoHub, device_id: str, device_type: DeviceType = DeviceType.Hub
+        self, hub: TapoHub, device_id: str, device_type: DeviceType = DeviceType.Sensor
     ):
         super().__init__(hub, device_id, device_type)
         self._logger = logging.getLogger(f"ButtonDevice[${device_id}]")
@@ -404,7 +404,7 @@ class S200ButtonDevice(TapoHubChildDevice):
 
 class SwitchChildDevice(TapoHubChildDevice):
     def __init__(
-        self, hub: TapoHub, device_id: str, device_type: DeviceType = DeviceType.Hub
+        self, hub: TapoHub, device_id: str, device_type: DeviceType = DeviceType.Sensor
     ):
         super().__init__(hub, device_id, device_type)
 
@@ -453,7 +453,7 @@ class SwitchChildDevice(TapoHubChildDevice):
 
 class T100MotionSensor(TapoHubChildDevice):
     def __init__(
-        self, hub: TapoHub, device_id: str, device_type: DeviceType = DeviceType.Hub
+        self, hub: TapoHub, device_id: str, device_type: DeviceType = DeviceType.Sensor
     ):
         super().__init__(hub, device_id, device_type)
 
@@ -500,7 +500,7 @@ class T100MotionSensor(TapoHubChildDevice):
 
 class T110SmartDoor(TapoHubChildDevice):
     def __init__(
-        self, hub: TapoHub, device_id: str, device_type: DeviceType = DeviceType.Hub
+        self, hub: TapoHub, device_id: str, device_type: DeviceType = DeviceType.Sensor
     ):
         super().__init__(hub, device_id, device_type)
 
@@ -548,7 +548,7 @@ class T110SmartDoor(TapoHubChildDevice):
 
 class T31Device(TapoHubChildDevice):
     def __init__(
-        self, hub: TapoHub, device_id: str, device_type: DeviceType = DeviceType.Hub
+        self, hub: TapoHub, device_id: str, device_type: DeviceType = DeviceType.Sensor
     ):
         super().__init__(hub, device_id, device_type)
 
@@ -606,7 +606,7 @@ class T31Device(TapoHubChildDevice):
 
 class WaterLeakSensor(TapoHubChildDevice):
     def __init__(
-        self, hub: TapoHub, device_id: str, device_type: DeviceType = DeviceType.Hub
+        self, hub: TapoHub, device_id: str, device_type: DeviceType = DeviceType.Sensor
     ):
         super().__init__(hub, device_id, device_type)
 
@@ -652,6 +652,8 @@ def _hub_child_create(
         return T100MotionSensor(hub, device_id)
     elif "ke100" in model:
         return KE100Device(hub, device_id)
+    elif "t300" in model:
+        return WaterLeakSensor(hub, device_id)
     elif any(supported in model for supported in ["s220", "s210"]):
         return SwitchChildDevice(hub, device_id)
     return None
