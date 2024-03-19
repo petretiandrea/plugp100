@@ -17,7 +17,7 @@ temp_hum_sensor = pytest.mark.parametrize(
 @temp_hum_sensor
 async def test_should_get_expose_state(device: TapoHub):
     child = cast(T31Device, device.children[0])
-    assert child.device_type == DeviceType.Hub
+    assert child.device_type == DeviceType.Sensor
 
     assert child.parent_device_id is not None
     assert child.mac is not None

@@ -1,7 +1,6 @@
 import unittest
 
-from plugp100.api.hub.hub_child_device import create_hub_child_device
-from plugp100.api.hub.hub_device import HubDevice
+from plugp100.new.tapohub import TapoHub
 from tests.integration.tapo_test_helper import (
     get_test_config,
     get_initialized_client,
@@ -18,11 +17,9 @@ class WaterLeakSensorTest(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self) -> None:
         credential, ip = await get_test_config(device_type="hub")
         self._api = await get_initialized_client(credential, ip)
-        self._hub = HubDevice(self._api)
-        self._device = create_hub_child_device(
-            self._hub,
-            (await self._hub.get_children()).get_or_raise().find_device("T300"),
-        )
+        self._hub = TapoHub("", 80, self._api)
+        await self._hub.update()
+        self._device = filter(lambda x: "p300" in x.model, self._hub.children)
 
     async def asyncTearDown(self):
         await self._api.close()

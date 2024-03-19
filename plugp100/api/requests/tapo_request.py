@@ -3,10 +3,10 @@ from typing import TypeVar, Any, List
 
 from plugp100.api.light_effect import LightEffect
 from plugp100.common.credentials import AuthCredential
-from plugp100.requests.handshake_params import HandshakeParams
-from plugp100.requests.login_device import LoginDeviceParams, LoginDeviceParamsV2
-from plugp100.requests.secure_passthrough_params import SecurePassthroughParams
-from plugp100.requests.trigger_logs_params import GetTriggerLogsParams
+from plugp100.api.requests.handshake_params import HandshakeParams
+from plugp100.api.requests.login_device import LoginDeviceParams, LoginDeviceParamsV2
+from plugp100.api.requests.secure_passthrough_params import SecurePassthroughParams
+from plugp100.api.requests.trigger_logs_params import GetTriggerLogsParams
 
 T = TypeVar("T")
 

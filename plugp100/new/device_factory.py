@@ -1,96 +1,116 @@
-import functools
+import dataclasses
 import logging
-from typing import Optional, Any, Type
+from typing import Optional, Type
 
 import aiohttp
 
 from plugp100.common.credentials import AuthCredential
-from plugp100.protocol.klap_protocol import KlapProtocol
+from plugp100.protocol.klap.klap_protocol import KlapProtocol
 from plugp100.protocol.passthrough_protocol import PassthroughProtocol
-from plugp100.requests.tapo_request import TapoRequest
 from plugp100.responses.tapo_exception import TapoException
+from .errors.invalid_authentication import InvalidAuthentication
 from .tapobulb import TapoBulb
-from .tapodevice import AbstractTapoDevice, TapoDevice
+from .tapodevice import AbstractTapoDevice
 from .tapohub import TapoHub
 from .tapoplug import TapoPlug
 from .tapoplugstrip import TapoPlugStrip
+from ..api.requests.tapo_request import TapoRequest
 from ..api.tapo_client import TapoClient
+from ..protocol.klap import klap_handshake_v1, klap_handshake_v2
 from ..protocol.tapo_protocol import TapoProtocol
 from ..responses.device_state import DeviceInfo
 
 _LOGGER = logging.getLogger("DeviceFactory")
 
 
+@dataclasses.dataclass
+class DeviceConnectConfiguration:
+    host: str
+    port: int = 80
+    credentials: Optional[AuthCredential] = None
+    device_type: Optional[str] = None
+    device_model: Optional[str] = None
+    encryption_type: Optional[str] = None
+    encryption_version: Optional[int] = None
+
+    @property
+    def url(self) -> str:
+        return f"http://{self.host}:{self.port}/app"
+
+
 async def connect(
-    host: str,
-    port: Optional[int],
-    credentials: AuthCredential,
-    session: aiohttp.ClientSession,
-) -> TapoDevice:
-    client, info = await _get_client_and_info(host, port, credentials, session)
-    factory = _get_device_class_from_info(info)
-    return factory(host, port, client)
-
-
-async def connect_from_discovery(
-    host: str,
-    port: Optional[int],
-    credentials: AuthCredential,
-    session: aiohttp.ClientSession,
-    protocol_type: Type[TapoProtocol],
-    device_type: str,
-    device_model: str,
-) -> TapoDevice:
-    url = f"http://{host}:{port}/app"
-    factory = _get_device_class_from_model_type(device_type, device_model)
-    if protocol_type is KlapProtocol:
-        protocol = KlapProtocol(credentials, url, session)
+    config: DeviceConnectConfiguration, session: Optional[aiohttp.ClientSession] = None
+):
+    protocol = await _get_or_guess_protocol(config, session)
+    if config.device_type is None or config.device_model is None:
+        _LOGGER.info(
+            "Not enough information to detected device type and model, trying to fetching from device..."
+        )
+        device_info = DeviceInfo(
+            **(await protocol.send_request(request=TapoRequest.get_device_info()))
+            .get_or_raise()
+            .result
+        )
+        factory = _get_device_class_from_model_type(device_info.type, device_info.model)
     else:
-        protocol = PassthroughProtocol(credentials, url, session)
-    client = TapoClient(credentials, f"http://{host}:{port}/app", protocol, session)
-    return factory(host, port, client)
+        factory = _get_device_class_from_model_type(
+            config.device_type, config.device_model
+        )
+    client = TapoClient(config.credentials, config.url, protocol, session)
+    return factory(config.host, config.port, client)
 
 
-async def _get_client_and_info(
-    host: str,
-    port: Optional[int],
-    credentials: AuthCredential,
-    session: aiohttp.ClientSession,
-) -> tuple[TapoClient, dict[str, Any]]:
-    url = f"http://{host}:{port}/app"
+async def _get_or_guess_protocol(
+    config: DeviceConnectConfiguration, session: Optional[aiohttp.ClientSession] = None
+) -> TapoProtocol:
+    if config.encryption_type is None:
+        return await _guess_protocol(config, session)
+    elif config.encryption_type.lower() == "klap":
+        handshake_version = (
+            klap_handshake_v2() if config.encryption_version == 2 else klap_handshake_v1()
+        )
+        return KlapProtocol(
+            auth_credential=config.credentials,
+            url=config.url,
+            klap_strategy=handshake_version,
+            http_session=session,
+        )
+    elif config.encryption_type.lower() == "aes":
+        return PassthroughProtocol(
+            auth_credential=config.credentials, url=config.url, http_session=session
+        )
+    else:
+        raise Exception("Failed to determine the right tapo protocol")
+
+
+async def _guess_protocol(
+    config: DeviceConnectConfiguration, session: aiohttp.ClientSession
+) -> TapoProtocol:
+    protocols = [
+        PassthroughProtocol(config.credentials, config.url, session),
+        KlapProtocol(config.credentials, config.url, klap_handshake_v1(), session),
+        KlapProtocol(config.credentials, config.url, klap_handshake_v2(), session),
+    ]
     device_info_request = TapoRequest.get_device_info()
-    protocol = PassthroughProtocol(credentials, url, session)
-    response = await protocol.send_request(device_info_request)
-    client_factory = functools.partial(lambda p, s: TapoClient(credentials, url, p, s))
-    if response.is_success():
-        return client_factory(protocol, session), response.value.result
-    else:
-        error = response.error()
-        if isinstance(error, TapoException) and error.error_code == 1003:
-            _LOGGER.warning("Default protocol not working, fallback to KLAP ;)")
-            protocol = KlapProtocol(
-                auth_credential=credentials,
-                url=url,
-                http_session=session,
-            )
-            response = (await protocol.send_request(device_info_request)).get_or_raise()
-            return client_factory(protocol, session), response.result
+    for protocol in protocols:
+        info = await protocol.send_request(device_info_request)
+        if info.is_success():
+            _LOGGER.info(f"Found working protocol {type(protocol)}")
+            return protocol
         else:
-            raise error
+            _LOGGER.info(f"Protocol {type(protocol)} not working, trying next...")
 
-
-def _get_device_class_from_info(device_info: dict[str, Any]) -> Type[AbstractTapoDevice]:
-    info = DeviceInfo(**device_info)
-    return _get_device_class_from_model_type(info.type, info.model)
+    _LOGGER.info("None of available protocol is working, maybe invalid credentials")
+    raise InvalidAuthentication(config.host, config.device_type)
 
 
 def _get_device_class_from_model_type(
     device_type: str, device_model: str
 ) -> Type[AbstractTapoDevice]:
     device_type = device_type.upper()
-    model = device_model.lower()
+    device_model = device_model.lower()
     if device_type == "SMART.TAPOPLUG":
-        return TapoPlugStrip if "p300" in model else TapoPlug
+        return TapoPlugStrip if "p300" in device_model else TapoPlug
     elif device_type == "SMART.TAPOBULB":
         return TapoBulb
     elif device_type == "SMART.TAPOHUB":

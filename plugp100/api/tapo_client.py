@@ -6,13 +6,14 @@ from typing import Optional, Any, cast
 import aiohttp
 
 from plugp100.api.light_effect import LightEffect
+from plugp100.api.requests.tapo_request import TapoRequest, MultipleRequestParams
 from plugp100.common.credentials import AuthCredential
 from plugp100.common.functional.tri import Try, Failure, Success
 from plugp100.common.utils.json_utils import Json, dataclass_encode_json
-from plugp100.protocol.klap_protocol import KlapProtocol
+from plugp100.protocol.klap import klap_handshake_v2
+from plugp100.protocol.klap.klap_protocol import KlapProtocol
 from plugp100.protocol.passthrough_protocol import PassthroughProtocol
 from plugp100.protocol.tapo_protocol import TapoProtocol
-from plugp100.requests.tapo_request import TapoRequest, MultipleRequestParams
 from plugp100.responses.child_device_list import ChildDeviceList
 from plugp100.responses.components import Components
 from plugp100.responses.energy_info import EnergyInfo
@@ -227,6 +228,7 @@ class TapoClient:
                     auth_credential=self._auth_credential,
                     url=self._url,
                     http_session=self._http_session,
+                    klap_strategy=klap_handshake_v2(),
                 )
             else:
                 raise error

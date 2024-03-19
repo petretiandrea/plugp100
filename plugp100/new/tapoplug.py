@@ -3,7 +3,7 @@ from typing import Optional
 from plugp100.api.tapo_client import TapoClient
 from plugp100.new.device_type import DeviceType
 from plugp100.new.tapodevice import AbstractTapoDevice
-from plugp100.requests.set_device_info.set_plug_info_params import SetPlugInfoParams
+from plugp100.api.requests.set_device_info.set_plug_info_params import SetPlugInfoParams
 from plugp100.responses.energy_info import EnergyInfo
 from plugp100.responses.power_info import PowerInfo
 

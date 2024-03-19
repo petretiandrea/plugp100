@@ -56,6 +56,18 @@ class TapoDevice(abc.ABC):
     async def update(self):
         pass
 
+    @abstractmethod
+    async def rssi(self) -> int:
+        pass
+
+    @abstractmethod
+    async def signal_level(self) -> int:
+        pass
+
+    @abstractmethod
+    async def firmware_version(self) -> str:
+        pass
+
 
 class AbstractTapoDevice(TapoDevice):
     def __init__(
@@ -95,7 +107,7 @@ class AbstractTapoDevice(TapoDevice):
 
     @property
     def nickname(self) -> str:
-        return self.device_info.nickname
+        return self.device_info.nickname or self.device_info.friendly_name
 
     @property
     def mac(self) -> str:
@@ -117,6 +129,18 @@ class AbstractTapoDevice(TapoDevice):
     @property
     def overheated(self) -> bool:
         return self.device_info.overheated
+
+    @property
+    def rssi(self) -> int:
+        return self.device_info.rssi
+
+    @property
+    def firmware_version(self) -> str:
+        return self.device_info.get_semantic_firmware_version().__str__()
+
+    @property
+    def signal_level(self) -> int:
+        return self.device_info.signal_level
 
     def __repr__(self):
         if self._last_update == {}:

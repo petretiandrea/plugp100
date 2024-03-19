@@ -1,12 +1,12 @@
 import logging
 from typing import Optional, List
 
+from plugp100.api.requests.tapo_request import TapoRequest
 from plugp100.api.tapo_client import TapoClient
 from plugp100.common.utils.json_utils import dataclass_encode_json
 from plugp100.new.device_type import DeviceType
 from plugp100.new.tapodevice import AbstractTapoDevice
-from plugp100.requests.set_device_info.set_plug_info_params import SetPlugInfoParams
-from plugp100.requests.tapo_request import TapoRequest
+from plugp100.api.requests.set_device_info.set_plug_info_params import SetPlugInfoParams
 from plugp100.responses.child_device_list import PowerStripChild
 from plugp100.responses.components import Components
 from plugp100.responses.device_state import DeviceInfo
@@ -51,6 +51,19 @@ class TapoStripSocket(AbstractTapoDevice):
                 child_id=self.child_id, request=TapoRequest.get_device_info()
             )
         ).get_or_raise()
+        components = (
+            self._last_update["components"]
+            if "components" in self._last_update
+            else Components.try_from_json(
+                (
+                    await self.client.control_child(
+                        child_id=self.child_id,
+                        request=TapoRequest.component_negotiation(),
+                    )
+                ).get_or_raise()
+            )
+        )
+
         self._last_update = {
             "device_info": DeviceInfo(
                 **{
@@ -61,7 +74,7 @@ class TapoStripSocket(AbstractTapoDevice):
                 }
             ),
             "state": state,
-            "components": Components({}),
+            "components": components,
         }
 
     async def turn_on(self):
@@ -79,3 +92,7 @@ class TapoStripSocket(AbstractTapoDevice):
     @property
     def is_on(self) -> bool:
         return self._last_update.get("state", {}).get("device_on", False)
+
+    @property
+    def parent_device_id(self) -> str:
+        return self._last_update.get("state", {}).get("original_device_id")

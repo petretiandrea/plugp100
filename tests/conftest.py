@@ -1,21 +1,23 @@
 import json
 from pathlib import Path
 from typing import Any, cast
+from unittest.mock import patch, AsyncMock
 
 import aiohttp
 import pytest
 
-from plugp100.api.tapo_client import TapoClient
-from plugp100.common.credentials import AuthCredential
-from plugp100.common.functional.tri import Try
-from plugp100.new.device_factory import _get_device_class_from_info
-from plugp100.new.tapodevice import TapoDevice
-from plugp100.protocol.tapo_protocol import TapoProtocol
-from plugp100.requests.tapo_request import (
+from plugp100.api.requests.tapo_request import (
     TapoRequest,
     ControlChildParams,
     MultipleRequestParams,
 )
+from plugp100.api.tapo_client import TapoClient
+from plugp100.common.credentials import AuthCredential
+from plugp100.common.functional.tri import Try
+from plugp100.new.device_factory import DeviceConnectConfiguration, connect
+from plugp100.new.tapodevice import TapoDevice
+from plugp100.protocol.tapo_protocol import TapoProtocol
+
 from plugp100.responses.tapo_response import TapoResponse
 
 plug = pytest.mark.parametrize("device", ["p100.json", "p105.json"], indirect=True)
@@ -46,16 +48,18 @@ async def device(request) -> TapoDevice:
         data = load_fixture(request.param)
     protocol = FakeProtocol(data)
     credential = AuthCredential("", "")
-    client = TapoClient(
-        auth_credential=credential,
-        url="",
-        protocol=protocol,
-        http_session=aiohttp.ClientSession(),
-    )
-    factory = _get_device_class_from_info((await client.get_device_info()).get_or_raise())
-    device = factory("", 80, client)
-    await device.update()
-    return device
+    with patch("plugp100.new.device_factory._get_or_guess_protocol") as mock:
+        mock.side_effect = AsyncMock(return_value=protocol)
+        connect_config = DeviceConnectConfiguration(
+            host="",
+            port=80,
+            credentials=credential,
+            encryption_type="klap",
+            encryption_version=2,
+        )
+        device = await connect(connect_config)
+        await device.update()
+        return device
 
 
 def load_fixture_with_merge(files: list[str]):

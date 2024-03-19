@@ -3,7 +3,11 @@ import base64
 import logging
 from typing import Optional, List, Set, Any, Callable, cast
 
-from plugp100.api.hub.hub_device_tracker import HubConnectedDeviceTracker, HubDeviceEvent
+from plugp100.api.requests.set_device_info.play_alarm_params import PlayAlarmParams
+from plugp100.api.requests.set_device_info.set_trv_info_params import TRVDeviceInfoParams
+from plugp100.api.requests.tapo_request import TapoRequest
+from plugp100.api.requests.trigger_logs_params import GetTriggerLogsParams
+from plugp100.new.hub_device_tracker import HubConnectedDeviceTracker, HubDeviceEvent
 from plugp100.api.tapo_client import TapoClient
 from plugp100.common.functional.tri import Try, Failure
 from plugp100.common.utils.json_utils import dataclass_encode_json, Json
@@ -14,11 +18,8 @@ from plugp100.new.event_polling.event_subscription import (
 )
 from plugp100.new.event_polling.poll_tracker import PollTracker, PollSubscription
 from plugp100.new.tapodevice import AbstractTapoDevice, TapoDevice
-from plugp100.requests.set_device_info.play_alarm_params import PlayAlarmParams
-from plugp100.requests.set_device_info.set_plug_info_params import SetPlugInfoParams
-from plugp100.requests.set_device_info.set_trv_info_params import TRVDeviceInfoParams
-from plugp100.requests.tapo_request import TapoRequest
-from plugp100.requests.trigger_logs_params import GetTriggerLogsParams
+from plugp100.api.requests.set_device_info.set_plug_info_params import SetPlugInfoParams
+
 from plugp100.responses.alarm_type_list import AlarmTypeList
 from plugp100.responses.components import Components
 from plugp100.responses.device_state import DeviceInfo
@@ -93,6 +94,19 @@ class TapoHub(AbstractTapoDevice):
     @property
     def children(self) -> List["TapoHubChildDevice"]:
         return self._children
+
+    def find_child_device_by_model(
+        self, model_filter: str
+    ) -> Optional["TapoHubChildDevice"]:
+        return next(
+            (
+                child
+                for child in self.children
+                if child.device_id is not None
+                and model_filter.lower() in child.model.lower()
+            ),
+            None,
+        )
 
     async def turn_alarm_on(self, alarm: PlayAlarmParams = None) -> Try[bool]:
         if self.has_alarm:
@@ -224,6 +238,18 @@ class TapoHubChildDevice(TapoDevice):
     @abc.abstractmethod
     async def _fetch_state(self) -> Try[tuple[HubChildBaseInfo, Any]]:
         pass
+
+    @property
+    async def rssi(self) -> int:
+        return self.device_info.rssi
+
+    @property
+    async def signal_level(self) -> int:
+        return self.device_info.signal_level
+
+    @property
+    async def firmware_version(self) -> str:
+        return self.device_info.get_semantic_firmware_version().__str__()
 
 
 class KE100Device(TapoHubChildDevice):
@@ -629,7 +655,7 @@ class WaterLeakSensor(TapoHubChildDevice):
         )
 
     @property
-    def alarm_active(self) -> bool:
+    def is_alarm_active(self) -> bool:
         return cast(LeakDeviceState, self._last_update["state"]).in_alarm
 
     @property

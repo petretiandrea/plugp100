@@ -16,7 +16,7 @@ button = pytest.mark.parametrize(
 @button
 async def test_should_get_expose_state(device: TapoHub):
     child = cast(S200ButtonDevice, device.children[0])
-    assert child.device_type == DeviceType.Hub
+    assert child.device_type == DeviceType.Sensor
 
     assert child.parent_device_id is not None
     assert child.mac is not None

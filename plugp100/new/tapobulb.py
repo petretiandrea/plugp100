@@ -2,15 +2,18 @@ import dataclasses
 from typing import Optional, Union, Tuple
 
 from plugp100.api.light_effect import LightEffect
+from plugp100.api.requests.set_device_info.set_light_color_info_params import (
+    LightColorDeviceInfoParams,
+)
 from plugp100.api.tapo_client import TapoClient
 from plugp100.common.functional.tri import Try, Failure
 from plugp100.new.device_type import DeviceType
 from plugp100.new.tapodevice import AbstractTapoDevice
-from plugp100.requests.set_device_info.set_light_color_info_params import (
-    LightColorDeviceInfoParams,
+
+from plugp100.api.requests.set_device_info.set_light_info_params import (
+    LightDeviceInfoParams,
 )
-from plugp100.requests.set_device_info.set_light_info_params import LightDeviceInfoParams
-from plugp100.requests.set_device_info.set_plug_info_params import SetPlugInfoParams
+from plugp100.api.requests.set_device_info.set_plug_info_params import SetPlugInfoParams
 from plugp100.responses.device_state import LedStripDeviceState, LightDeviceState
 
 
