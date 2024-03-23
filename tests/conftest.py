@@ -106,7 +106,7 @@ class FakeProtocol(TapoProtocol):
             self._data["get_device_info"]["in_alarm"] = False
             return _tapo_response_of({})
         else:
-            response = self._data.get(method, Try.of(TapoResponse(0, {}, None)))
+            response = self._data.get(method, {})
             return _tapo_response_of(response)
 
     async def close(self):

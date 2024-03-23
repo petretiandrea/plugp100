@@ -1,6 +1,3 @@
-import asyncio
-from unittest.mock import MagicMock
-
 from plugp100.new.device_type import DeviceType
 from plugp100.new.tapohub import TapoHub
 from tests.conftest import hub

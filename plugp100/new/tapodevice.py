@@ -1,109 +1,97 @@
 import abc
+import dataclasses
 import logging
 from abc import abstractmethod
-from typing import Optional
+from typing import Optional, TypeVar, Type, Dict, Any, Generic
 
+from plugp100.api.requests.tapo_request import TapoRequest
 from plugp100.api.tapo_client import TapoClient
+from plugp100.common.functional.tri import Try
+from plugp100.new.components.device_component import DeviceComponent
+from plugp100.new.components.overheat_component import OverheatComponent
 from plugp100.new.device_type import DeviceType
 from plugp100.responses.components import Components
 from plugp100.responses.device_state import DeviceInfo
 
 _LOGGER = logging.getLogger("TapoDevice")
 
-
-class TapoDevice(abc.ABC):
-    @property
-    @abstractmethod
-    def device_info(self) -> DeviceInfo:
-        pass
-
-    @property
-    @abstractmethod
-    def components(self) -> Components:
-        pass
-
-    @property
-    @abstractmethod
-    def nickname(self) -> str:
-        pass
-
-    @property
-    @abstractmethod
-    def mac(self) -> str:
-        pass
-
-    @property
-    @abstractmethod
-    def model(self) -> str:
-        pass
-
-    @property
-    @abstractmethod
-    def device_id(self) -> str:
-        pass
-
-    @property
-    @abstractmethod
-    def device_type(self) -> DeviceType:
-        pass
-
-    @property
-    @abstractmethod
-    def overheated(self) -> bool:
-        pass
-
-    @abstractmethod
-    async def update(self):
-        pass
-
-    @abstractmethod
-    async def rssi(self) -> int:
-        pass
-
-    @abstractmethod
-    async def signal_level(self) -> int:
-        pass
-
-    @abstractmethod
-    async def firmware_version(self) -> str:
-        pass
+C = TypeVar("C", bound=DeviceComponent)
 
 
-class AbstractTapoDevice(TapoDevice):
+@dataclasses.dataclass
+class LastUpdate:
+    components: Components
+    device_info: DeviceInfo
+
+
+class TapoDevice:
     def __init__(
         self,
         host: str,
         port: Optional[int],
         client: TapoClient,
         device_type: DeviceType = DeviceType.Unknown,
+        child_id: Optional[str] = None,
     ):
         self.host = host
         self.port = port
         self.client = client
-        self._last_update = {}
+        self._child_id = child_id
+        self._last_update: LastUpdate | None = None
         self._device_type = device_type
-        self._additional_data = {}
+        self._active_components: Dict[Type[DeviceComponent], DeviceComponent] = {}
 
     async def update(self):
-        if "components" not in self._last_update:
-            components = (await self.client.get_component_negotiation()).get_or_raise()
+        if self._last_update is None:
+            _LOGGER.info("Initializing device...")
+            components = await self._negotiate_components()
+            await self._setup_components(components)
         else:
-            components = self._last_update["components"]
-        response = (await self.client.get_device_info()).get_or_raise()
-        self._last_update = {
-            "device_info": DeviceInfo(**response),
-            "components": components,
-            "state": response,
-        }
-        # update other modules
+            components = self._last_update.components
+
+        if self._child_id:
+            state = (
+                await self.client.control_child(
+                    child_id=self._child_id, request=TapoRequest.get_device_info()
+                )
+            ).get_or_raise()
+        else:
+            state = (await self.client.get_device_info()).get_or_raise()
+        self._last_update = LastUpdate(
+            device_info=DeviceInfo(**state), components=components
+        )
+        await self._update_from_state(state)
+        _LOGGER.info("Fetching component updates...")
+        for _, component in self._active_components.items():
+            await component.update(state)
+
+    async def _update_from_state(self, state: dict[str, Any]):
+        pass
+
+    async def _setup_components(self, components: Components):
+        for feature in self._get_components_to_activate(components):
+            self.add_component(feature)
+        self.add_component(OverheatComponent())
+
+    def _get_components_to_activate(self, components: Components) -> list[C]:
+        return []
+
+    def add_component(self, component: C):
+        self._active_components[type(component)] = component
+
+    def get_component(self, component_type: Type[C]) -> Optional[C]:
+        return self._active_components.get(component_type, None)
+
+    def has_component(self, component_type: Type[C]) -> bool:
+        return self.get_component(component_type) is not None
 
     @property
     def device_info(self) -> DeviceInfo:
-        return self._last_update["device_info"]
+        return self._last_update.device_info
 
     @property
     def components(self) -> Components:
-        return self._last_update["components"]
+        return self._last_update.components
 
     @property
     def nickname(self) -> str:
@@ -131,16 +119,20 @@ class AbstractTapoDevice(TapoDevice):
         return self.device_info.overheated
 
     @property
-    def rssi(self) -> int:
-        return self.device_info.rssi
-
-    @property
     def firmware_version(self) -> str:
         return self.device_info.get_semantic_firmware_version().__str__()
 
     @property
-    def signal_level(self) -> int:
-        return self.device_info.signal_level
+    def wifi_info(self) -> "WifiInfo":
+        return WifiInfo(self.device_info.signal_level, self.device_info.rssi)
+
+    async def _negotiate_components(self) -> Components:
+        if self._child_id:
+            child_components = await self.client.control_child(
+                self._child_id, TapoRequest.component_negotiation()
+            )
+            return Components.try_from_json(child_components.get_or_raise())
+        return (await self.client.get_component_negotiation()).get_or_raise()
 
     def __repr__(self):
         if self._last_update == {}:
@@ -148,5 +140,11 @@ class AbstractTapoDevice(TapoDevice):
         return (
             f"<{self._device_type} model {self.model} at {self.host}"
             f" ({self.nickname})"
-            f" - dev specific: {self._last_update['state']}>"
+            f" - dev specific: {self._last_update.state}>"
         )
+
+
+@dataclasses.dataclass
+class WifiInfo:
+    signal_level: int
+    rssi: int

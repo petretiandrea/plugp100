@@ -1,6 +1,7 @@
 from typing import cast
 
-from plugp100.new.tapohub import TapoHub, KE100Device
+from plugp100.new.child.tapohubchildren import KE100Device
+from plugp100.new.tapohub import TapoHub
 from plugp100.responses.hub_childs.ke100_device_state import TRVState
 from plugp100.responses.temperature_unit import TemperatureUnit
 from tests.conftest import trv
@@ -9,7 +10,7 @@ from tests.conftest import trv
 @trv
 async def test_should_get_child(device: TapoHub):
     child = cast(KE100Device, device.children[0])
-    assert child.parent_device_id == "77JJAYBSKD83BBCC"
+    assert child.parent_device_id == "802D86324AC15B78B560A284ED9A2E292137268A"
 
     assert child.mac == "11AA22BB33CC"
     assert child.device_id is not None

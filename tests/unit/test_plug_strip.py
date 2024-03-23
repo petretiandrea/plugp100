@@ -1,11 +1,11 @@
 from plugp100.new.device_type import DeviceType
-from plugp100.new.tapoplugstrip import TapoPlugStrip
+from plugp100.new.tapoplug import TapoPlug
 from tests.conftest import plug_strip
 
 
 @plug_strip
-async def test_must_expose_device_info(device: TapoPlugStrip):
-    assert device.device_type == DeviceType.PlugStrip
+async def test_must_expose_device_info(device: TapoPlug):
+    assert device.device_type == DeviceType.Plug
 
     assert device.device_id is not None
     assert device.mac is not None
@@ -20,7 +20,7 @@ async def test_must_expose_device_info(device: TapoPlugStrip):
 
 
 @plug_strip
-async def test_must_expose_socks_info(device: TapoPlugStrip):
+async def test_must_expose_socks_info(device: TapoPlug):
     for sock in device.sockets:
         assert sock.device_type == DeviceType.Plug
         assert sock.device_id is not None
@@ -35,7 +35,7 @@ async def test_must_expose_socks_info(device: TapoPlugStrip):
 
 
 @plug_strip
-async def test_must_turn_on(device: TapoPlugStrip):
+async def test_must_turn_on(device: TapoPlug):
     for sock in device.sockets:
         await sock.turn_on()
         await sock.update()
@@ -43,7 +43,7 @@ async def test_must_turn_on(device: TapoPlugStrip):
 
 
 @plug_strip
-async def test_must_turn_off(device: TapoPlugStrip):
+async def test_must_turn_off(device: TapoPlug):
     for sock in device.sockets:
         await sock.turn_off()
         await sock.update()

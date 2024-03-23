@@ -6,7 +6,6 @@ class DeviceType(Enum):
 
     # The values match what the cli has historically used]
     Plug = "plug"
-    PlugStrip = "plugStrip"
     Bulb = "bulb"
     Hub = "hub"
     Sensor = "sensor"

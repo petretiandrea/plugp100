@@ -7,13 +7,11 @@ import aiohttp
 from plugp100.common.credentials import AuthCredential
 from plugp100.protocol.klap.klap_protocol import KlapProtocol
 from plugp100.protocol.passthrough_protocol import PassthroughProtocol
-from plugp100.responses.tapo_exception import TapoException
 from .errors.invalid_authentication import InvalidAuthentication
 from .tapobulb import TapoBulb
-from .tapodevice import AbstractTapoDevice
+from .tapodevice import TapoDevice
 from .tapohub import TapoHub
 from .tapoplug import TapoPlug
-from .tapoplugstrip import TapoPlugStrip
 from ..api.requests.tapo_request import TapoRequest
 from ..api.tapo_client import TapoClient
 from ..protocol.klap import klap_handshake_v1, klap_handshake_v2
@@ -106,13 +104,12 @@ async def _guess_protocol(
 
 def _get_device_class_from_model_type(
     device_type: str, device_model: str
-) -> Type[AbstractTapoDevice]:
+) -> Type[TapoDevice]:
     device_type = device_type.upper()
-    device_model = device_model.lower()
     if device_type == "SMART.TAPOPLUG":
-        return TapoPlugStrip if "p300" in device_model else TapoPlug
+        return TapoPlug
     elif device_type == "SMART.TAPOBULB":
         return TapoBulb
     elif device_type == "SMART.TAPOHUB":
         return TapoHub
-    return AbstractTapoDevice
+    return TapoDevice
