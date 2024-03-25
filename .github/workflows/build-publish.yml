@@ -73,6 +73,38 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install setuptools wheel twine
+
+      - name: Semantic Release (Dry Run)
+        id: semantic
+        uses: cycjimmy/semantic-release-action@v4
+        with:
+          semantic_version: 23.0.2
+          branches: |
+            [ 'main', {name: 'next', prerelease: true}, {name: 'dev', channel: 'dev', prerelease: true} ]
+          extra_plugins: |
+            @semantic-release/commit-analyzer@11.1.0
+            @semantic-release/release-notes-generator@12.1.0
+            @semantic-release/git@10.0.1
+            @semantic-release/github@9.2.6
+          dry_run: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Bump version file
+        run: sed -i 's/__version__ = ".*"/__version__ = \"${{ steps.semantic.outputs.new_release_version }}\"/g' plugp100/__init__.py
+
+      - name: Generating Any and Source Distribution
+        run: |
+          python setup.py sdist bdist_wheel
+          ls -R
+
+      - name: Publish source distribution to PyPi
+        env:
+          TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
+          TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+        run: |
+          twine upload dist/*
+
       - name: Semantic Release
         uses: cycjimmy/semantic-release-action@4.0.0
         with:
@@ -84,16 +116,5 @@ jobs:
             @semantic-release/release-notes-generator@12.1.0
             @semantic-release/git@10.0.1
             @semantic-release/github@9.2.6
-            @semantic-release/exec@6.0.3
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Generating Any and Source Distribution
-        run: |
-          python setup.py sdist bdist_wheel
-          ls -R
-      - name: Publish source distribution to PyPi
-        env:
-          TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
-          TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
-        run: |
-          twine upload dist/*

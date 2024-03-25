@@ -4,7 +4,6 @@ import unittest
 
 import yaml
 
-from plugp100.api.tapo_client import TapoClient
 from plugp100.common.credentials import AuthCredential
 from plugp100.new.device_factory import DeviceConnectConfiguration
 from plugp100.new.tapodevice import TapoDevice
@@ -14,12 +13,12 @@ from plugp100.responses.device_usage_info import DeviceUsageInfo
 async def _test_expose_device_info(device: TapoDevice, test: unittest.TestCase):
     test.assertIsNotNone(device.device_id)
     test.assertIsNotNone(device.mac)
-    test.assertIsNotNone(device.rssi)
+    test.assertIsNotNone(device.wifi_info.rssi)
     test.assertIsNotNone(device.model)
     test.assertIsNotNone(device.firmware_version)
     test.assertIsNotNone(device.nickname)
     test.assertIsNotNone(device.overheated)
-    test.assertIsNotNone(device.signal_level)
+    test.assertIsNotNone(device.wifi_info.signal_level)
     test.assertIsNotNone(device.device_type)
 
 
@@ -47,11 +46,6 @@ async def get_test_config(device_type: DeviceType) -> DeviceConnectConfiguration
     return DeviceConnectConfiguration(
         host=ip, credentials=AuthCredential(username, password)
     )
-
-
-async def get_initialized_client(credential: AuthCredential, ip: str) -> TapoClient:
-    client = TapoClient.create(credential, ip)
-    return client
 
 
 @functools.cache

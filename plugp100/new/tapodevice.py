@@ -41,6 +41,10 @@ class TapoDevice:
         self._device_type = device_type
         self._active_components: Dict[Type[DeviceComponent], DeviceComponent] = {}
 
+    @property
+    def protocol_version(self) -> str:
+        return self.client.protocol.name
+
     async def update(self):
         if self._last_update is None:
             _LOGGER.info("Initializing device...")
@@ -140,7 +144,7 @@ class TapoDevice:
         return (
             f"<{self._device_type} model {self.model} at {self.host}"
             f" ({self.nickname})"
-            f" - dev specific: {self._last_update.state}>"
+            f" - dev specific: {self._last_update.device_info}>"
         )
 
 

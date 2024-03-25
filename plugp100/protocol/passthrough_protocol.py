@@ -35,6 +35,10 @@ class PassthroughProtocol(TapoProtocol):
         self._session: Optional[Session] = None
         self._credential = auth_credential
 
+    @property
+    def name(self) -> str:
+        return "Passthrough"
+
     async def send_request(
         self, request: TapoRequest, retry: int = 3
     ) -> Try[TapoResponse[dict[str, Any]]]:

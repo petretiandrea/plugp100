@@ -4,6 +4,11 @@
     {
       "name": "next",
       "prerelease": true
+    },
+    {
+      "name": "dev",
+      "channel": "dev",
+      "prerelease": true
     }
   ],
   "ci": true,
@@ -22,12 +27,6 @@
       }
     ],
     "@semantic-release/release-notes-generator",
-    [
-      "@semantic-release/exec",
-      {
-        "publishCmd": "sed -i 's/__version__ = \".*\"/__version__ = \"${nextRelease.version}\"/g' plugp100/__init__.py"
-      }
-    ],
     [
       "@semantic-release/git",
       {

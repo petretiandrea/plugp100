@@ -30,31 +30,6 @@ class TapoProtocolType(Enum):
 
 
 class TapoClient:
-    @staticmethod
-    def create(
-        credential: AuthCredential,
-        address: str,
-        port: int = 80,
-        is_https: bool = False,
-        http_session: Optional[aiohttp.ClientSession] = None,
-        protocol_type: TapoProtocolType = TapoProtocolType.AUTO,
-    ) -> "TapoClient":
-        url = f"{'https' if is_https else 'http'}://{address}:{port}/app"
-        protocol = None
-        if protocol_type == TapoProtocolType.KLAP:
-            protocol = KlapProtocol(
-                auth_credential=credential,
-                url=url,
-                http_session=http_session,
-            )
-        elif protocol_type == TapoProtocolType.PASSTHROUGH:
-            protocol = PassthroughProtocol(
-                auth_credential=credential,
-                url=url,
-                http_session=http_session,
-            )
-        return TapoClient(credential, url, protocol, http_session)
-
     def __init__(
         self,
         auth_credential: AuthCredential,
@@ -65,17 +40,16 @@ class TapoClient:
         self._auth_credential = auth_credential
         self._url = url
         self._http_session = http_session
-        self._protocol: Optional[TapoProtocol] = protocol
+        self._protocol = protocol
 
-    async def _initialize_protocol_if_needed(self):
-        if self._protocol is None:
-            await self._guess_protocol()
+    @property
+    def protocol(self) -> TapoProtocol:
+        return self._protocol
 
     async def close(self):
         await self._protocol.close()
 
     async def execute_raw_request(self, request: "TapoRequest") -> Try[Json]:
-        await self._initialize_protocol_if_needed()
         return (await self._protocol.send_request(request)).map(lambda x: x.result)
 
     async def get_component_negotiation(self) -> Try[Components]:
@@ -186,7 +160,6 @@ class TapoClient:
         @type request: TapoRequest
         @return: an instance of the `Either` class, which can contain either a `Json` object or an `Exception`.
         """
-        await self._initialize_protocol_if_needed()
         multiple_request = TapoRequest.multiple_request(
             MultipleRequestParams([request])
         ).with_request_time_millis(round(time() * 1000))

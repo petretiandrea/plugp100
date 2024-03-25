@@ -1,7 +1,8 @@
 import unittest
 
+from plugp100.new.child.tapohubchildren import TemperatureHumiditySensor
 from plugp100.new.device_factory import connect
-from plugp100.new.tapohub import TapoHub, T31Device
+from plugp100.new.tapohub import TapoHub
 from plugp100.responses.temperature_unit import TemperatureUnit
 from tests.integration.tapo_test_helper import (
     get_test_config,
@@ -19,7 +20,9 @@ class SensorT310Test(unittest.IsolatedAsyncioTestCase):
         config = await get_test_config(device_type="hub")
         self._hub: TapoHub = await connect(config)
         await self._hub.update()
-        self._device: T31Device = self._hub.find_child_device_by_model("T310")
+        self._device: TemperatureHumiditySensor = self._hub.find_child_device_by_model(
+            "T310"
+        )
         await self._device.update()
 
     async def asyncTearDown(self):
@@ -29,15 +32,15 @@ class SensorT310Test(unittest.IsolatedAsyncioTestCase):
         self.assertIsNotNone(self._device.parent_device_id)
         self.assertIsNotNone(self._device.device_id)
         self.assertIsNotNone(self._device.mac)
-        self.assertIsNotNone(self._device.rssi)
+        self.assertIsNotNone(self._device.wifi_info.rssi)
         self.assertIsNotNone(self._device.model)
         self.assertIsNotNone(self._device.firmware_version)
         self.assertIsNotNone(self._device.nickname)
         self.assertIsNotNone(self._device.current_humidity)
         self.assertIsNotNone(self._device.current_temperature)
-        self.assertIsNotNone(self._device.current_humidity_exception)
-        self.assertIsNotNone(self._device.current_temperature_exception)
-        self.assertIsNotNone(self._device.current_temperature_exception)
+        self.assertIsNotNone(self._device.current_humidity)
+        self.assertIsNotNone(self._device.current_humidity_error)
+        self.assertIsNotNone(self._device.current_temperature_error)
         self.assertIsNotNone(self._device.report_interval_seconds)
         self.assertEqual(self._device.temperature_unit, TemperatureUnit.CELSIUS)
         self.assertEqual(self._device.battery_low, False)

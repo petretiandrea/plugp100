@@ -20,7 +20,7 @@ from plugp100.protocol.tapo_protocol import TapoProtocol
 from plugp100.api.requests.tapo_request import TapoRequest
 from plugp100.responses.tapo_response import TapoResponse
 
-from .klap_handshake_revision import KlapHandshakeRevision
+from .klap_handshake_revision import KlapHandshakeRevision, KlapHandshakeRevisionV2
 
 logger = logging.getLogger(__name__)
 
@@ -55,6 +55,13 @@ class KlapProtocol(TapoProtocol):
             if http_session is None
             else http_session
         )
+
+    @property
+    def name(self) -> str:
+        if self._klap_strategy is KlapHandshakeRevisionV2:
+            return "Klap V2"
+        else:
+            return "Klap V1"
 
     async def send_request(
         self, request: TapoRequest, retry: int = 3
