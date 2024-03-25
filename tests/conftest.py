@@ -82,6 +82,10 @@ def load_fixture(file: str):
 
 
 class FakeProtocol(TapoProtocol):
+    @property
+    def name(self) -> str:
+        return "Fake protocol"
+
     def __init__(self, data: dict[str, Any]):
         self._data = data
 
