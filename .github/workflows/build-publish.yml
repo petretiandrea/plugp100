@@ -62,10 +62,12 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
+
       - name: Setup Node 20.x
-        uses: actions/setup-node@4.0.2
+        uses: actions/setup-node@v4
         with:
           node-version: 20
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -107,11 +109,11 @@ jobs:
           twine upload dist/*
 
       - name: Semantic Release
-        uses: cycjimmy/semantic-release-action@4.0.0
+        uses: cycjimmy/semantic-release-action@v4
         with:
           semantic_version: 23.0.2
           branches: |
-            [ 'main',  {name: 'next', prerelease: true}]
+            [ 'main',  {name: 'next', prerelease: true},  {name: 'dev', channel: 'dev', prerelease: true}]
           extra_plugins: |
             @semantic-release/commit-analyzer@11.1.0
             @semantic-release/release-notes-generator@12.1.0
