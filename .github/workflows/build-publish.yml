@@ -110,6 +110,7 @@ jobs:
 
       - name: Semantic Release
         uses: cycjimmy/semantic-release-action@v4
+        if: failure()
         with:
           semantic_version: 23.0.2
           branches: |
