@@ -185,23 +185,3 @@ class TapoClient:
             TapoRequest.set_device_info(device_info)
         )
         return response.map(lambda _: True)
-
-    async def _guess_protocol(self):
-        self._protocol = PassthroughProtocol(
-            auth_credential=self._auth_credential,
-            url=self._url,
-            http_session=self._http_session,
-        )
-        response = await self.get_component_negotiation()
-        if response.is_failure():
-            error = response.error()
-            if isinstance(error, TapoException) and error.error_code == 1003:
-                logger.info("Default protocol not working, fallback to KLAP ;)")
-                self._protocol = KlapProtocol(
-                    auth_credential=self._auth_credential,
-                    url=self._url,
-                    http_session=self._http_session,
-                    klap_strategy=klap_handshake_v2(),
-                )
-            else:
-                raise error
