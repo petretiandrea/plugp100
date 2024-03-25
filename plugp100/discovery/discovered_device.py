@@ -1,6 +1,12 @@
 import dataclasses
 from typing import Optional, Any
 
+import aiohttp
+
+from plugp100.common.credentials import AuthCredential
+from plugp100.new.device_factory import DeviceConnectConfiguration, connect
+from plugp100.new.tapodevice import TapoDevice
+
 
 @dataclasses.dataclass
 class DiscoveredDevice:
@@ -32,6 +38,19 @@ class DiscoveredDevice:
             factory_default=values.get("factory_default", None),
             mgt_encrypt_schm=EncryptionScheme(**values.get("mgt_encrypt_schm")),
         )
+
+    async def get_tapo_device(
+        self, credentials: AuthCredential, session: Optional[aiohttp.ClientSession] = None
+    ) -> TapoDevice:
+        config = DeviceConnectConfiguration(
+            host=self.ip,
+            port=self.mgt_encrypt_schm.http_port,
+            credentials=credentials,
+            device_type=self.device_type,
+            encryption_type=self.mgt_encrypt_schm.encrypt_type,
+            encryption_version=self.mgt_encrypt_schm.lv,
+        )
+        return await connect(config, session)
 
 
 @dataclasses.dataclass

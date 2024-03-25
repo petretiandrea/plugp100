@@ -1,0 +1,141 @@
+{
+  "component_nego": {
+    "component_list": [
+      {
+        "id": "device",
+        "ver_code": 2
+      },
+      {
+        "id": "firmware",
+        "ver_code": 2
+      },
+      {
+        "id": "quick_setup",
+        "ver_code": 3
+      },
+      {
+        "id": "inherit",
+        "ver_code": 1
+      },
+      {
+        "id": "time",
+        "ver_code": 1
+      },
+      {
+        "id": "wireless",
+        "ver_code": 1
+      },
+      {
+        "id": "account",
+        "ver_code": 1
+      },
+      {
+        "id": "synchronize",
+        "ver_code": 1
+      },
+      {
+        "id": "sunrise_sunset",
+        "ver_code": 1
+      },
+      {
+        "id": "led",
+        "ver_code": 1
+      },
+      {
+        "id": "cloud_connect",
+        "ver_code": 1
+      },
+      {
+        "id": "iot_cloud",
+        "ver_code": 1
+      },
+      {
+        "id": "child_device",
+        "ver_code": 1
+      },
+      {
+        "id": "child_quick_setup",
+        "ver_code": 1
+      },
+      {
+        "id": "child_inherit",
+        "ver_code": 1
+      },
+      {
+        "id": "control_child",
+        "ver_code": 1
+      },
+      {
+        "id": "alarm",
+        "ver_code": 1
+      },
+      {
+        "id": "device_load",
+        "ver_code": 1
+      },
+      {
+        "id": "device_local_time",
+        "ver_code": 1
+      },
+      {
+        "id": "alarm_logs",
+        "ver_code": 1
+      }
+    ]
+  },
+  "get_device_info": {
+    "device_id": "802D86324AC15B78B560A284ED9A2E292137268A",
+    "fw_ver": "1.3.9 Build 230522 Rel.103415",
+    "hw_ver": "1.0",
+    "type": "SMART.TAPOHUB",
+    "model": "H100",
+    "mac": "78-8C-B5-F7-46-85",
+    "hw_id": "81C01BC6E4AD1827315AC6A9D81A5132",
+    "fw_id": "00000000000000000000000000000000",
+    "oem_id": "D65F1AA7B819559EDF3C5C2BD5957929",
+    "overheated": false,
+    "ip": "192.168.1.13",
+    "time_diff": 60,
+    "ssid": "SG9tZS1OZXR3b3Jr",
+    "rssi": -61,
+    "signal_level": 2,
+    "in_alarm": false,
+    "in_alarm_source": "",
+    "latitude": 437009,
+    "longitude": 128307,
+    "lang": "en_US",
+    "avatar": "hub",
+    "region": "Europe/Rome",
+    "specs": "EU",
+    "nickname": "U21hcnQgSHVi",
+    "has_set_location_info": true
+  },
+  "get_child_device_list": {
+    "child_device_list": [],
+    "start_index": 0,
+    "sum": 0
+  },
+  "get_support_alarm_type_list": {
+    "alarm_type_list": [
+      "Doorbell Ring 1",
+      "Doorbell Ring 2",
+      "Doorbell Ring 3",
+      "Doorbell Ring 4",
+      "Doorbell Ring 5",
+      "Doorbell Ring 6",
+      "Doorbell Ring 7",
+      "Doorbell Ring 8",
+      "Doorbell Ring 9",
+      "Doorbell Ring 10",
+      "Phone Ring",
+      "Alarm 1",
+      "Alarm 2",
+      "Alarm 3",
+      "Alarm 4",
+      "Dripping Tap",
+      "Alarm 5",
+      "Connection 1",
+      "Connection 2"
+    ]
+  }
+}

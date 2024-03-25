@@ -47,9 +47,11 @@ class LightDeviceState(DeviceState):
     hue: Optional[int]
     saturation: Optional[int]
     color_temp: Optional[int]
+    color_temp_range: Optional[tuple[int, int]]
 
     @staticmethod
     def try_from_json(kwargs: dict[str, Any]) -> Try["LightDeviceState"]:
+        color_temp_range = tuple(kwargs.get("color_temp_range", []))
         return Try.of(
             lambda: LightDeviceState(
                 info=DeviceInfo(**kwargs),
@@ -58,6 +60,7 @@ class LightDeviceState(DeviceState):
                 hue=kwargs.get("hue", None),
                 saturation=kwargs.get("saturation", None),
                 color_temp=kwargs.get("color_temp", None),
+                color_temp_range=None if color_temp_range == () else color_temp_range,
             )
         )
 
@@ -107,7 +110,7 @@ class DeviceInfo:
     overheated: bool
 
     # wifi
-    ssid: str
+    ssid: Optional[str]
     signal_level: int
     rssi: int
     friendly_name: str
@@ -134,7 +137,9 @@ class DeviceInfo:
         self.type = kwargs["type"]
         self.overheated = kwargs.get("overheated", False)
         self.ip = kwargs.get("ip")
-        self.ssid = base64.b64decode(kwargs["ssid"]).decode()
+        self.ssid = (
+            base64.b64decode(kwargs["ssid"]).decode() if "ssid" in kwargs else None
+        )
         self.signal_level = kwargs.get("signal_level", 0)
         self.rssi = kwargs.get("rssi", 0)
         self.friendly_name = self.model if self.nickname == "" else self.nickname

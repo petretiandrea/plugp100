@@ -1,8 +1,49 @@
 name: Code Review
-on: pull_request
+on:
+  pull_request:
+    types:
+      - opened
+      - edited
+      - synchronize
+    branches:
+      - main
+      - dev
+      - next
+
+permissions:
+  pull-requests: write
+  statuses: write
 
 jobs:
+  validate-pr-title:
+    name: Validate PR title
+    runs-on: ubuntu-latest
+    steps:
+      - uses: amannn/action-semantic-pull-request@v5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          types: |
+            docs
+            refactor
+            chore
+            fix
+            feat
+            breaking
+          scopes: |
+            ci
+            core
+          requireScope: true
+          ignoreLabels: |
+            bot
+          subjectPattern: ^.+$
+          subjectPatternError: |
+            The subject "{subject}" found in the pull request title "{title}"
+            didn't match the configured pattern. Please ensure that the subject
+            doesn't start with an uppercase character.
+          wip: true
   black:
+    name: Linting & Test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4.1.1
@@ -18,4 +59,16 @@ jobs:
           black --check --verbose .
       - name: "Test code"
         run: |
-          python -m unittest discover -s tests/unit
+          pytest \
+            --durations=10 \
+            --cov-fail-under=60 \
+            --junitxml=pytest.xml \
+            --cov-report=term-missing:skip-covered \
+            --cov=app \
+            -p no:sugar \
+            tests/unit | tee pytest-coverage.txt
+      - name: Pytest coverage comment
+        uses: MishaKav/pytest-coverage-comment@main
+        with:
+          pytest-coverage-path: ./pytest-coverage.txt
+          junitxml-path: ./pytest.xml
