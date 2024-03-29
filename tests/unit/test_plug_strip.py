@@ -23,6 +23,7 @@ async def test_must_expose_device_info(device: TapoPlug):
 async def test_must_expose_socks_info(device: TapoPlug):
     for sock in device.sockets:
         assert sock.device_type == DeviceType.Plug
+        assert sock.device_id != device.device_id
         assert sock.device_id is not None
         assert sock.mac is not None
         assert sock.model is not None

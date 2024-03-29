@@ -22,6 +22,7 @@ C = TypeVar("C", bound=DeviceComponent)
 class LastUpdate:
     components: Components
     device_info: DeviceInfo
+    raw_state: dict[str, Any]
 
 
 class TapoDevice:
@@ -62,7 +63,7 @@ class TapoDevice:
         else:
             state = (await self.client.get_device_info()).get_or_raise()
         self._last_update = LastUpdate(
-            device_info=DeviceInfo(**state), components=components
+            device_info=DeviceInfo(**state), components=components, raw_state=state
         )
         await self._update_from_state(state)
         _LOGGER.info("Fetching component updates...")
@@ -125,6 +126,10 @@ class TapoDevice:
     @property
     def firmware_version(self) -> str:
         return self.device_info.get_semantic_firmware_version().__str__()
+
+    @property
+    def hardware_version(self) -> str:
+        return self.device_info.hardware_version
 
     @property
     def wifi_info(self) -> "WifiInfo":
