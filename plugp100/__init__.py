@@ -16,4 +16,4 @@ from plugp100.api.requests import *
 from plugp100.api import *
 from plugp100.common import *
 
-__version__ = "5.0.0-dev.2"
+__version__ = "5.0.0-dev.3"
