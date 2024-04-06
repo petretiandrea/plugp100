@@ -39,6 +39,26 @@ class DiscoveredDevice:
             mgt_encrypt_schm=EncryptionScheme(**values.get("mgt_encrypt_schm")),
         )
 
+    @property
+    def as_dict(self) -> dict[str, Any]:
+        return {
+            "device_type": self.device_type,
+            "device_model": self.device_model,
+            "ip": self.ip,
+            "mac": self.mac,
+            "device_id": self.device_id,
+            "owner": self.owner,
+            "hw_ver": self.hw_ver,
+            "is_support_iot_cloud": self.is_support_iot_cloud,
+            "factory_default": self.factory_default,
+            "mgt_encrypt_schm": {
+                "is_support_https": self.mgt_encrypt_schm.is_support_https,
+                "encrypt_type": self.mgt_encrypt_schm.encrypt_type,
+                "http_port": self.mgt_encrypt_schm.http_port,
+                "lv": self.mgt_encrypt_schm.lv,
+            },
+        }
+
     async def get_tapo_device(
         self, credentials: AuthCredential, session: Optional[aiohttp.ClientSession] = None
     ) -> TapoDevice:

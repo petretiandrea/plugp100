@@ -40,7 +40,7 @@ async def connect(
     config: DeviceConnectConfiguration, session: Optional[aiohttp.ClientSession] = None
 ):
     protocol = await _get_or_guess_protocol(config, session)
-    if config.device_type is None or config.device_model is None:
+    if config.device_type is None:
         _LOGGER.info(
             "Not enough information to detected device type and model, trying to fetching from device..."
         )
@@ -49,11 +49,9 @@ async def connect(
             .get_or_raise()
             .result
         )
-        factory = _get_device_class_from_model_type(device_info.type, device_info.model)
+        factory = _get_device_class_from_model_type(device_info.type)
     else:
-        factory = _get_device_class_from_model_type(
-            config.device_type, config.device_model
-        )
+        factory = _get_device_class_from_model_type(config.device_type)
     client = TapoClient(config.credentials, config.url, protocol, session)
     return factory(config.host, config.port, client)
 
@@ -102,9 +100,7 @@ async def _guess_protocol(
     raise InvalidAuthentication(config.host, config.device_type)
 
 
-def _get_device_class_from_model_type(
-    device_type: str, device_model: str
-) -> Type[TapoDevice]:
+def _get_device_class_from_model_type(device_type: str) -> Type[TapoDevice]:
     device_type = device_type.upper()
     if device_type == "SMART.TAPOPLUG":
         return TapoPlug
