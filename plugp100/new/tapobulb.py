@@ -19,6 +19,10 @@ class TapoBulb(TapoDevice):
         return self.get_component(LightComponent).device_on
 
     @property
+    def is_brightness(self):
+        return self.components.has("brightness")
+
+    @property
     def is_color(self) -> bool:
         return self.components.has("color")
 

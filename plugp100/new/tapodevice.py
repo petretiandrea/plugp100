@@ -43,8 +43,16 @@ class TapoDevice:
         self._active_components: Dict[Type[DeviceComponent], DeviceComponent] = {}
 
     @property
+    def get_device_components(self) -> [DeviceComponent]:
+        return self._active_components.values()
+
+    @property
     def protocol_version(self) -> str:
         return self.client.protocol.name
+
+    @property
+    def raw_state(self) -> dict[str, Any]:
+        return self._last_update.raw_state
 
     async def update(self):
         if self._last_update is None:

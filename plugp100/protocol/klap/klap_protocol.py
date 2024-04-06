@@ -58,7 +58,7 @@ class KlapProtocol(TapoProtocol):
 
     @property
     def name(self) -> str:
-        if self._klap_strategy is KlapHandshakeRevisionV2:
+        if isinstance(self._klap_strategy, KlapHandshakeRevisionV2):
             return "Klap V2"
         else:
             return "Klap V1"
