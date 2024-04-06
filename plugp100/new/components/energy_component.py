@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Any
 
 from plugp100.api.tapo_client import TapoClient
 from plugp100.new.components.device_component import DeviceComponent
@@ -12,7 +12,7 @@ class EnergyComponent(DeviceComponent):
         self._energy_usage = None
         self._power_info = None
 
-    async def update(self, **kwargs):
+    async def update(self, current_state: dict[str, Any] | None = None):
         energy_usage = await self._client.get_energy_usage()
         power_info = await self._client.get_current_power()
         self._energy_usage = energy_usage.value if energy_usage.is_success() else None

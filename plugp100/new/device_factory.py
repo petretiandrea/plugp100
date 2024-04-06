@@ -39,8 +39,8 @@ class DeviceConnectConfiguration:
 async def connect(
     config: DeviceConnectConfiguration, session: Optional[aiohttp.ClientSession] = None
 ):
-    protocol = await _get_or_guess_protocol(config, session)
     if config.device_type is None:
+        protocol = await _get_or_guess_protocol(config, session)
         _LOGGER.info(
             "Not enough information to detected device type and model, trying to fetching from device..."
         )
@@ -52,6 +52,8 @@ async def connect(
         factory = _get_device_class_from_model_type(device_info.type)
     else:
         factory = _get_device_class_from_model_type(config.device_type)
+        protocol = await _get_or_guess_protocol(config, session)
+
     client = TapoClient(config.credentials, config.url, protocol, session)
     return factory(config.host, config.port, client)
 
@@ -108,4 +110,6 @@ def _get_device_class_from_model_type(device_type: str) -> Type[TapoDevice]:
         return TapoBulb
     elif device_type == "SMART.TAPOHUB":
         return TapoHub
+    elif device_type == "SMART.IPCAMERA":
+        raise Exception(f"Device of type {device_type} not supported!")
     return TapoDevice

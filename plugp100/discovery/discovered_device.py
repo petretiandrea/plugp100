@@ -70,9 +70,14 @@ class DiscoveredDevice:
         self, credentials: AuthCredential, session: Optional[aiohttp.ClientSession] = None
     ) -> TapoDevice:
         if encrypt_schema := self.mgt_encrypt_schm:
+            port = (
+                encrypt_schema.http_port or 443
+                if encrypt_schema.is_support_https
+                else encrypt_schema.http_port
+            )
             config = DeviceConnectConfiguration(
                 host=self.ip,
-                port=encrypt_schema.http_port,
+                port=port,
                 credentials=credentials,
                 device_type=self.device_type,
                 encryption_type=encrypt_schema.encrypt_type,
