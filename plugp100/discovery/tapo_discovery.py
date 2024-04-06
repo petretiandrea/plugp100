@@ -82,7 +82,6 @@ class TapoDiscovery:
             None,
             lambda: list(TapoDiscovery(broadcast, port, timeout)._scan()),
         )
-        print(devices_found)
         return [DiscoveredDevice.from_dict(x) for x in devices_found]
 
     @staticmethod
