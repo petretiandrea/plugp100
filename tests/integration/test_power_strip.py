@@ -1,7 +1,7 @@
 import unittest
 
 from plugp100.new.device_factory import connect
-from plugp100.new.tapoplugstrip import TapoPlugStrip
+from plugp100.new.tapoplug import TapoPlug
 from tests.integration.tapo_test_helper import (
     _test_expose_device_info,
     get_test_config,
@@ -14,7 +14,7 @@ class PowerStripTest(unittest.IsolatedAsyncioTestCase):
 
     async def asyncSetUp(self) -> None:
         connect_config = await get_test_config(device_type="power_strip")
-        self._device: TapoPlugStrip = await connect(connect_config)
+        self._device: TapoPlug = await connect(connect_config)
         await self._device.update()
 
     async def asyncTearDown(self):
