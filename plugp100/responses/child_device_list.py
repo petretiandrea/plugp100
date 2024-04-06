@@ -52,7 +52,7 @@ class ChildDeviceList(object):
         )
 
     def get_next_index(self) -> int:
-        return self.start_index + len(self.child_device_list) + 1
+        return self.start_index + len(self.child_device_list)
 
     def has_next(self) -> bool:
         return self.get_next_index() < self.sum

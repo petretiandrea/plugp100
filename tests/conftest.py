@@ -31,6 +31,9 @@ bulb = pytest.mark.parametrize(
 bulb_led_strip = pytest.mark.parametrize("device", ["l930.json"], indirect=True)
 
 hub = pytest.mark.parametrize("device", ["h100.json"], indirect=True)
+hub_lot_devices = pytest.mark.parametrize(
+    "device", ["h100_lot_devices.json"], indirect=True
+)
 
 trv = pytest.mark.parametrize(
     "device",
@@ -110,7 +113,11 @@ class FakeProtocol(TapoProtocol):
             self._data["get_device_info"]["in_alarm"] = False
             return _tapo_response_of({})
         else:
-            response = self._data.get(method, {})
+            if method.startswith("get_child_device_list"):
+                page_index = request.params.start_index
+                response = self._data.get(f"{method}_{page_index}", None)
+            else:
+                response = self._data.get(method, {})
             return _tapo_response_of(response)
 
     async def close(self):
