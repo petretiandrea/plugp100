@@ -1,49 +1,77 @@
 import asyncio
-import os
+import logging
 
-from plugp100.api.light_effect_preset import LightEffectPreset
-from plugp100.api.tapo_client import TapoClient
 from plugp100.common.credentials import AuthCredential
-from plugp100.discovery.arp_lookup import ArpLookup
 from plugp100.discovery.tapo_discovery import TapoDiscovery
+from plugp100.new.device_factory import connect, DeviceConnectConfiguration
+
+
+# Example get device from discovery
+async def example_discovery(credentials: AuthCredential):
+    discovered = await TapoDiscovery.scan(timeout=5)
+    for discovered_device in discovered:
+        try:
+            device = await discovered_device.get_tapo_device(credentials)
+            await device.update()
+            print(
+                {
+                    "type": type(device),
+                    "protocol": device.protocol_version,
+                    "raw_state": device.raw_state,
+                }
+            )
+            await device.client.close()
+        except Exception as e:
+            logging.error(
+                f"Failed to update {discovered_device.ip} {discovered_device.device_type}",
+                exc_info=e,
+            )
+
+
+# Example by knowing protocol details and device class
+async def example_connect_knowing_device_and_protocol(
+    credentials: AuthCredential, host: str
+):
+    device_configuration = DeviceConnectConfiguration(
+        host=host,
+        credentials=credentials,
+        device_type="SMART.TAPOPLUG",
+        encryption_type="klap",
+        encryption_version=2,
+    )
+    device = await connect(device_configuration)
+    await device.update()
+    print(
+        {
+            "type": type(device),
+            "protocol": device.protocol_version,
+            "raw_state": device.raw_state,
+            "components": device.get_device_components,
+        }
+    )
+
+
+# Example without knowing device class and protocol. The library will try
+# to get info to establish protocol and device class
+async def example_connect_by_guessing(credentials: AuthCredential, host: str):
+    device_configuration = DeviceConnectConfiguration(host=host, credentials=credentials)
+    device = await connect(device_configuration)
+    await device.update()
+    print(
+        {
+            "type": type(device),
+            "protocol": device.protocol_version,
+            "raw_state": device.raw_state,
+            "components": device.get_device_components,
+        }
+    )
 
 
 async def main():
-    print("Scanning network...")
-    discovered_devices = list(TapoDiscovery.scan(5))
-    for x in discovered_devices:
-        print(x)
-
-    if len(discovered_devices) > 0:
-        print("Trying to lookup with mac address")
-        lookup = await ArpLookup.lookup(
-            discovered_devices[0].mac.replace("-", ":"),
-            "192.168.1.0/24",
-            allow_promiscuous=False,
-        )
-        print(lookup)
-
-    # create generic tapo api
-    username = os.getenv("USERNAME", "<tapo_email>")
-    password = os.getenv("PASSWORD", "<tapo_password>")
-
-    credentials = AuthCredential(username, password)
-    client = TapoClient.create(credentials, "<tapo_device_ip>")
-
-    print(await client.get_device_info())
-    print(await client.get_energy_usage())
-    print(await client.get_current_power())
-    print(await client.get_child_device_list())
-    print(await client.get_child_device_component_list())
-    print(await client.set_lighting_effect(LightEffectPreset.Aurora.to_effect()))
-    # plug = PlugDevice(TapoClient(username, password), "<tapo_device_ip>")
-    # light = LightDevice(TapoClient(username, password), "<tapo_device_ip>")
-    # ledstrip = LedStripDevice(TapoClient(username, password), "<tapo_device_ip>")
-
-    # - hub example
-    # hub = HubDevice(client)
-    # print(await hub.get_children())
-    # print(await hub.get_state_as_json())
+    credentials = AuthCredential("<tapo_username>", "<tapo_password>")
+    await example_discovery(credentials)
+    await example_connect_knowing_device_and_protocol(credentials, "<tapo_device_ip>")
+    await example_connect_by_guessing(credentials, "<tapo_device_ip>")
 
 
 if __name__ == "__main__":

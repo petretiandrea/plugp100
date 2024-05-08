@@ -6,13 +6,14 @@ from typing import Optional, Any, cast
 import aiohttp
 
 from plugp100.api.light_effect import LightEffect
+from plugp100.api.requests.tapo_request import TapoRequest, MultipleRequestParams
 from plugp100.common.credentials import AuthCredential
 from plugp100.common.functional.tri import Try, Failure, Success
 from plugp100.common.utils.json_utils import Json, dataclass_encode_json
-from plugp100.protocol.klap_protocol import KlapProtocol
+from plugp100.protocol.klap import klap_handshake_v2
+from plugp100.protocol.klap.klap_protocol import KlapProtocol
 from plugp100.protocol.passthrough_protocol import PassthroughProtocol
 from plugp100.protocol.tapo_protocol import TapoProtocol
-from plugp100.requests.tapo_request import TapoRequest, MultipleRequestParams
 from plugp100.responses.child_device_list import ChildDeviceList
 from plugp100.responses.components import Components
 from plugp100.responses.energy_info import EnergyInfo
@@ -29,31 +30,6 @@ class TapoProtocolType(Enum):
 
 
 class TapoClient:
-    @staticmethod
-    def create(
-        credential: AuthCredential,
-        address: str,
-        port: int = 80,
-        is_https: bool = False,
-        http_session: Optional[aiohttp.ClientSession] = None,
-        protocol_type: TapoProtocolType = TapoProtocolType.AUTO,
-    ) -> "TapoClient":
-        url = f"{'https' if is_https else 'http'}://{address}:{port}/app"
-        protocol = None
-        if protocol_type == TapoProtocolType.KLAP:
-            protocol = KlapProtocol(
-                auth_credential=credential,
-                url=url,
-                http_session=http_session,
-            )
-        elif protocol_type == TapoProtocolType.PASSTHROUGH:
-            protocol = PassthroughProtocol(
-                auth_credential=credential,
-                url=url,
-                http_session=http_session,
-            )
-        return TapoClient(credential, url, protocol, http_session)
-
     def __init__(
         self,
         auth_credential: AuthCredential,
@@ -64,17 +40,16 @@ class TapoClient:
         self._auth_credential = auth_credential
         self._url = url
         self._http_session = http_session
-        self._protocol: Optional[TapoProtocol] = protocol
+        self._protocol = protocol
 
-    async def _initialize_protocol_if_needed(self):
-        if self._protocol is None:
-            await self._guess_protocol()
+    @property
+    def protocol(self) -> TapoProtocol:
+        return self._protocol
 
     async def close(self):
         await self._protocol.close()
 
     async def execute_raw_request(self, request: "TapoRequest") -> Try[Json]:
-        await self._initialize_protocol_if_needed()
         return (await self._protocol.send_request(request)).map(lambda x: x.result)
 
     async def get_component_negotiation(self) -> Try[Components]:
@@ -185,7 +160,6 @@ class TapoClient:
         @type request: TapoRequest
         @return: an instance of the `Either` class, which can contain either a `Json` object or an `Exception`.
         """
-        await self._initialize_protocol_if_needed()
         multiple_request = TapoRequest.multiple_request(
             MultipleRequestParams([request])
         ).with_request_time_millis(round(time() * 1000))
@@ -211,22 +185,3 @@ class TapoClient:
             TapoRequest.set_device_info(device_info)
         )
         return response.map(lambda _: True)
-
-    async def _guess_protocol(self):
-        self._protocol = PassthroughProtocol(
-            auth_credential=self._auth_credential,
-            url=self._url,
-            http_session=self._http_session,
-        )
-        response = await self.get_component_negotiation()
-        if response.is_failure():
-            error = response.error()
-            if isinstance(error, TapoException) and error.error_code == 1003:
-                logger.info("Default protocol not working, fallback to KLAP ;)")
-                self._protocol = KlapProtocol(
-                    auth_credential=self._auth_credential,
-                    url=self._url,
-                    http_session=self._http_session,
-                )
-            else:
-                raise error

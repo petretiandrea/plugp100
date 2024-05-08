@@ -136,4 +136,4 @@ requirements-*.txt
 
 .local.devices.yml
 
-plugp100/local_run.py
+**/local_run.py

@@ -1,0 +1,53 @@
+{
+  "component_nego": {
+    "device": 2,
+    "firmware": 2,
+    "quick_setup": 3,
+    "time": 1,
+    "wireless": 1,
+    "schedule": 2,
+    "countdown": 2,
+    "antitheft": 1,
+    "account": 1,
+    "synchronize": 1,
+    "sunrise_sunset": 1,
+    "led": 1,
+    "cloud_connect": 1,
+    "iot_cloud": 1,
+    "device_local_time": 1,
+    "default_states": 1,
+    "auto_off": 2,
+    "localSmart": 1
+  },
+  "get_device_info": {
+    "device_id": "80224632A3133FF55700884796D0C0401FA93225",
+    "fw_ver": "1.2.1 Build 230804 Rel.190922",
+    "hw_ver": "2.0",
+    "type": "SMART.TAPOPLUG",
+    "model": "P100",
+    "mac": "54-AF-97-61-3A-3B",
+    "hw_id": "4012E37933F469A8790D690E12080BB6",
+    "fw_id": "00000000000000000000000000000000",
+    "oem_id": "525FC9C0545B4C8BEF51FA66130E51DE",
+    "ip": "192.168.0.88",
+    "time_diff": 0,
+    "ssid": "Vk0zOTg2ODkw",
+    "rssi": -15,
+    "signal_level": 3,
+    "auto_off_status": "off",
+    "auto_off_remain_time": 0,
+    "lang": "en_US",
+    "avatar": "house",
+    "region": "Europe/London",
+    "specs": "",
+    "nickname": "T2ZmaWNlIFBsdWc=",
+    "has_set_location_info": true,
+    "device_on": false,
+    "on_time": 0,
+    "default_states": {
+      "type": "last_states",
+      "state": {}
+    },
+    "overheated": false
+  }
+}

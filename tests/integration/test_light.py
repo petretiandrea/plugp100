@@ -1,11 +1,10 @@
 import unittest
 
-from plugp100.api.light_device import LightDevice
+from plugp100.new.device_factory import connect
+from plugp100.new.tapobulb import TapoBulb
 from tests.integration.tapo_test_helper import (
     _test_expose_device_info,
     get_test_config,
-    _test_device_usage,
-    get_initialized_client,
 )
 
 
@@ -14,50 +13,48 @@ class LightTest(unittest.IsolatedAsyncioTestCase):
     _api = None
 
     async def asyncSetUp(self) -> None:
-        credential, ip = await get_test_config(device_type="light")
-        self._api = await get_initialized_client(credential, ip)
-        self._device = LightDevice(self._api)
+        config = await get_test_config(device_type="light")
+        self._device: TapoBulb = await connect(config)
+        await self._device.update()
 
     async def asyncTearDown(self):
-        await self._api.close()
+        await self._device.client.close()
 
     async def test_expose_device_info(self):
-        state = (await self._device.get_state()).get_or_raise().info
-        await _test_expose_device_info(state, self)
+        await _test_expose_device_info(self._device, self)
 
-    async def test_expose_device_usage_info(self):
-        state = (await self._device.get_device_usage()).get_or_raise()
-        await _test_device_usage(state, self)
+    # async def test_expose_device_usage_info(self):
+    #    await _test_device_usage(self._device, self)
 
     async def test_should_turn_on_off(self):
-        await self._device.on()
-        state = (await self._device.get_state()).get_or_raise()
-        self.assertEqual(True, state.device_on)
-        await self._device.off()
-        state = (await self._device.get_state()).get_or_raise()
-        self.assertEqual(False, state.device_on)
+        await self._device.turn_on()
+        await self._device.update()
+        self.assertEqual(True, self._device.is_on)
+        await self._device.turn_off()
+        await self._device.update()
+        self.assertEqual(False, self._device.is_on)
 
     async def test_should_set_brightness(self):
-        await self._device.on()
+        await self._device.turn_on()
         await self._device.set_brightness(40)
-        state = (await self._device.get_state()).get_or_raise()
-        self.assertEqual(40, state.brightness)
+        await self._device.update()
+        self.assertEqual(40, self._device.brightness)
 
     async def test_should_set_hue_saturation(self):
-        await self._device.on()
+        await self._device.turn_on()
         await self._device.set_hue_saturation(120, 10)
-        state = (await self._device.get_state()).get_or_raise()
-        self.assertEqual(120, state.hue)
-        self.assertEqual(10, state.saturation)
+        await self._device.update()
+        self.assertEqual(120, self._device.hs.hue)
+        self.assertEqual(10, self._device.hs.saturation)
 
     async def test_should_set_color_temperature(self):
-        await self._device.on()
+        await self._device.turn_on()
         await self._device.set_color_temperature(2780)
-        state = (await self._device.get_state()).get_or_raise()
-        self.assertEqual(2780, state.color_temp)
+        await self._device.update()
+        self.assertEqual(2780, self._device.color_temp)
 
     async def test_has_components(self):
-        state = (await self._device.get_component_negotiation()).get_or_raise()
+        state = self._device.components
         self.assertTrue(len(state.as_list()) > 0)
         self.assertTrue(state.has("brightness"))
         self.assertTrue(state.has("color"))

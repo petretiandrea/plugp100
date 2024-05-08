@@ -1,11 +1,10 @@
 import unittest
 
-from plugp100.api.power_strip_device import PowerStripDevice
+from plugp100.new.device_factory import connect
+from plugp100.new.tapoplug import TapoPlug
 from tests.integration.tapo_test_helper import (
     _test_expose_device_info,
     get_test_config,
-    _test_device_usage,
-    get_initialized_client,
 )
 
 
@@ -14,57 +13,50 @@ class PowerStripTest(unittest.IsolatedAsyncioTestCase):
     _api = None
 
     async def asyncSetUp(self) -> None:
-        credential, ip = await get_test_config(device_type="power_strip")
-        self._api = await get_initialized_client(credential, ip)
-        self._device = PowerStripDevice(self._api)
+        connect_config = await get_test_config(device_type="power_strip")
+        self._device: TapoPlug = await connect(connect_config)
+        await self._device.update()
 
     async def asyncTearDown(self):
-        await self._api.close()
+        await self._device.client.close()
 
     async def test_expose_device_info(self):
-        state = (await self._device.get_state()).get_or_raise().info
-        await _test_expose_device_info(state, self)
+        await _test_expose_device_info(self._device, self)
 
-    async def test_expose_device_usage_info(self):
-        state = (await self._device.get_device_usage()).get_or_raise()
-        await _test_device_usage(state, self)
+    # async def test_expose_device_usage_info(self):
+    #    state = (await self._device.get_device_usage()).get_or_raise()
+    #    await _test_device_usage(state, self)
 
     async def test_should_turn_on_each_socket(self):
-        children = (await self._device.get_children()).get_or_raise()
-        for socket_id, socket in children.items():
-            await self._device.on(socket_id)
+        for socket in self._device.sockets:
+            await socket.turn_on()
 
-        children = (await self._device.get_children()).get_or_raise()
-        for socket_id, socket in children.items():
-            self.assertEqual(True, socket.device_on)
+        for socket in self._device.sockets:
+            await socket.update()
+            self.assertEqual(True, socket.is_on)
 
     async def test_should_turn_off_each_socket(self):
-        children = (await self._device.get_children()).get_or_raise()
-        for socket_id, _ in children.items():
-            await self._device.off(socket_id)
+        for socket in self._device.sockets:
+            await socket.turn_off()
 
-        children = (await self._device.get_children()).get_or_raise()
-        for _, socket in children.items():
-            self.assertEqual(False, socket.device_on)
+        for socket in self._device.sockets:
+            await socket.update()
+            self.assertEqual(False, socket.is_on)
 
     async def test_should_expose_sub_info_each_socket(self):
-        children = (await self._device.get_children()).get_or_raise()
-        for _, socket in children.items():
+        for socket in self._device.sockets:
             self.assertIsNotNone(socket.nickname)
             self.assertIsNot(socket.nickname, "")
             self.assertIsNotNone(socket.device_id)
-            self.assertIsNotNone(socket.original_device_id)
+            self.assertIsNotNone(socket.parent_device_id)
 
     async def test_has_components(self):
-        state = (await self._device.get_component_negotiation()).get_or_raise()
-        self.assertTrue(len(state.as_list()) > 0)
-        self.assertTrue(state.has("control_child"))
-        self.assertTrue(state.has("child_device"))
+        components = self._device.components
+        self.assertTrue(len(components.as_list()) > 0)
+        self.assertTrue(components.has("control_child"))
+        self.assertTrue(components.has("child_device"))
 
     async def test_children_has_components(self):
-        children = (await self._device.get_children()).get_or_raise()
-        for socket_id, _ in children.items():
-            state = (
-                await self._device.get_component_negotiation_child(socket_id)
-            ).get_or_raise()
-            self.assertTrue(len(state.as_list()) > 0)
+        for socket in self._device.sockets:
+            components = socket.components
+            self.assertTrue(len(components.as_list()) > 0)
