@@ -90,13 +90,22 @@ async def _guess_protocol(
         KlapProtocol(config.credentials, config.url, klap_handshake_v2(), session),
     ]
     device_info_request = TapoRequest.get_device_info()
+    work_protocol = None
     for protocol in protocols:
         info = await protocol.send_request(device_info_request)
         if info.is_success():
             _LOGGER.debug(f"Found working protocol {type(protocol)}")
-            return protocol
+            work_protocol = protocol
         else:
             _LOGGER.debug(f"Protocol {type(protocol)} not working, trying next...")
+
+    # close sessions which we don't need
+    for protocol in protocols:
+        if  protocol != work_protocol:
+            await protocol.close()
+
+    if work_protocol:
+        return work_protocol
 
     _LOGGER.error("None of available protocol is working, maybe invalid credentials")
     raise InvalidAuthentication(config.host, config.device_type)
