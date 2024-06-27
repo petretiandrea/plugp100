@@ -35,7 +35,7 @@ runs:
         EOF
         chmod +x ./run.sh
         cat ./run.sh
-    - uses: actions/cache@v3
+    - uses: actions/cache@v4
       name: "Cache pip wheels"
       id: cache-pip-wheels
       with:
