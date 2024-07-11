@@ -63,6 +63,17 @@ class TapoDevice:
             components = self._last_update.components
 
         if self._child_id:
+            if self.client.request != TapoRequest:
+                # Try new style format if supported
+                try:
+                    state = (
+                        await self.client.control_child(
+                            child_id=self._child_id, request=self.client.request.get_device_info()                        )
+                    ).get_or_raise()
+                except:
+                    _LOGGER.warning(
+                        f"Child device {self._child_id} didn't understand the request. Switching request format..."
+                    )
             state = (
                 await self.client.control_child(
                     child_id=self._child_id, request=TapoRequest.get_device_info()
@@ -150,7 +161,7 @@ class TapoDevice:
         return self.has_component(Countdown)
 
     async def get_latest_firmware(self) -> Try[LatestFirmware]:
-        request = TapoRequest(method="get_latest_fw", params=None)
+        request = self.client.request.get_latest_firmware()
         if self._child_id:
             response = await self.client.control_child(self._child_id, request)
         else:
@@ -158,7 +169,7 @@ class TapoDevice:
         return response.map(lambda x: LatestFirmware.from_json(x))
 
     async def get_firmware_download_state(self) -> Try[FirmwareDownloadProgress]:
-        request = TapoRequest(method="get_fw_download_state", params=None)
+        request = self.client.request.get_firmware_download_state()
         if self._child_id:
             response = await self.client.control_child(self._child_id, request)
         else:
@@ -166,7 +177,7 @@ class TapoDevice:
         return response.map(lambda x: FirmwareDownloadProgress.from_json(x))
 
     async def start_firmware_upgrade(self) -> bool:
-        request = TapoRequest(method="fw_download", params=None)
+        request = self.client.request.start_firmware_upgrade()
         if self._child_id:
             response = await self.client.control_child(self._child_id, request)
         else:
@@ -176,10 +187,7 @@ class TapoDevice:
 
     async def _negotiate_components(self) -> Components:
         if self._child_id:
-            child_components = await self.client.control_child(
-                self._child_id, TapoRequest.component_negotiation()
-            )
-            return Components.try_from_json(child_components.get_or_raise())
+            return await self.client.get_component_negotiation_for_child(self._child_id)
         return (await self.client.get_component_negotiation()).get_or_raise()
 
     def __repr__(self):

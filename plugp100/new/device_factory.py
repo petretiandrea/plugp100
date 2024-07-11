@@ -84,19 +84,23 @@ async def _get_or_guess_protocol(
 async def _guess_protocol(
     config: DeviceConnectConfiguration, session: aiohttp.ClientSession
 ) -> TapoProtocol:
-    protocols = [
-        PassthroughProtocol(config.credentials, config.url, session),
-        KlapProtocol(config.credentials, config.url, klap_handshake_v1(), session),
-        KlapProtocol(config.credentials, config.url, klap_handshake_v2(), session),
+    tests = [
+        [ PassthroughProtocol(config.credentials, config.url, session), TapoRequest ],
+        [ KlapProtocol(config.credentials, config.url, klap_handshake_v1(), session), TapoRequest ],
+        [ KlapProtocol(config.credentials, config.url, klap_handshake_v2(), session), TapoRequest ],
     ]
-    device_info_request = TapoRequest.get_device_info()
-    for protocol in protocols:
-        info = await protocol.send_request(device_info_request)
-        if info.is_success():
-            _LOGGER.debug(f"Found working protocol {type(protocol)}")
-            return protocol
-        else:
-            _LOGGER.debug(f"Protocol {type(protocol)} not working, trying next...")
+    for test in tests:
+        protocol = test[0]
+        request = test[1]
+        try:
+            info = await protocol.send_request(request.get_device_info())
+            if info.is_success():
+                _LOGGER.debug(f"Found working protocol for {config.url}: {type(protocol)}")
+                return protocol
+            else:
+                raise Exception()
+        except:
+            _LOGGER.debug(f"Protocol {type(protocol)} not working for {config.url}, trying next...")
 
     _LOGGER.error("None of available protocol is working, maybe invalid credentials")
     raise InvalidAuthentication(config.host, config.device_type)

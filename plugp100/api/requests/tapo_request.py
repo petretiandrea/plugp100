@@ -82,6 +82,18 @@ class TapoRequest(object):
         return TapoRequest(method="get_temp_humidity_records", params=None)
 
     @staticmethod
+    def get_latest_firmware() -> "TapoRequest":
+        return TapoRequest(method="get_latest_fw", params=None)
+
+    @staticmethod
+    def get_firmware_download_state() -> "TapoRequest":
+        return TapoRequest(method="get_fw_download_state", params=None)
+
+    @staticmethod
+    def start_firmware_upgrade() -> "TapoRequest":
+        return TapoRequest(method="fw_download", params=None)
+
+    @staticmethod
     def component_negotiation() -> "TapoRequest":
         return TapoRequest(method="component_nego", params=None)
 

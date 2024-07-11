@@ -29,7 +29,7 @@ class TriggerLogComponent(DeviceComponent):
         @param start_id: start item id from start to returns in reverse time order
         @return: Trigger Logs or Error
         """
-        request = TapoRequest.get_child_event_logs(
+        request = self._client.request.get_child_event_logs(
             GetTriggerLogsParams(page_size, start_id)
         )
         return (await self._client.control_child(self._device_id, request)).flat_map(

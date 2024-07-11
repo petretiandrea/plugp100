@@ -165,7 +165,7 @@ class KE100Device(TapoHubChildDevice):
         )
 
     async def _send_trv_control_request(self, params: TRVDeviceInfoParams) -> Try[bool]:
-        request = TapoRequest.set_device_info(dataclass_encode_json(params))
+        request = self.client.request.set_device_info(dataclass_encode_json(params))
         return (await self.client.control_child(self._child_id, request)).map(
             lambda _: True
         )
@@ -282,7 +282,7 @@ class MotionSensor(TapoHubChildDevice):
         page_size: int,
         start_id: int = 0,
     ) -> Try[TriggerLogResponse[T100Event]]:
-        request = TapoRequest.get_child_event_logs(
+        request = self.client.request.get_child_event_logs(
             GetTriggerLogsParams(page_size, start_id)
         )
         return (await self.client.control_child(self._device_id, request)).flat_map(
@@ -314,7 +314,7 @@ class SmartDoorSensor(TapoHubChildDevice):
         page_size: int,
         start_id: int = 0,
     ) -> Try[TriggerLogResponse[T110Event]]:
-        request = TapoRequest.get_child_event_logs(
+        request = self.client.request.get_child_event_logs(
             GetTriggerLogsParams(page_size, start_id)
         )
         response = await self.client.control_child(self._device_id, request)
