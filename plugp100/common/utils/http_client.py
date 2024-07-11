@@ -20,8 +20,14 @@ class AsyncHttp:
         if headers is None:
             headers = self.common_headers
         try:
+            # Manually disable SSL verification since
+            # ssl=False gives SSLV3_ALERT_HANDSHAKE_FAILURE
+            context = ssl.SSLContext()
+            context.set_ciphers("AES256-GCM-SHA384")
+            context.check_hostname = False
+            context.verify_mode =  ssl.CERT_NONE
             async with self.session.post(
-                url, json=json, headers=headers
+                url, json=json, headers=headers, ssl=context
             ) as response:
                 return await self._force_read_release(response)
         except Exception as e:
