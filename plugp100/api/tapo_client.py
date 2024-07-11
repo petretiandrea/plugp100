@@ -41,7 +41,7 @@ class TapoClient:
         self._url = url
         self._http_session = http_session
         self._protocol = protocol
-        self.request = TapoRequest
+        self.request = protocol.request
 
     @property
     def protocol(self) -> TapoProtocol:
@@ -54,11 +54,46 @@ class TapoClient:
         return (await self._protocol.send_request(request)).map(lambda x: x.result)
 
     async def get_component_negotiation_for_child(self, child_id) -> Try[Components]:
+        if self.protocol.name == "PassthroughH200":
+            # todo: this is very inefficient. What is the parallel of component_nego in the new protocol?
+            page = 0
+            seen = 0
+            child_components = await self.get_child_device_component_list(page)
+            child_components = child_components.get_or_raise()
+            if ( "child_component_list" not in child_components
+                or "sum" not in child_components
+                or len(child_components["child_component_list"]) == 0 ):
+                    raise Exception(f"Cannot get component list: malformed response {child_components}")
+
+            # Maybe we get lucky and the first child is the one we're looking for
+            for device in child_components["child_component_list"]:
+                seen += 1
+                if device['device_id'] == child_id:
+                    return Components.try_from_json( device )
+
+            # Otherwise, get the number of children from the first response
+            numChildren = child_components["sum"]
+            while seen < numChildren:
+                page += 1
+                child_components = await self.get_child_device_component_list(page)
+                child_components = child_components.get_or_raise()
+                for device in child_components["child_component_list"]:
+                    seen += 1
+                    if device['device_id'] == child_id:
+                        return Components.try_from_json( device )
+
+            raise Exception(f"Cannot get component list: child_id {child_id} not found.")
+
         child_components = await self.client.control_child(
             self._child_id, self.request.component_negotiation()
         )
         return Components.try_from_json(child_components.get_or_raise())
+
     async def get_component_negotiation(self) -> Try[Components]:
+        if self.protocol.name == "PassthroughH200":
+            # todo: what is the parallel of component_nego for hubs?
+            # todo: no alarm support
+            return Try.of(Components({"control_child": 1}))
         return (await self.execute_raw_request(self.request.component_negotiation())).map(
             Components.try_from_json
         )
@@ -145,13 +180,13 @@ class TapoClient:
             )
         return current_head
 
-    async def get_child_device_component_list(self) -> Try[Json]:
+    async def get_child_device_component_list(self, start_index=0) -> Try[Json]:
         """
         The function `get_child_device_component_list` retrieves a list of child device components asynchronously and
         returns either the JSON response or an exception.
         @return: an `Either` object, which can contain either a `Json` object or an `Exception`.
         """
-        request = self.request.get_child_device_component_list()
+        request = self.request.get_child_device_component_list(start_index)
         return (await self.execute_raw_request(request)).map(lambda x: x)
 
     async def control_child(self, child_id: str, request: TapoRequest) -> Try[Json]:
