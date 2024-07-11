@@ -126,15 +126,15 @@ class DeviceInfo:
     is_hardware_v2: bool = property(lambda self: self.hardware_version == "2.0")
 
     def __init__(self, **kwargs):
-        self.device_id = kwargs["device_id"]
+        self.device_id = kwargs.get("device_id", kwargs.get("dev_id"))
         self.hardware_id = kwargs["hw_id"]
         self.oem_id = kwargs["oem_id"]
-        self.firmware_version = kwargs["fw_ver"]
-        self.hardware_version = kwargs["hw_ver"]
+        self.firmware_version = kwargs.get("fw_ver", kwargs.get("sw_version"))
+        self.hardware_version = kwargs.get("hw_ver", kwargs.get("hw_version"))
         self.mac = kwargs["mac"]
-        self.nickname = base64.b64decode(kwargs["nickname"]).decode("UTF-8")
-        self.model = kwargs["model"]
-        self.type = kwargs["type"]
+        self.nickname = base64.b64decode(kwargs["nickname"]).decode("UTF-8") if "nickname" in kwargs else kwargs["device_alias"]
+        self.model = kwargs.get("model", kwargs.get("device_model"))
+        self.type = kwargs.get("type", kwargs.get("device_type"))
         self.overheated = kwargs.get("overheated", False)
         self.ip = kwargs.get("ip")
         self.ssid = (

@@ -173,8 +173,12 @@ class TapoClient:
         response = await self._protocol.send_request(request)
         if response.is_success():
             try:
-                responses = response.get().result["responseData"]["result"]["responses"]
-                if len(responses) > 0:
+                result = response.get().result
+                if "responseData" in result:
+                    responses = result["responseData"]["result"]["responses"]
+                else:
+                    responses = result["response_data"]["result"]["responses"]
+                if len(responses) > 0 and responses[0]["error_code"] == 0:
                     return (
                         Success(responses[0]["result"])
                         if "result" in responses[0]

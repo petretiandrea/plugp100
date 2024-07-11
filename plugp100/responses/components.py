@@ -10,7 +10,12 @@ class Components:
     def try_from_json(data: dict[str, Any]) -> "Components":
         if "component_list" in data:
             components = data.get("component_list", [])
-            return Components({c["id"]: c["ver_code"] for c in components})
+            if len(components) == 0:
+                return Components({})
+            if "id" in components[0]:
+                return Components({c["id"]: c["ver_code"] for c in components})
+            if "name" in components[0]:
+                return Components({c["name"]: c["version"] for c in components})
         return Components({})
 
     def __contains__(self, item):

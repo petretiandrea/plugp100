@@ -4,7 +4,7 @@ from typing import TypeVar, Any, List
 from plugp100.api.light_effect import LightEffect
 from plugp100.common.credentials import AuthCredential
 from plugp100.api.requests.handshake_params import HandshakeParams
-from plugp100.api.requests.login_device import LoginDeviceParams, LoginDeviceParamsV2
+from plugp100.api.requests.login_device import LoginDeviceParams, LoginDeviceParamsV2, LoginDeviceParamsH200
 from plugp100.api.requests.secure_passthrough_params import SecurePassthroughParams
 from plugp100.api.requests.trigger_logs_params import GetTriggerLogsParams
 
@@ -60,7 +60,7 @@ class TapoRequest(object):
         )
 
     @staticmethod
-    def get_child_device_component_list() -> "TapoRequest":
+    def get_child_device_component_list(start_index: int = 0) -> "TapoRequest":
         return TapoRequest(method="get_child_device_component_list", params=None)
 
     @staticmethod
@@ -126,12 +126,56 @@ class TapoRequest(object):
         return self.method == other.method and self.params == other.params
 
 
+class TapoRequestH200(TapoRequest):
+    @staticmethod
+    def login(cnonce=None, password=None, hashed=None, digest_passwd=None) -> "TapoRequest":
+        return TapoRequest(
+            method="login",
+            params=LoginDeviceParamsH200(cnonce, password, hashed, digest_passwd)
+        )
+
+    @staticmethod
+    def get_device_info() -> "TapoRequest":
+        return TapoRequest(method="getDeviceInfo", params={"device_info": {"name": ["basic_info"]}})
+
+    @staticmethod
+    def get_child_device_list(start_index: int = 0) -> "TapoRequest":
+        return TapoRequest(
+            method="getChildDeviceList", params={"childControl": PaginationParams(start_index)}
+        )
+
+    @staticmethod
+    def get_child_device_component_list(start_index: int = 0) -> "TapoRequest":
+        return TapoRequest(method="getChildDeviceComponentList", params={"childControl": PaginationParams(start_index)})
+
+    @staticmethod
+    def control_child(device_id: str, request: "TapoRequest") -> "TapoRequest":
+        return TapoRequest(
+            method="controlChild", params={'childControl': ControlChildParamsH200(device_id, request) }
+        )
+
+    @staticmethod
+    def get_latest_firmware() -> "TapoRequest":
+        raise Exception("Not yet supported")
+
+    @staticmethod
+    def get_firmware_download_state() -> "TapoRequest":
+        raise Exception("Not yet supported")
+
+    @staticmethod
+    def start_firmware_upgrade() -> "TapoRequest":
+        raise Exception("Not yet supported")
+
 # moved here to avoid circular import in python
 @dataclass
 class ControlChildParams:
     device_id: str
     requestData: "TapoRequest"
 
+@dataclass
+class ControlChildParamsH200:
+    device_id: str
+    request_data: "TapoRequest"
 
 @dataclass
 class MultipleRequestParams:
