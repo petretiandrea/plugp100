@@ -12,6 +12,10 @@ class TapoProtocol(abc.ABC):
     def name(self) -> str:
         pass
 
+    @property
+    def request(self):
+        return TapoRequest
+
     @abc.abstractmethod
     async def send_request(
         self, request: TapoRequest, retry: int = 3

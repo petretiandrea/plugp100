@@ -19,7 +19,7 @@ class OnOffComponent(DeviceComponent):
 
     async def turn_on(self):
         if self._child_id:
-            request = TapoRequest.set_device_info(
+            request = self._client.request.set_device_info(
                 dataclass_encode_json(SetPlugInfoParams(device_on=True))
             )
             return await self._client.control_child(self._child_id, request)
@@ -27,7 +27,7 @@ class OnOffComponent(DeviceComponent):
 
     async def turn_off(self):
         if self._child_id:
-            request = TapoRequest.set_device_info(
+            request = self._client.request.set_device_info(
                 dataclass_encode_json(SetPlugInfoParams(device_on=False))
             )
             return await self._client.control_child(self._child_id, request)

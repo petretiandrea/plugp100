@@ -12,4 +12,4 @@ class SmartDoorComponent(DeviceComponent):
         self.is_open = False
 
     async def update(self, current_state: dict[str, Any] | None = None):
-        self.is_open = current_state["is_open"]
+        self.is_open = current_state["is_open"] if "is_open" in current_state else current_state["open"]

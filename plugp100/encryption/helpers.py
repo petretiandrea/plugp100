@@ -2,6 +2,8 @@ import base64
 import hashlib
 
 from cryptography.hazmat.primitives import hashes
+from Crypto.Cipher import AES
+from Crypto.Util.Padding import pad, unpad
 
 Base64str = str
 
@@ -30,3 +32,21 @@ def md5(payload: bytes) -> bytes:
 
 def sha256(payload: bytes) -> bytes:
     return hashlib.sha256(payload).digest()
+
+def sha256_digest(bytes):
+    utf8 = bytes.encode("utf8")
+    return hashlib.sha256( utf8 ).hexdigest().upper()
+
+def md5_digest(bytes):
+    utf8 = bytes.encode("utf8")
+    return hashlib.md5( utf8 ).hexdigest().upper()
+
+def aes_encrypt_request(request, lsk, ivb):
+    cipher = AES.new(lsk, AES.MODE_CBC, ivb)
+    ct_bytes = cipher.encrypt(pad(request, AES.block_size))
+    return ct_bytes
+
+def aes_decrypt_response(response, lsk, ivb):
+    cipher = AES.new(lsk, AES.MODE_CBC, ivb)
+    pt = cipher.decrypt(response)
+    return unpad(pt, AES.block_size)

@@ -7,12 +7,13 @@ import aiohttp
 from plugp100.common.credentials import AuthCredential
 from plugp100.protocol.klap.klap_protocol import KlapProtocol
 from plugp100.protocol.passthrough_protocol import PassthroughProtocol
+from plugp100.protocol.passthrough_protocol_h200 import PassthroughProtocolH200
 from .errors.invalid_authentication import InvalidAuthentication
 from .tapobulb import TapoBulb
 from .tapodevice import TapoDevice
 from .tapohub import TapoHub
 from .tapoplug import TapoPlug
-from ..api.requests.tapo_request import TapoRequest
+from ..api.requests.tapo_request import TapoRequest, TapoRequestH200
 from ..api.tapo_client import TapoClient
 from ..protocol.klap import klap_handshake_v1, klap_handshake_v2
 from ..protocol.tapo_protocol import TapoProtocol
@@ -45,7 +46,7 @@ async def connect(
             "Not enough information to detected device type and model, trying to fetching from device..."
         )
         device_info = DeviceInfo(
-            **(await protocol.send_request(request=TapoRequest.get_device_info()))
+            **(await protocol.send_request(request=protocol.request.get_device_info()))
             .get_or_raise()
             .result
         )
@@ -88,15 +89,18 @@ async def _guess_protocol(
         PassthroughProtocol(config.credentials, config.url, session),
         KlapProtocol(config.credentials, config.url, klap_handshake_v1(), session),
         KlapProtocol(config.credentials, config.url, klap_handshake_v2(), session),
+        PassthroughProtocolH200(config.credentials, config.host, session)
     ]
-    device_info_request = TapoRequest.get_device_info()
     for protocol in protocols:
-        info = await protocol.send_request(device_info_request)
-        if info.is_success():
-            _LOGGER.debug(f"Found working protocol {type(protocol)}")
-            return protocol
-        else:
-            _LOGGER.debug(f"Protocol {type(protocol)} not working, trying next...")
+        try:
+            info = await protocol.send_request(protocol.request.get_device_info())
+            if info.is_success():
+                _LOGGER.debug(f"Found working protocol for {config.url}: {type(protocol)}")
+                return protocol
+            else:
+                raise Exception()
+        except:
+            _LOGGER.debug(f"Protocol {type(protocol)} not working for {config.url}, trying next...")
 
     _LOGGER.error("None of available protocol is working, maybe invalid credentials")
     raise InvalidAuthentication(config.host, config.device_type)

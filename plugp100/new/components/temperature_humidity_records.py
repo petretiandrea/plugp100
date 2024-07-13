@@ -18,6 +18,6 @@ class TemperatureHumidityRecordComponent(DeviceComponent):
     async def get_temperature_humidity_records(
         self,
     ) -> Try[TemperatureHumidityRecordsRaw]:
-        request = TapoRequest.get_temperature_humidity_records()
+        request = self._client.request.get_temperature_humidity_records()
         response = await self._client.control_child(self._child_id, request)
         return response.flat_map(TemperatureHumidityRecordsRaw.from_json)

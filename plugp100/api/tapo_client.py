@@ -41,6 +41,7 @@ class TapoClient:
         self._url = url
         self._http_session = http_session
         self._protocol = protocol
+        self.request = protocol.request
 
     @property
     def protocol(self) -> TapoProtocol:
@@ -52,8 +53,48 @@ class TapoClient:
     async def execute_raw_request(self, request: "TapoRequest") -> Try[Json]:
         return (await self._protocol.send_request(request)).map(lambda x: x.result)
 
+    async def get_component_negotiation_for_child(self, child_id) -> Try[Components]:
+        if self.protocol.name == "PassthroughH200":
+            # todo: this is very inefficient. What is the parallel of component_nego in the new protocol?
+            page = 0
+            seen = 0
+            child_components = await self.get_child_device_component_list(page)
+            child_components = child_components.get_or_raise()
+            if ( "child_component_list" not in child_components
+                or "sum" not in child_components
+                or len(child_components["child_component_list"]) == 0 ):
+                    raise Exception(f"Cannot get component list: malformed response {child_components}")
+
+            # Maybe we get lucky and the first child is the one we're looking for
+            for device in child_components["child_component_list"]:
+                seen += 1
+                if device['device_id'] == child_id:
+                    return Components.try_from_json( device )
+
+            # Otherwise, get the number of children from the first response
+            numChildren = child_components["sum"]
+            while seen < numChildren:
+                page += 1
+                child_components = await self.get_child_device_component_list(page)
+                child_components = child_components.get_or_raise()
+                for device in child_components["child_component_list"]:
+                    seen += 1
+                    if device['device_id'] == child_id:
+                        return Components.try_from_json( device )
+
+            raise Exception(f"Cannot get component list: child_id {child_id} not found.")
+
+        child_components = await self.client.control_child(
+            self._child_id, self.request.component_negotiation()
+        )
+        return Components.try_from_json(child_components.get_or_raise())
+
     async def get_component_negotiation(self) -> Try[Components]:
-        return (await self.execute_raw_request(TapoRequest.component_negotiation())).map(
+        if self.protocol.name == "PassthroughH200":
+            # todo: what is the parallel of component_nego for hubs?
+            # todo: no alarm support
+            return Try.of(Components({"control_child": 1}))
+        return (await self.execute_raw_request(self.request.component_negotiation())).map(
             Components.try_from_json
         )
 
@@ -63,7 +104,7 @@ class TapoClient:
         exception.
         @return: an `Either` object that contains either a `Json` object or an `Exception`.
         """
-        get_info_request = TapoRequest.get_device_info()
+        get_info_request = self.request.get_device_info()
         return await self.execute_raw_request(get_info_request)
 
     async def get_energy_usage(self) -> Try[EnergyInfo]:
@@ -72,7 +113,7 @@ class TapoClient:
         or an exception.
         @return: an `Either` type, which can either contain an `EnergyInfo` object or an `Exception` object.
         """
-        get_energy_request = TapoRequest.get_energy_usage()
+        get_energy_request = self.request.get_energy_usage()
         response = await self.execute_raw_request(get_energy_request)
         return response.map(EnergyInfo)
 
@@ -82,7 +123,7 @@ class TapoClient:
         `PowerInfo` object, or an `Exception` if an error occurs.
         @return: an `Either` object that contains either a `PowerInfo` object or an `Exception`.
         """
-        get_current_power = TapoRequest.get_current_power()
+        get_current_power = self.request.get_current_power()
         response = await self.execute_raw_request(get_current_power)
         return response.map(PowerInfo)
 
@@ -107,7 +148,7 @@ class TapoClient:
         @return: an `Either` object that contains either a `True` value or an `Exception`.
         """
         response = await self.execute_raw_request(
-            TapoRequest.set_lighting_effect(light_effect)
+            self.request.set_lighting_effect(light_effect)
         )
         return response.map(lambda _: True)
 
@@ -117,7 +158,7 @@ class TapoClient:
         an exception.
         @return: an `Either` object, which can contain either a `ChildDeviceList` or an `Exception`.
         """
-        request = TapoRequest.get_child_device_list(0)
+        request = self.request.get_child_device_list(0)
         response = (await self.execute_raw_request(request)).map(
             lambda x: ChildDeviceList.try_from_json(**x)
         )
@@ -131,7 +172,7 @@ class TapoClient:
         current_head = Try.of(head)
         while current_head.map(lambda x: x.has_next()).get_or_else(False):
             previous_head = current_head.get()
-            request = TapoRequest.get_child_device_list(previous_head.get_next_index())
+            request = self.request.get_child_device_list(previous_head.get_next_index())
             current_head = (
                 (await self.execute_raw_request(request))
                 .map(lambda x: ChildDeviceList.try_from_json(**x))
@@ -139,13 +180,13 @@ class TapoClient:
             )
         return current_head
 
-    async def get_child_device_component_list(self) -> Try[Json]:
+    async def get_child_device_component_list(self, start_index=0) -> Try[Json]:
         """
         The function `get_child_device_component_list` retrieves a list of child device components asynchronously and
         returns either the JSON response or an exception.
         @return: an `Either` object, which can contain either a `Json` object or an `Exception`.
         """
-        request = TapoRequest.get_child_device_component_list()
+        request = self.request.get_child_device_component_list(start_index)
         return (await self.execute_raw_request(request)).map(lambda x: x)
 
     async def control_child(self, child_id: str, request: TapoRequest) -> Try[Json]:
@@ -160,15 +201,19 @@ class TapoClient:
         @type request: TapoRequest
         @return: an instance of the `Either` class, which can contain either a `Json` object or an `Exception`.
         """
-        multiple_request = TapoRequest.multiple_request(
+        multiple_request = self.request.multiple_request(
             MultipleRequestParams([request])
         ).with_request_time_millis(round(time() * 1000))
-        request = TapoRequest.control_child(child_id, multiple_request)
+        request = self.request.control_child(child_id, multiple_request)
         response = await self._protocol.send_request(request)
         if response.is_success():
             try:
-                responses = response.get().result["responseData"]["result"]["responses"]
-                if len(responses) > 0:
+                result = response.get().result
+                if "responseData" in result:
+                    responses = result["responseData"]["result"]["responses"]
+                else:
+                    responses = result["response_data"]["result"]["responses"]
+                if len(responses) > 0 and responses[0]["error_code"] == 0:
                     return (
                         Success(responses[0]["result"])
                         if "result" in responses[0]
@@ -182,6 +227,6 @@ class TapoClient:
 
     async def _set_device_info(self, device_info: Json) -> Try[bool]:
         response = await self.execute_raw_request(
-            TapoRequest.set_device_info(device_info)
+            self.request.set_device_info(device_info)
         )
         return response.map(lambda _: True)
