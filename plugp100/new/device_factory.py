@@ -90,10 +90,13 @@ async def _guess_protocol(
         KlapProtocol(config.credentials, config.url, klap_handshake_v2(), session),
     ]
     device_info_request = TapoRequest.get_device_info()
-    for protocol in protocols:
+    for i,protocol in enumerate(protocols):
         info = await protocol.send_request(device_info_request)
         if info.is_success():
             _LOGGER.debug(f"Found working protocol {type(protocol)}")
+            for j,p in enumerate(protocols):
+                if i != j:
+                    await p.close()
             return protocol
         else:
             _LOGGER.debug(f"Protocol {type(protocol)} not working, trying next...")
