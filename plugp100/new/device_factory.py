@@ -110,6 +110,8 @@ def _get_device_class_from_model_type(device_type: str) -> Type[TapoDevice]:
         return TapoBulb
     elif device_type == "SMART.TAPOHUB":
         return TapoHub
+    elif device_type == "SMART.KASAHUB":
+        return TapoHub
     elif device_type == "SMART.IPCAMERA":
         raise Exception(f"Device of type {device_type} not supported!")
     return TapoDevice
