@@ -90,10 +90,13 @@ async def _guess_protocol(
         KlapProtocol(config.credentials, config.url, klap_handshake_v2(), session),
     ]
     device_info_request = TapoRequest.get_device_info()
-    for protocol in protocols:
+    for i,protocol in enumerate(protocols):
         info = await protocol.send_request(device_info_request)
         if info.is_success():
             _LOGGER.debug(f"Found working protocol {type(protocol)}")
+            for j,p in enumerate(protocols):
+                if i != j:
+                    await p.close()
             return protocol
         else:
             _LOGGER.debug(f"Protocol {type(protocol)} not working, trying next...")
@@ -109,6 +112,8 @@ def _get_device_class_from_model_type(device_type: str) -> Type[TapoDevice]:
     elif device_type == "SMART.TAPOBULB":
         return TapoBulb
     elif device_type == "SMART.TAPOHUB":
+        return TapoHub
+    elif device_type == "SMART.KASAHUB":
         return TapoHub
     elif device_type == "SMART.IPCAMERA":
         raise Exception(f"Device of type {device_type} not supported!")
