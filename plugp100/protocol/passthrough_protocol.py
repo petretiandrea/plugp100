@@ -4,6 +4,7 @@ from typing import Optional, Any
 
 import aiohttp
 
+from plugp100.api.requests.tapo_request import TapoRequest
 from plugp100.common.credentials import AuthCredential
 from plugp100.common.functional.tri import Try
 from plugp100.protocol.securepassthrough_transport import (
@@ -12,7 +13,6 @@ from plugp100.protocol.securepassthrough_transport import (
 )
 from plugp100.common.utils.http_client import AsyncHttp
 from plugp100.protocol.tapo_protocol import TapoProtocol
-from plugp100.requests.tapo_request import TapoRequest
 from plugp100.responses.tapo_exception import TapoException, TapoError
 from plugp100.responses.tapo_response import TapoResponse
 
@@ -34,6 +34,10 @@ class PassthroughProtocol(TapoProtocol):
         self._passthrough = SecurePassthroughTransport(self._http)
         self._session: Optional[Session] = None
         self._credential = auth_credential
+
+    @property
+    def name(self) -> str:
+        return "Passthrough"
 
     async def send_request(
         self, request: TapoRequest, retry: int = 3

@@ -6,7 +6,7 @@ import unittest
 from cryptography.hazmat.primitives import serialization, hashes
 from cryptography.hazmat.primitives.asymmetric import padding
 
-from plugp100.discovery.discovered_device import DiscoveredDevice, EncryptionScheme
+from plugp100.discovery.discovered_device import DiscoveredDevice, EncryptionSchema
 from plugp100.discovery.tapo_discovery import (
     TapoDiscovery,
     _build_packet_for_payload_json,
@@ -88,7 +88,7 @@ class TapoDiscoveryTest(unittest.TestCase):
                     device_model="P105(IT)",
                     ip="192.168.1.3",
                     mac="9C-53-22-A7-C8-35",
-                    mgt_encrypt_schm=EncryptionScheme(
+                    mgt_encrypt_schm=EncryptionSchema(
                         is_support_https=False, encrypt_type="KLAP", http_port=80, lv=2
                     ),
                     device_id="26d9887af76f0d5facf8febeb20f6ec9",

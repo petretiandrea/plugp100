@@ -8,8 +8,10 @@ class Components:
 
     @staticmethod
     def try_from_json(data: dict[str, Any]) -> "Components":
-        components = data.get("component_list", [])
-        return Components({c["id"]: c["ver_code"] for c in components})
+        if "component_list" in data:
+            components = data.get("component_list", [])
+            return Components({c["id"]: c["ver_code"] for c in components})
+        return Components({})
 
     def __contains__(self, item):
         return self.has(item)

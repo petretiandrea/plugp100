@@ -1,0 +1,196 @@
+{
+  "get_child_device_list": {
+    "child_device_list": [
+      {
+        "parent_device_id": "802D86324AC15B78B560A284ED9A2E292137268A",
+        "hw_ver": "1.0",
+        "fw_ver": "1.10.0 Build 220728 Rel.154816",
+        "device_id": "802E7B27B9B02EE9CC80D45266892785214DC06F",
+        "mac": "5C628BC0ECA0",
+        "type": "SMART.TAPOSENSOR",
+        "model": "S200B",
+        "hw_id": "9A1EB033BE24834E2A7A6A4E4CF405E8",
+        "oem_id": "3D8088F225430E1A4D209836F8B29E3A",
+        "specs": "EU",
+        "category": "subg.trigger.button",
+        "bind_count": 7,
+        "status_follow_edge": false,
+        "status": "online",
+        "lastOnboardingTimestamp": 1698964042,
+        "rssi": -84,
+        "signal_level": 1,
+        "jamming_rssi": -120,
+        "jamming_signal_level": 1,
+        "at_low_battery": false,
+        "nickname": "UHVsc2FudGUgaW50ZWxsaWdlbnRl",
+        "avatar": "button",
+        "report_interval": 16,
+        "region": "Europe/Rome"
+      }
+    ],
+    "start_index": 0,
+    "sum": 1
+  },
+  "component_nego_802E7B27B9B02EE9CC80D45266892785214DC06F": {
+    "component_list": [
+      {
+        "id": "device",
+        "ver_code": 2
+      },
+      {
+        "id": "quick_setup",
+        "ver_code": 3
+      },
+      {
+        "id": "trigger_log",
+        "ver_code": 1
+      },
+      {
+        "id": "time",
+        "ver_code": 1
+      },
+      {
+        "id": "device_local_time",
+        "ver_code": 1
+      },
+      {
+        "id": "account",
+        "ver_code": 1
+      },
+      {
+        "id": "synchronize",
+        "ver_code": 1
+      },
+      {
+        "id": "cloud_connect",
+        "ver_code": 1
+      },
+      {
+        "id": "iot_cloud",
+        "ver_code": 1
+      },
+      {
+        "id": "firmware",
+        "ver_code": 1
+      },
+      {
+        "id": "battery_detect",
+        "ver_code": 1
+      },
+      {
+        "id": "double_click",
+        "ver_code": 1
+      }
+    ]
+  },
+  "get_device_info_802E7B27B9B02EE9CC80D45266892785214DC06F": {
+    "parent_device_id": "802D86324AC15B78B560A284ED9A2E292137268A",
+    "hw_ver": "1.0",
+    "fw_ver": "1.10.0 Build 220728 Rel.154816",
+    "device_id": "802E7B27B9B02EE9CC80D45266892785214DC06F",
+    "mac": "5C628BC0ECA0",
+    "type": "SMART.TAPOSENSOR",
+    "model": "S200B",
+    "hw_id": "9A1EB033BE24834E2A7A6A4E4CF405E8",
+    "oem_id": "3D8088F225430E1A4D209836F8B29E3A",
+    "specs": "EU",
+    "category": "subg.trigger.button",
+    "bind_count": 7,
+    "status_follow_edge": false,
+    "status": "online",
+    "lastOnboardingTimestamp": 1698964042,
+    "rssi": -84,
+    "signal_level": 1,
+    "jamming_rssi": -120,
+    "jamming_signal_level": 1,
+    "at_low_battery": false,
+    "nickname": "UHVsc2FudGUgaW50ZWxsaWdlbnRl",
+    "avatar": "button",
+    "report_interval": 16,
+    "region": "Europe/Rome"
+  },
+  "get_trigger_logs_802E7B27B9B02EE9CC80D45266892785214DC06F": {
+    "start_id": 25,
+    "logs": [
+      {
+        "timestamp": 1703329531,
+        "eventId": "a3ae20ef-00f7-0cf9-0b7a-c21ef08f306f",
+        "event": "rotation",
+        "params": {
+          "rotate_deg": -30
+        },
+        "id": 25
+      },
+      {
+        "timestamp": 1703329482,
+        "eventId": "c2e17038-140a-8d4e-2f17-038140a8d4e2",
+        "event": "rotation",
+        "params": {
+          "rotate_deg": -30
+        },
+        "id": 24
+      },
+      {
+        "timestamp": 1702502748,
+        "eventId": "2941f527-4e7a-68e1-a587-9e9a185971e5",
+        "event": "rotation",
+        "params": {
+          "rotate_deg": 90
+        },
+        "id": 23
+      },
+      {
+        "timestamp": 1702502748,
+        "eventId": "0d426d7a-f1b4-960f-4be9-3850e4b69f0b",
+        "event": "rotation",
+        "params": {
+          "rotate_deg": -30
+        },
+        "id": 22
+      },
+      {
+        "timestamp": 1702502747,
+        "eventId": "cba99084-0647-e73f-53ed-3a51647e73f5",
+        "event": "rotation",
+        "params": {
+          "rotate_deg": 60
+        },
+        "id": 21
+      },
+      {
+        "timestamp": 1702502747,
+        "eventId": "b26a0ebc-e5c9-5798-7708-3720a36a8678",
+        "event": "rotation",
+        "params": {
+          "rotate_deg": -60
+        },
+        "id": 20
+      },
+      {
+        "timestamp": 1702502743,
+        "eventId": "14392f24-21ab-6608-37a0-e3421ab66083",
+        "event": "singleClick",
+        "id": 19
+      },
+      {
+        "timestamp": 1702502743,
+        "eventId": "d4519b7e-8c75-817b-8e7c-85f9c75817b8",
+        "event": "singleClick",
+        "id": 18
+      },
+      {
+        "timestamp": 1702502741,
+        "eventId": "4c51d79c-39eb-8236-e485-b52d6147dc91",
+        "event": "singleClick",
+        "id": 17
+      },
+      {
+        "timestamp": 1702502741,
+        "eventId": "227fd90a-eb93-a7b5-34fc-90aeb93a7b53",
+        "event": "singleClick",
+        "id": 16
+      }
+    ],
+    "sum": 25
+  }
+}

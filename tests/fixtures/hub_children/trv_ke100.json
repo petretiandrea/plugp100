@@ -1,0 +1,85 @@
+{
+  "get_child_device_list": {
+    "child_device_list": [
+      {
+        "trv_states": [
+          "heating"
+        ],
+        "device_id": "38018301SAS1234ZAD",
+        "mac": "11AA22BB33CC",
+        "hw_ver": "1.0",
+        "fw_ver": "2.6.0",
+        "type": "SMART.KASAENERGY",
+        "model": "KE100",
+        "hw_id": "3801AABBCCDDEE",
+        "oem_id": "0836ABBU2MCKSA",
+        "specs": "UK",
+        "category": "subg.trv",
+        "bind_count": 1,
+        "status": "online",
+        "lastOnboardingTimestamp": 313213142,
+        "rssi": -67,
+        "signal_level": 3,
+        "jamming_rssi": -117,
+        "jamming_signal_level": 1,
+        "temp_unit": "celsius",
+        "current_temp": 20.5,
+        "target_temp": 27.5,
+        "temp_offset": 0,
+        "min_control_temp": 5,
+        "max_control_temp": 30,
+        "frost_protection_on": false,
+        "at_low_battery": false,
+        "battery_percentage": 100,
+        "parent_device_id": "77JJAYBSKD83BBCC",
+        "nickname": "bXktbmFtZQ==",
+        "location": "",
+        "avatar": "kasa_trv",
+        "child_protection": false,
+        "region": "Europe/London"
+      }
+    ],
+    "start_index": 0,
+    "sum": 1
+  },
+  "get_device_info_38018301SAS1234ZAD": {
+    "trv_states": [
+      "heating"
+    ],
+    "device_id": "38018301SAS1234ZAD",
+    "mac": "11AA22BB33CC",
+    "hw_ver": "1.0",
+    "fw_ver": "2.6.0",
+    "type": "SMART.KASAENERGY",
+    "model": "KE100",
+    "hw_id": "3801AABBCCDDEE",
+    "oem_id": "0836ABBU2MCKSA",
+    "specs": "UK",
+    "category": "subg.trv",
+    "bind_count": 1,
+    "status": "online",
+    "lastOnboardingTimestamp": 313213142,
+    "rssi": -67,
+    "signal_level": 3,
+    "jamming_rssi": -117,
+    "jamming_signal_level": 1,
+    "temp_unit": "celsius",
+    "current_temp": 20.5,
+    "target_temp": 27.5,
+    "temp_offset": 0,
+    "min_control_temp": 5,
+    "max_control_temp": 30,
+    "frost_protection_on": false,
+    "at_low_battery": false,
+    "battery_percentage": 100,
+    "parent_device_id": "77JJAYBSKD83BBCC",
+    "nickname": "bXktbmFtZQ==",
+    "location": "",
+    "avatar": "kasa_trv",
+    "child_protection": false,
+    "region": "Europe/London"
+  },
+  "component_nego_38018301SAS1234ZAD": {
+    "component_list": []
+  }
+}
