@@ -1,5 +1,5 @@
 {
-  "get_child_device_list": {
+  "get_child_device_list_0": {
     "child_device_list": [
       {
         "parent_device_id": "802D86324AC15B78B560A284ED9A2E292137268A",

@@ -107,7 +107,7 @@
     "nickname": "",
     "has_set_location_info": true
   },
-  "get_child_device_list": {
+  "get_child_device_list_0": {
     "child_device_list": [
       {
         "type": "SMART.TAPOPLUG",

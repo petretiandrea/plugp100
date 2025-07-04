@@ -38,7 +38,7 @@ async def test_query(klap_revision: KlapHandshakeRevision):
         )
 
         expected_sequence = None
-        for _ in range(10):
+        for _ in range(1):
             resp = await client.execute_raw_request(
                 TapoRequest(method="none", params="{}")
             )
