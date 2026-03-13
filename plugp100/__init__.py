@@ -9,8 +9,6 @@ from plugp100.discovery import (
     connect_discovered_device,
 )
 
-__version__ = "5.1.6"
-
 __all__ = [
     "AuthCredential",
     "DeviceConnectConfiguration",
@@ -27,3 +25,4 @@ __all__ = [
     "connect_discovered_device",
     "connect",
 ]
+__version__ = "5.1.7"
