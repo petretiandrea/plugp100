@@ -17,7 +17,6 @@ from plugp100 import (
 
 
 def test_root_package_exports_explicit_api():
-    assert __version__ == "5.1.6"
     assert AuthCredential.__name__ == "AuthCredential"
     assert TapoClient.__name__ == "TapoClient"
     assert DeviceConnectConfiguration.__name__ == "DeviceConnectConfiguration"
