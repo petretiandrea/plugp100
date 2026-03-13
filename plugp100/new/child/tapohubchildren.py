@@ -89,7 +89,7 @@ class KE100Device(TapoHubChildDevice):
         self._last_state: KE100DeviceState | None = None
 
     def _get_components_to_activate(self, components: Components) -> list[C]:
-        return super()._get_components_to_activate(components) + [BatteryComponent()]
+        return super()._get_components_to_activate(components) + [BatteryComponent()] + [TemperatureComponent()]
 
     async def _update_from_state(self, state: dict[str, Any]):
         self._last_state = KE100DeviceState.from_json(state).get_or_raise()
