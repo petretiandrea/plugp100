@@ -12,7 +12,11 @@ from plugp100.models.hub_children.door import (
     parse_t110_event,
 )
 from plugp100.models.hub_children.logs import TriggerLogResponse
-from plugp100.models.hub_children.motion import MotionDetectedEvent, T100Event, parse_t100_event
+from plugp100.models.hub_children.motion import (
+    MotionDetectedEvent,
+    T100Event,
+    parse_t100_event,
+)
 from plugp100.models.hub_children.temperature import (
     T31DeviceState,
     TemperatureHumidityRecordsRaw,

@@ -1,4 +1,7 @@
-from plugp100.events.event_subscription import EventLogsStateTracker, EventSubscriptionOptions
+from plugp100.events.event_subscription import (
+    EventLogsStateTracker,
+    EventSubscriptionOptions,
+)
 from plugp100.events.hub_device_tracker import (
     DeviceAdded,
     DeviceRemoved,

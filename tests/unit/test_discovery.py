@@ -22,8 +22,7 @@ def test_must_convert_discovered_device_to_dict():
 async def test_discovered_device_should_get_real_tapo_device():
     discovered_device = DiscoveredDevice.from_dict(load_fixture("discovery.json"))
     device = await connect_discovered_device(
-        discovered_device,
-        credentials=AuthCredential("test", "test")
+        discovered_device, credentials=AuthCredential("test", "test")
     )
     assert device is not None
     assert device.protocol_version == "Klap V2"
@@ -39,8 +38,7 @@ async def test_should_not_get_device_info_if_discovery_has_type():
         side_effect=AsyncMock(return_value=None),
     ) as send_request:
         device = await connect_discovered_device(
-            discovered_device,
-            credentials=AuthCredential("test", "test")
+            discovered_device, credentials=AuthCredential("test", "test")
         )
         send_request.assert_not_called()
         assert device is not None

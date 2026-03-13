@@ -32,4 +32,6 @@ class OnOffComponent(DeviceComponent):
         return await self._client.set_device_info(SetPlugInfoParams(False))
 
     async def update(self, current_state: dict[str, object] | None = None):
-        self._device_on = current_state.get("device_on", False) if current_state else False
+        self._device_on = (
+            current_state.get("device_on", False) if current_state else False
+        )

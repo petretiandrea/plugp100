@@ -13,7 +13,9 @@ class LightEffectComponent(DeviceComponent):
         self._state: LedStripDeviceState | None = None
 
     async def update(self, current_state: dict[str, object] | None = None):
-        self._state = LedStripDeviceState.try_from_json(current_state or {}).get_or_raise()
+        self._state = LedStripDeviceState.try_from_json(
+            current_state or {}
+        ).get_or_raise()
 
     @property
     def state(self) -> LedStripDeviceState:

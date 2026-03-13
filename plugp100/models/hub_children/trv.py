@@ -45,14 +45,19 @@ class KE100DeviceState:
         self.frost_protection_on = kwargs["frost_protection_on"]
         self.child_protection = kwargs["child_protection"]
         self.temperature_unit = next(
-            (member for member in TemperatureUnit if member.value == kwargs.get("temp_unit")),
+            (
+                member
+                for member in TemperatureUnit
+                if member.value == kwargs.get("temp_unit")
+            ),
             TemperatureUnit.CELSIUS,
         )
         self.trv_state = next(
             (
                 member
                 for member in TRVState
-                if kwargs.get("trv_states") and member.value == kwargs.get("trv_states")[0]
+                if kwargs.get("trv_states")
+                and member.value == kwargs.get("trv_states")[0]
             ),
             None,
         )

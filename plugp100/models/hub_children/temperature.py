@@ -20,7 +20,9 @@ class T31DeviceState:
     @staticmethod
     def from_json(kwargs: dict[str, Any]) -> Try["T31DeviceState"]:
         return HubChildBaseInfo.from_json(kwargs).flat_map(
-            lambda base_info: Try.of(lambda: T31DeviceState(**kwargs, base_info=base_info))
+            lambda base_info: Try.of(
+                lambda: T31DeviceState(**kwargs, base_info=base_info)
+            )
         )
 
     def __init__(self, **kwargs):
@@ -31,7 +33,11 @@ class T31DeviceState:
         self.current_temperature = kwargs.get("current_temp")
         self.current_temperature_exception = kwargs.get("current_temp_exception")
         self.temperature_unit = next(
-            (member for member in TemperatureUnit if member.value == kwargs.get("temp_unit")),
+            (
+                member
+                for member in TemperatureUnit
+                if member.value == kwargs.get("temp_unit")
+            ),
             TemperatureUnit.CELSIUS,
         )
 
