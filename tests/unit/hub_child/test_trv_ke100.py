@@ -1,15 +1,12 @@
-from typing import cast
-
-from plugp100.new.child.tapohubchildren import KE100Device
-from plugp100.new.tapohub import TapoHub
-from plugp100.responses.hub_childs.ke100_device_state import TRVState
-from plugp100.responses.temperature_unit import TemperatureUnit
-from tests.conftest import trv
+from plugp100.devices.children import KE100Device
+from plugp100.models.hub_child import TRVState
+from plugp100.models.temperature import TemperatureUnit
+from tests.conftest import trv, trv_device
 
 
 @trv
-async def test_should_get_child(device: TapoHub):
-    child = cast(KE100Device, device.children[0])
+async def test_should_get_child(trv_device: KE100Device):
+    child = trv_device
     assert child.parent_device_id == "802D86324AC15B78B560A284ED9A2E292137268A"
 
     assert child.mac == "11AA22BB33CC"
@@ -31,48 +28,48 @@ async def test_should_get_child(device: TapoHub):
 
 
 @trv
-async def test_should_set_target_temp(device: TapoHub):
-    child = cast(KE100Device, device.children[0])
+async def test_should_set_target_temp(trv_device: KE100Device):
+    child = trv_device
     await child.set_target_temp({"temperature": 24})
     await child.update()
     assert child.target_temperature == 24
 
 
 @trv
-async def test_should_set_temp_offset(device: TapoHub):
-    child = cast(KE100Device, device.children[0])
+async def test_should_set_temp_offset(trv_device: KE100Device):
+    child = trv_device
     await child.set_temp_offset(-5)
     await child.update()
     assert child.temperature_offset == -5
 
 
 @trv
-async def test_should_set_frost_protection_on(device: TapoHub):
-    child = cast(KE100Device, device.children[0])
+async def test_should_set_frost_protection_on(trv_device: KE100Device):
+    child = trv_device
     await child.set_frost_protection_on()
     await child.update()
     assert child.is_frost_protection_on is True
 
 
 @trv
-async def test_should_set_frost_protection_off(device: TapoHub):
-    child = cast(KE100Device, device.children[0])
+async def test_should_set_frost_protection_off(trv_device: KE100Device):
+    child = trv_device
     await child.set_frost_protection_off()
     await child.update()
     assert child.is_frost_protection_on is False
 
 
 @trv
-async def test_should_set_child_protection_on(device: TapoHub):
-    child = cast(KE100Device, device.children[0])
+async def test_should_set_child_protection_on(trv_device: KE100Device):
+    child = trv_device
     await child.set_child_protection_on()
     await child.update()
     assert child.is_child_protection_on is True
 
 
 @trv
-async def test_should_set_child_protection_off(device: TapoHub):
-    child = cast(KE100Device, device.children[0])
+async def test_should_set_child_protection_off(trv_device: KE100Device):
+    child = trv_device
     await child.set_child_protection_off()
     await child.update()
     assert child.is_child_protection_on is False

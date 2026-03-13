@@ -1,7 +1,7 @@
 import unittest
 
-from plugp100.new.device_factory import connect
-from plugp100.new.tapobulb import TapoBulb
+from plugp100.devices.bulb import TapoBulb
+from plugp100.devices.factory import connect
 from tests.integration.tapo_test_helper import (
     _test_expose_device_info,
     get_test_config,

@@ -1,5 +1,5 @@
-from plugp100.new.device_type import DeviceType
-from plugp100.new.tapohub import TapoHub
+from plugp100.devices.hub import TapoHub
+from plugp100.devices.types import DeviceType
 from tests.conftest import hub, hub_lot_devices
 
 

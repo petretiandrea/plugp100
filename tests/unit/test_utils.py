@@ -2,8 +2,8 @@ import random
 from typing import Any, List
 
 from plugp100.common.functional.tri import Try
-from plugp100.responses.child_device_list import ChildDeviceList
-from plugp100.responses.tapo_response import TapoResponse
+from plugp100.models.child import ChildDeviceList
+from plugp100.api.transport.response import TapoResponse
 
 
 def wrap_as_tapo_response(result) -> Try[TapoResponse[dict[str, Any]]]:

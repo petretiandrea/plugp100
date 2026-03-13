@@ -9,12 +9,12 @@ from plugp100.api.requests.tapo_request import TapoRequest
 from plugp100.api.tapo_client import TapoClient
 from plugp100.common.credentials import AuthCredential
 from plugp100.common.functional.tri import Success
-from plugp100.protocol.klap import (
+from plugp100.api.protocol.klap import (
     KlapHandshakeRevision,
     klap_handshake_v2,
     klap_handshake_v1,
 )
-from plugp100.protocol.klap.klap_protocol import KlapProtocol, KlapChiper
+from plugp100.api.protocol.klap.klap_protocol import KlapProtocol, KlapChiper
 
 
 @pytest.mark.parametrize(

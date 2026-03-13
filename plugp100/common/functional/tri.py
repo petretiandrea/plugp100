@@ -1,5 +1,5 @@
 # Get from pyEffects library
-from typing import Callable, List, Type, TypeVar, Union, Generic
+from typing import Callable, Generic, List, Type, TypeVar, Union, overload
 
 A = TypeVar("A", covariant=True)
 B = TypeVar("B")
@@ -8,6 +8,16 @@ B = TypeVar("B")
 class Try(Generic[A]):
     value: A
     biased: bool
+
+    @staticmethod
+    @overload
+    def of(func_or_value: Callable[[], B]) -> "Try[B]":
+        ...
+
+    @staticmethod
+    @overload
+    def of(func_or_value: B) -> "Try[B]":
+        ...
 
     @staticmethod
     def of(func_or_value: Union[B, Callable[[], B]]) -> "Try[B]":

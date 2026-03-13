@@ -2,8 +2,8 @@ import asyncio
 import logging
 
 from plugp100.common.credentials import AuthCredential
-from plugp100.discovery.tapo_discovery import TapoDiscovery
-from plugp100.new.device_factory import connect, DeviceConnectConfiguration
+from plugp100.devices.factory import DeviceConnectConfiguration, connect
+from plugp100.discovery import TapoDiscovery, connect_discovered_device
 
 
 # Example get device from discovery
@@ -11,7 +11,7 @@ async def example_discovery(credentials: AuthCredential):
     discovered = await TapoDiscovery.scan(timeout=5)
     for discovered_device in discovered:
         try:
-            device = await discovered_device.get_tapo_device(credentials)
+            device = await connect_discovered_device(discovered_device, credentials)
             await device.update()
             print(
                 {

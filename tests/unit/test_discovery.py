@@ -1,8 +1,8 @@
 from unittest.mock import patch, AsyncMock
 
 from plugp100.common.credentials import AuthCredential
-from plugp100.discovery import DiscoveredDevice
-from plugp100.new.tapobulb import TapoBulb
+from plugp100.devices.bulb import TapoBulb
+from plugp100.discovery import DiscoveredDevice, connect_discovered_device
 from tests.conftest import load_fixture
 
 
@@ -21,7 +21,8 @@ def test_must_convert_discovered_device_to_dict():
 
 async def test_discovered_device_should_get_real_tapo_device():
     discovered_device = DiscoveredDevice.from_dict(load_fixture("discovery.json"))
-    device = await discovered_device.get_tapo_device(
+    device = await connect_discovered_device(
+        discovered_device,
         credentials=AuthCredential("test", "test")
     )
     assert device is not None
@@ -34,10 +35,11 @@ async def test_should_not_get_device_info_if_discovery_has_type():
     discovered_device = DiscoveredDevice.from_dict(load_fixture("discovery.json"))
 
     with patch(
-        "plugp100.protocol.tapo_protocol.TapoProtocol.send_request",
+        "plugp100.api.protocol.tapo_protocol.TapoProtocol.send_request",
         side_effect=AsyncMock(return_value=None),
     ) as send_request:
-        device = await discovered_device.get_tapo_device(
+        device = await connect_discovered_device(
+            discovered_device,
             credentials=AuthCredential("test", "test")
         )
         send_request.assert_not_called()
