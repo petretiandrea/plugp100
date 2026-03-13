@@ -38,7 +38,7 @@ Repository = "https://github.com/petretiandrea/plugp100"
 
 [dependency-groups]
 dev = [
-  "async-timeout==4.0.2",
+  "async-timeout==5.0.1",
   "black==23.12.1",
   "pre-commit==3.6.0",
   "pytest-cov==4.1.0",
