@@ -12,7 +12,7 @@ class TemperatureComponent(DeviceComponent):
 
     async def update(self, current_state: dict[str, Any] | None = None):
         self.current_temperature = current_state["current_temp"]
-        self.current_temperature_error = current_state["current_temp_exception"]
+        self.current_temperature_error = current_state.get("current_temp_exception", None)
         self.temperature_unit = next(
             [
                 member
