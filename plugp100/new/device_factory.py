@@ -25,6 +25,8 @@ _LOGGER = logging.getLogger("DeviceFactory")
 class DeviceConnectConfiguration:
     host: str
     port: int = 80
+    scheme: str = "http"
+    verify_ssl: bool = True
     credentials: Optional[AuthCredential] = None
     device_type: Optional[str] = None
     device_model: Optional[str] = None
@@ -33,7 +35,7 @@ class DeviceConnectConfiguration:
 
     @property
     def url(self) -> str:
-        return f"http://{self.host}:{self.port}/app"
+        return f"{self.scheme}://{self.host}:{self.port}/app"
 
 
 async def connect(
@@ -72,10 +74,14 @@ async def _get_or_guess_protocol(
             url=config.url,
             klap_strategy=handshake_version,
             http_session=session,
+            verify_ssl=config.verify_ssl,
         )
     elif config.encryption_type.lower() == "aes":
         return PassthroughProtocol(
-            auth_credential=config.credentials, url=config.url, http_session=session
+            auth_credential=config.credentials,
+            url=config.url,
+            http_session=session,
+            verify_ssl=config.verify_ssl,
         )
     else:
         raise Exception("Failed to determine the right tapo protocol")
@@ -84,25 +90,70 @@ async def _get_or_guess_protocol(
 async def _guess_protocol(
     config: DeviceConnectConfiguration, session: Optional[aiohttp.ClientSession] = None
 ) -> TapoProtocol:
+    protocol = await _try_protocols_at(config, session)
+    if protocol is not None:
+        return protocol
+
+    # H200 hubs (and other recent Tapo firmwares) only listen on HTTPS:443
+    # with a self-signed TPRI-DEVICE certificate. If the default HTTP:80
+    # transport failed completely, retry over HTTPS:443 with TLS verification
+    # disabled before declaring it an authentication failure.
+    if config.scheme == "http" and config.port == 80:
+        _LOGGER.debug(
+            "HTTP:80 protocols failed for %s, retrying over HTTPS:443", config.host
+        )
+        https_config = dataclasses.replace(
+            config, scheme="https", port=443, verify_ssl=False
+        )
+        protocol = await _try_protocols_at(https_config, session)
+        if protocol is not None:
+            return protocol
+
+    _LOGGER.error("None of available protocol is working, maybe invalid credentials")
+    raise InvalidAuthentication(config.host, config.device_type)
+
+
+async def _try_protocols_at(
+    config: DeviceConnectConfiguration, session: Optional[aiohttp.ClientSession] = None
+) -> Optional[TapoProtocol]:
     protocols = [
-        PassthroughProtocol(config.credentials, config.url, session),
-        KlapProtocol(config.credentials, config.url, klap_handshake_v1(), session),
-        KlapProtocol(config.credentials, config.url, klap_handshake_v2(), session),
+        PassthroughProtocol(
+            config.credentials, config.url, session, verify_ssl=config.verify_ssl
+        ),
+        KlapProtocol(
+            config.credentials,
+            config.url,
+            klap_handshake_v1(),
+            session,
+            verify_ssl=config.verify_ssl,
+        ),
+        KlapProtocol(
+            config.credentials,
+            config.url,
+            klap_handshake_v2(),
+            session,
+            verify_ssl=config.verify_ssl,
+        ),
     ]
     device_info_request = TapoRequest.get_device_info()
     for i, protocol in enumerate(protocols):
         info = await protocol.send_request(device_info_request)
         if info.is_success():
-            _LOGGER.debug(f"Found working protocol {type(protocol)}")
+            _LOGGER.debug(
+                "Found working protocol %s at %s", type(protocol), config.url
+            )
             for j, p in enumerate(protocols):
                 if i != j:
                     await p.close()
             return protocol
         else:
-            _LOGGER.debug(f"Protocol {type(protocol)} not working, trying next...")
-
-    _LOGGER.error("None of available protocol is working, maybe invalid credentials")
-    raise InvalidAuthentication(config.host, config.device_type)
+            _LOGGER.debug(
+                "Protocol %s at %s not working, trying next...",
+                type(protocol),
+                config.url,
+            )
+            await protocol.close()
+    return None
 
 
 def _get_device_class_from_model_type(device_type: str) -> Type[TapoDevice]:

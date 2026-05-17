@@ -25,12 +25,14 @@ class PassthroughProtocol(TapoProtocol):
         auth_credential: AuthCredential,
         url: str,
         http_session: Optional[aiohttp.ClientSession] = None,
+        verify_ssl: bool = True,
     ):
         super().__init__()
         self._url = url
         self._owns_http_session = http_session is None
         self._http = AsyncHttp(
-            aiohttp.ClientSession() if self._owns_http_session else http_session
+            aiohttp.ClientSession() if self._owns_http_session else http_session,
+            verify_ssl=verify_ssl,
         )
         self._passthrough = SecurePassthroughTransport(self._http)
         self._session: Optional[Session] = None

@@ -37,6 +37,7 @@ class KlapProtocol(TapoProtocol):
         url: str,
         klap_strategy: KlapHandshakeRevision,
         http_session: Optional[aiohttp.ClientSession] = None,
+        verify_ssl: bool = True,
     ):
         super().__init__()
         self._base_url = url
@@ -56,6 +57,8 @@ class KlapProtocol(TapoProtocol):
             if self._owns_http_session
             else http_session
         )
+        # aiohttp expects None (default validation) or False to disable.
+        self._ssl = None if verify_ssl else False
 
     @property
     def name(self) -> str:
@@ -253,7 +256,7 @@ class KlapProtocol(TapoProtocol):
         response_data = None
         self._http_session.cookie_jar.clear()
         resp = await self._http_session.post(
-            url, params=params, data=data, cookies=cookies
+            url, params=params, data=data, cookies=cookies, ssl=self._ssl
         )
         self._last_request_url = url
         async with resp:
