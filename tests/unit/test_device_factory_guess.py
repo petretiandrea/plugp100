@@ -2,6 +2,7 @@ import asyncio
 from unittest.mock import patch
 
 import aiohttp
+import pytest
 
 from plugp100.api.requests.tapo_request import TapoRequest
 from plugp100.common.credentials import AuthCredential
@@ -13,7 +14,14 @@ from plugp100.new.device_factory import (
     _guess_protocol,
 )
 from plugp100.new.errors.invalid_authentication import InvalidAuthentication
+from plugp100.new.errors.protocol_guess import (
+    HostUnreachableError,
+    ProtocolDetectionTimeoutError,
+    UnsupportedProtocolError,
+)
+from plugp100.protocol.klap.klap_protocol import KlapAuthenticationError
 from plugp100.protocol.tapo_protocol import TapoProtocol
+from plugp100.protocol.tpap_protocol import AuthenticationError
 from plugp100.responses.tapo_response import TapoResponse
 
 
@@ -100,8 +108,12 @@ async def test_protocol_candidates_cover_http_and_https():
                 await protocol.close()
 
 
-async def test_guess_protocol_raises_invalid_authentication_after_all_failures():
-    failed = FakeCandidateProtocol(Failure(Exception("not this protocol")))
+@pytest.mark.parametrize(
+    "failure",
+    [AuthenticationError("invalid password"), KlapAuthenticationError("bad challenge")],
+)
+async def test_guess_protocol_raises_invalid_authentication_after_all_failures(failure):
+    failed = FakeCandidateProtocol(Failure(failure))
     config = DeviceConnectConfiguration(
         host="device", credentials=AuthCredential("user", "password")
     )
@@ -109,11 +121,49 @@ async def test_guess_protocol_raises_invalid_authentication_after_all_failures()
         "plugp100.new.device_factory._build_protocol_candidates",
         return_value=[_ProtocolCandidate("failure", lambda: failed)],
     ):
-        try:
+        with pytest.raises(InvalidAuthentication) as raised:
             await _guess_protocol(config)
-        except InvalidAuthentication as exc:
-            assert str(exc) == "Unable to authenticate or determine protocol for device"
-        else:
-            raise AssertionError("InvalidAuthentication was not raised")
 
+    assert str(raised.value) == "Unable to authenticate for device"
+    assert raised.value.failures == (("failure", failed.response.error()),)
+    assert failed.closed
+
+
+@pytest.mark.parametrize(
+    ("failure", "expected_error", "message"),
+    [
+        (
+            asyncio.TimeoutError(),
+            ProtocolDetectionTimeoutError,
+            "Protocol detection timed out for device",
+        ),
+        (
+            aiohttp.ClientConnectionError("unreachable"),
+            HostUnreachableError,
+            "Unable to reach device for device",
+        ),
+        (
+            Exception("unexpected response"),
+            UnsupportedProtocolError,
+            "No supported protocol found for device",
+        ),
+    ],
+)
+async def test_guess_protocol_reports_specific_final_error(
+    failure, expected_error, message
+):
+    failed = FakeCandidateProtocol(Failure(failure))
+    config = DeviceConnectConfiguration(
+        host="device", credentials=AuthCredential("user", "password")
+    )
+
+    with patch(
+        "plugp100.new.device_factory._build_protocol_candidates",
+        return_value=[_ProtocolCandidate("failure", lambda: failed)],
+    ):
+        with pytest.raises(expected_error) as raised:
+            await _guess_protocol(config)
+
+    assert str(raised.value) == message
+    assert raised.value.failures == (("failure", failure),)
     assert failed.closed

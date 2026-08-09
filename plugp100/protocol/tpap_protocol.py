@@ -1391,31 +1391,31 @@ XhBkdDAKBggqhkjOPQQDAgNJADBGAiEA+7j5jemtXcGYN0unH+9rjVhVAL7WrsOi
         return context
 
     async def send(self, request: str) -> dict[str, Any]:
-        """Send the request."""
-        try:
-            return await self._send_once(request)
-        except Exception as exc:
-            if not self._should_retry_live_session(exc):
-                raise
-
-            _LOGGER.debug(
-                "TPAP: resetting live session and retrying after error: %s",
-                exc,
-            )
-            await self.reset()
-            return await self._send_once(request)
+        """Send one request without applying retry policy."""
+        return await self._send_once(request)
 
     async def send_request(
         self, request: TapoRequest, retry: int = 3
     ) -> Try[TapoResponse[dict[str, Any]]]:
-        try:
-            response = await self.send(jsons.dumps(request))
-            return TapoResponse.try_from_json(response)
-        except Exception as exc:
-            if retry > 0 and self._should_retry_live_session(exc):
+        payload = jsons.dumps(request)
+        attempts = max(retry, 0) + 1
+        for attempt in range(attempts):
+            try:
+                response = await self.send(payload)
+                return TapoResponse.try_from_json(response)
+            except Exception as exc:
+                if attempt == attempts - 1 or not self._should_retry_live_session(exc):
+                    return Failure(exc)
+
+                _LOGGER.debug(
+                    "TPAP: resetting live session before retry %d/%d after error: %s",
+                    attempt + 1,
+                    attempts - 1,
+                    exc,
+                )
                 await self.reset()
-                return await self.send_request(request, retry - 1)
-            return Failure(exc)
+
+        raise AssertionError("TPAP retry loop completed without a result")
 
     async def _send_once(self, request: str) -> dict[str, Any]:
         """Send a single request."""

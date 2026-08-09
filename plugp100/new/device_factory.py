@@ -7,10 +7,17 @@ from typing import Callable, Optional, Type
 import aiohttp
 
 from plugp100.common.credentials import AuthCredential
-from plugp100.protocol.klap.klap_protocol import KlapProtocol
+from plugp100.protocol.klap.klap_protocol import KlapAuthenticationError, KlapProtocol
 from plugp100.protocol.passthrough_protocol import PassthroughProtocol
-from plugp100.protocol.tpap_protocol import TpapProtocol
+from plugp100.protocol.tpap_protocol import AuthenticationError, TpapProtocol
+from plugp100.responses.tapo_exception import TapoError, TapoException
 from .errors.invalid_authentication import InvalidAuthentication
+from .errors.protocol_guess import (
+    HostUnreachableError,
+    ProtocolDetectionTimeoutError,
+    ProtocolFailure,
+    UnsupportedProtocolError,
+)
 from .tapobulb import TapoBulb
 from .tapodevice import TapoDevice
 from .tapohub import TapoHub
@@ -95,10 +102,12 @@ async def _guess_protocol(
     config: DeviceConnectConfiguration, session: Optional[aiohttp.ClientSession] = None
 ) -> TapoProtocol:
     device_info_request = TapoRequest.get_device_info()
+    failures: list[ProtocolFailure] = []
     for candidate in _build_protocol_candidates(config, session):
-        protocol = candidate.factory()
+        protocol = None
         success = False
         try:
+            protocol = candidate.factory()
             request = protocol.send_request(device_info_request)
             info = (
                 await asyncio.wait_for(request, timeout=config.timeout)
@@ -109,20 +118,66 @@ async def _guess_protocol(
                 success = True
                 _LOGGER.debug("Found working protocol %s", candidate.name)
                 return protocol
+            error = info.error()
+            failures.append((candidate.name, error))
             _LOGGER.debug(
                 "Protocol candidate %s failed: %s",
                 candidate.name,
-                info.error(),
+                error,
             )
         except Exception as ex:
+            failures.append((candidate.name, ex))
             _LOGGER.debug("Protocol candidate %s failed: %s", candidate.name, ex)
         finally:
-            if not success:
+            if protocol is not None and not success:
                 with suppress(Exception):
                     await protocol.close()
 
-    _LOGGER.error("None of available protocol is working, maybe invalid credentials")
-    raise InvalidAuthentication(config.host, config.device_type)
+    error = _protocol_guess_error(config, failures)
+    _LOGGER.error("None of the available protocols worked: %s", error)
+    raise error
+
+
+_AUTHENTICATION_ERROR_CODES = {
+    TapoError.ERR_AES_DECODE_FAIL.value,
+    TapoError.INVALID_CREDENTIAL.value,
+    TapoError.ERR_HAND_SHAKE_FAILED.value,
+    TapoError.ERR_LOGIN_FAILED.value,
+}
+
+
+def _protocol_guess_error(
+    config: DeviceConnectConfiguration, failures: list[ProtocolFailure]
+) -> Exception:
+    errors = [error for _, error in failures]
+
+    if any(_is_authentication_error(error) for error in errors):
+        return InvalidAuthentication(config.host, config.device_type, failures=failures)
+
+    if errors and all(_is_timeout_error(error) for error in errors):
+        return ProtocolDetectionTimeoutError(
+            config.host, config.device_type, failures=failures
+        )
+
+    if errors and all(_is_network_error(error) for error in errors):
+        return HostUnreachableError(config.host, config.device_type, failures=failures)
+
+    return UnsupportedProtocolError(config.host, config.device_type, failures=failures)
+
+
+def _is_authentication_error(error: Exception) -> bool:
+    return isinstance(error, (AuthenticationError, KlapAuthenticationError)) or (
+        isinstance(error, TapoException)
+        and error.error_code in _AUTHENTICATION_ERROR_CODES
+    )
+
+
+def _is_timeout_error(error: Exception) -> bool:
+    return isinstance(error, (TimeoutError, asyncio.TimeoutError))
+
+
+def _is_network_error(error: Exception) -> bool:
+    return _is_timeout_error(error) or isinstance(error, aiohttp.ClientConnectionError)
 
 
 @dataclasses.dataclass(frozen=True)

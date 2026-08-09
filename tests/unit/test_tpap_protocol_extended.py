@@ -15,6 +15,7 @@ from cryptography.hazmat.primitives.asymmetric import ec, rsa
 from cryptography.x509.oid import NameOID
 from yarl import URL
 
+from plugp100.api.requests.tapo_request import TapoRequest
 from plugp100.common.credentials import AuthCredential
 from plugp100.protocol.tpap_protocol import (
     AuthenticationError,
@@ -309,15 +310,30 @@ async def test_payload_retry_and_ssl_helpers():
         )
         assert not protocol._should_retry_live_session(KasaException("no"))
 
+        retry_error = _RetryableError("retry", error_code=SmartErrorCode.SESSION_EXPIRED)
+        protocol._send_once = AsyncMock(side_effect=retry_error)
+        protocol.reset = AsyncMock()
+        with pytest.raises(_RetryableError):
+            await protocol.send("{}")
+        protocol.reset.assert_not_awaited()
+
         protocol._send_once = AsyncMock(
             side_effect=[
-                _RetryableError("retry", error_code=SmartErrorCode.SESSION_EXPIRED),
+                retry_error,
                 {"error_code": 0, "result": {}},
             ]
         )
-        protocol.reset = AsyncMock()
-        assert await protocol.send("{}") == {"error_code": 0, "result": {}}
+        result = await protocol.send_request(TapoRequest.get_device_info())
+        assert result.is_success()
+        assert protocol._send_once.await_count == 2
         protocol.reset.assert_awaited_once()
+
+        protocol._send_once = AsyncMock(side_effect=retry_error)
+        protocol.reset.reset_mock()
+        result = await protocol.send_request(TapoRequest.get_device_info(), retry=3)
+        assert result.is_failure()
+        assert protocol._send_once.await_count == 4
+        assert protocol.reset.await_count == 3
 
 
 def test_certificate_loading_validity_and_signatures():

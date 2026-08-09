@@ -26,6 +26,10 @@ from .klap_handshake_revision import KlapHandshakeRevision, KlapHandshakeRevisio
 logger = logging.getLogger(__name__)
 
 
+class KlapAuthenticationError(Exception):
+    """Raised when the device challenge does not match the credentials."""
+
+
 class KlapProtocol(TapoProtocol):
     TP_SESSION_COOKIE_NAME = "TP_SESSIONID"
     TP_TIMEOUT_COOKIE_NAME = "TIMEOUT"
@@ -208,7 +212,7 @@ class KlapProtocol(TapoProtocol):
                     logger.debug(
                         f"Server response doesn't match our challenge on url {self._base_url}"
                     )
-                    raise Exception(
+                    raise KlapAuthenticationError(
                         f"Server response doesn't match our challenge on url {self._base_url}"
                     )
 
