@@ -305,12 +305,14 @@ class KlapProtocol(TapoProtocol):
 
 @dataclasses.dataclass
 class KlapSession:
+    RENEWAL_MARGIN_SECONDS = 40
+
     chiper: "KlapChiper"
     expire_at: float
     session_cookie: str
 
     def is_handshake_session_expired(self) -> bool:
-        return (self.expire_at - (time.time() * 1000)) <= 40 * 1000
+        return (self.expire_at - time.time()) <= self.RENEWAL_MARGIN_SECONDS
 
 
 # The chiper is not thread safe and use sequence number to encrypt and decrypt data.
