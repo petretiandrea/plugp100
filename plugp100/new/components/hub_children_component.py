@@ -23,13 +23,14 @@ class HubChildrenComponent(DeviceComponent):
         self._client = client
         self._children: [TapoDevice] = []
         self._parent_device = parent_device
+        self._children_initialized = False
 
     @property
     def children(self) -> [TapoDevice]:
         return self._children
 
     async def update(self, current_state: dict[str, Any] | None = None):
-        if len(self._children) == 0:
+        if not self._children_initialized:
             children = (
                 await self._client.get_child_device_list(all_pages=True)
             ).get_or_raise()
@@ -46,6 +47,7 @@ class HubChildrenComponent(DeviceComponent):
                         "Please request support by opening an issue to https://github.com/petretiandrea/plugp100/issues/new"
                     )
 
+            self._children_initialized = True
             for child_device in self._children:
                 await child_device.update()
 
