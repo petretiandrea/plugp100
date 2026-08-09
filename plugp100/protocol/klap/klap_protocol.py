@@ -19,6 +19,11 @@ from plugp100.common.functional.tri import Try, Failure
 from plugp100.common.utils.ssl_utils import ssl_context_for_url
 from plugp100.protocol.tapo_protocol import TapoProtocol
 from plugp100.api.requests.tapo_request import TapoRequest
+from plugp100.responses.tapo_exception import (
+    TapoAuthenticationError,
+    TapoDeviceError,
+    TapoRetryableError,
+)
 from plugp100.responses.tapo_response import TapoResponse
 
 from .klap_handshake_revision import KlapHandshakeRevision, KlapHandshakeRevisionV2
@@ -26,15 +31,15 @@ from .klap_handshake_revision import KlapHandshakeRevision, KlapHandshakeRevisio
 logger = logging.getLogger(__name__)
 
 
-class KlapAuthenticationError(Exception):
+class KlapAuthenticationError(TapoAuthenticationError):
     """Raised when the device challenge does not match the credentials."""
 
 
-class KlapSessionError(Exception):
+class KlapSessionError(TapoRetryableError):
     """Raised when an established KLAP session must be renewed."""
 
 
-class KlapDeviceError(Exception):
+class KlapDeviceError(TapoDeviceError):
     """Raised for definitive device responses that should not be retried."""
 
 

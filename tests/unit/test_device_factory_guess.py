@@ -21,7 +21,7 @@ from plugp100.new.errors.protocol_guess import (
 )
 from plugp100.protocol.klap.klap_protocol import KlapAuthenticationError
 from plugp100.protocol.tapo_protocol import TapoProtocol
-from plugp100.protocol.tpap_protocol import AuthenticationError
+from plugp100.responses.tapo_exception import TapoAuthenticationError
 from plugp100.responses.tapo_response import TapoResponse
 
 
@@ -113,7 +113,10 @@ async def test_protocol_candidates_cover_http_and_https():
 
 @pytest.mark.parametrize(
     "failure",
-    [AuthenticationError("invalid password"), KlapAuthenticationError("bad challenge")],
+    [
+        TapoAuthenticationError("invalid password"),
+        KlapAuthenticationError("bad challenge"),
+    ],
 )
 async def test_guess_protocol_raises_invalid_authentication_after_all_failures(failure):
     failed = FakeCandidateProtocol(Failure(failure))

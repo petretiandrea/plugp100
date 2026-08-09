@@ -5,7 +5,7 @@ import ssl
 import struct
 from datetime import datetime, timedelta, timezone
 from types import SimpleNamespace
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 import aiohttp
 import pytest
@@ -17,14 +17,13 @@ from yarl import URL
 
 from plugp100.api.requests.tapo_request import TapoRequest
 from plugp100.common.credentials import AuthCredential
-from plugp100.protocol.tpap_protocol import (
-    AuthenticationError,
-    DeviceError,
-    KasaException,
-    SmartErrorCode,
-    TpapEncryptionSession,
-    TpapProtocol,
-    _RetryableError,
+from plugp100.protocol.tpap_protocol import TpapEncryptionSession, TpapProtocol
+from plugp100.responses.tapo_exception import (
+    TapoAuthenticationError,
+    TapoDeviceError,
+    TapoError,
+    TapoProtocolError,
+    TapoRetryableError,
 )
 
 
@@ -161,15 +160,15 @@ def test_build_credentials_fallbacks(extra):
 
 def test_mac_passcode_and_suite_validation():
     assert len(TpapEncryptionSession._mac_pass_from_device_mac("AA:BB:CC:DD:EE:FF")) == 64
-    with pytest.raises(KasaException, match="Invalid device MAC"):
+    with pytest.raises(TapoProtocolError, match="Invalid device MAC"):
         TpapEncryptionSession._mac_pass_from_device_mac("not-a-mac")
-    with pytest.raises(KasaException, match="too short"):
+    with pytest.raises(TapoProtocolError, match="too short"):
         TpapEncryptionSession._mac_pass_from_device_mac("AA:BB:CC:DD:EE")
     for suite, curve in ((1, "NIST256p"), (3, "NIST384p"), (5, "NIST521p")):
         assert TpapEncryptionSession._suite_parameters(suite)[2].name == curve
-    with pytest.raises(KasaException, match="Unsupported TPAP suite type"):
+    with pytest.raises(TapoProtocolError, match="Unsupported TPAP suite type"):
         TpapEncryptionSession._suite_parameters(999)
-    with pytest.raises(KasaException, match="Unsupported TPAP session cipher"):
+    with pytest.raises(TapoProtocolError, match="Unsupported TPAP session cipher"):
         TpapEncryptionSession._cipher_parameters("unknown")
     with pytest.raises(ValueError, match="base nonce too short"):
         TpapEncryptionSession._nonce_from_base(b"123", 1)
@@ -181,7 +180,7 @@ async def test_register_validation_and_cmac_suite():
             AuthCredential("user", "pw"), "http://device/app", http_session
         )
         session = protocol._encryption_session
-        with pytest.raises(KasaException, match="user random not initialized"):
+        with pytest.raises(TapoProtocolError, match="user random not initialized"):
             session._build_share_params_from_register({}, "secret")
         session._user_random = base64.b64encode(b"u" * 16).decode()
         invalid = [
@@ -197,7 +196,7 @@ async def test_register_validation_and_cmac_suite():
             ({"encryption": "unknown"}, "Unsupported TPAP session cipher"),
         ]
         for overrides, message in invalid:
-            with pytest.raises(KasaException, match=message):
+            with pytest.raises(TapoProtocolError, match=message):
                 session._build_share_params_from_register(
                     _register_result(**overrides), "secret"
                 )
@@ -215,37 +214,37 @@ async def test_error_codes_and_session_establishment():
         )
         session = protocol._encryption_session
         session._handle_response_error_code({"error_code": 0}, "success")
-        with pytest.raises(_RetryableError):
+        with pytest.raises(TapoRetryableError):
             session._handle_response_error_code(
-                {"error_code": SmartErrorCode.SESSION_EXPIRED.value}, "retry"
+                {"error_code": TapoError.ERR_SESSION_EXPIRED.value}, "retry"
             )
-        with pytest.raises(AuthenticationError):
+        with pytest.raises(TapoAuthenticationError):
             session._handle_response_error_code(
-                {"error_code": SmartErrorCode.LOGIN_ERROR.value}, "auth"
+                {"error_code": TapoError.INVALID_CREDENTIAL.value}, "auth"
             )
-        with pytest.raises(DeviceError):
+        with pytest.raises(TapoDeviceError):
             session._handle_response_error_code({"error_code": "unknown"}, "device")
 
         session._expected_dev_confirm = "expected"
-        with pytest.raises(KasaException, match="missing dev_confirm"):
+        with pytest.raises(TapoProtocolError, match="missing dev_confirm"):
             session._establish_session_from_share_result({})
-        with pytest.raises(KasaException, match="confirmation mismatch"):
+        with pytest.raises(TapoProtocolError, match="confirmation mismatch"):
             session._establish_session_from_share_result({"dev_confirm": "wrong"})
         session._shared_key = None
-        with pytest.raises(KasaException, match="shared key was not derived"):
+        with pytest.raises(TapoProtocolError, match="shared key was not derived"):
             session._establish_session_from_share_result(
                 {"dev_confirm": "expected", "sessionId": "SID", "start_seq": 1}
             )
         session._shared_key = b"shared"
-        with pytest.raises(KasaException, match="Missing session fields"):
+        with pytest.raises(TapoProtocolError, match="Missing session fields"):
             session._establish_session_from_share_result(
                 {"dev_confirm": "expected", "start_seq": 1}
             )
-        with pytest.raises(KasaException, match="Missing session fields"):
+        with pytest.raises(TapoProtocolError, match="Missing session fields"):
             session._establish_session_from_share_result(
                 {"dev_confirm": "expected", "sessionId": "SID"}
             )
-        with pytest.raises(KasaException, match="Invalid session fields"):
+        with pytest.raises(TapoProtocolError, match="Invalid session fields"):
             session._establish_session_from_share_result(
                 {
                     "dev_confirm": "expected",
@@ -298,7 +297,7 @@ async def test_payload_retry_and_ssl_helpers():
         session.advance(5)
         session.advance(3)
         assert session._sequence == 6
-        with pytest.raises(KasaException, match="response too short"):
+        with pytest.raises(TapoProtocolError, match="response too short"):
             session.decrypt(b"short", 1)
         response = TpapEncryptionSession._encrypt_payload(
             "chacha20_poly1305", key, nonce, b"world", 8
@@ -306,14 +305,17 @@ async def test_payload_retry_and_ssl_helpers():
         assert session.decrypt(struct.pack(">I", 8) + response, 7) == b"world"
 
         assert protocol._should_retry_live_session(
-            _RetryableError("retry", error_code=SmartErrorCode.STAT_ACCESS_ERROR)
+            TapoRetryableError(TapoError.ERR_STAT_ACCESS, "retry")
         )
-        assert not protocol._should_retry_live_session(KasaException("no"))
+        assert protocol._should_retry_live_session(
+            aiohttp.ClientConnectionError("disconnected")
+        )
+        assert not protocol._should_retry_live_session(TapoProtocolError("no"))
 
-        retry_error = _RetryableError("retry", error_code=SmartErrorCode.SESSION_EXPIRED)
+        retry_error = TapoRetryableError(TapoError.ERR_SESSION_EXPIRED, "retry")
         protocol._send_once = AsyncMock(side_effect=retry_error)
         protocol.reset = AsyncMock()
-        with pytest.raises(_RetryableError):
+        with pytest.raises(TapoRetryableError):
             await protocol.send("{}")
         protocol.reset.assert_not_awaited()
 
@@ -345,9 +347,9 @@ def test_certificate_loading_validity_and_signatures():
     der = base64.b64encode(leaf.public_bytes(serialization.Encoding.DER)).decode()
     assert TpapProtocol._load_certificate_value(pem).subject == leaf.subject
     assert TpapProtocol._load_certificate_value(der).subject == leaf.subject
-    with pytest.raises(KasaException, match="Empty certificate"):
+    with pytest.raises(TapoProtocolError, match="Empty certificate"):
         TpapProtocol._load_certificate_value(" ")
-    with pytest.raises(KasaException, match="Invalid certificate"):
+    with pytest.raises(TapoProtocolError, match="Invalid certificate"):
         TpapProtocol._load_certificate_value("invalid")
     TpapProtocol._verify_certificate_validity(leaf)
     TpapProtocol._verify_certificate_signature(leaf, root)
@@ -361,13 +363,13 @@ def test_certificate_loading_validity_and_signatures():
         not_valid_before=datetime.now() - timedelta(days=2),
         not_valid_after=datetime.now() - timedelta(days=1),
     )
-    with pytest.raises(KasaException, match="outside its validity period"):
+    with pytest.raises(TapoProtocolError, match="outside its validity period"):
         TpapProtocol._verify_certificate_validity(expired)
     no_hash = SimpleNamespace(signature_hash_algorithm=None)
     issuer = SimpleNamespace(public_key=lambda: ec_root_key.public_key())
-    with pytest.raises(KasaException, match="hash algorithm is unavailable"):
+    with pytest.raises(TapoProtocolError, match="hash algorithm is unavailable"):
         TpapProtocol._verify_certificate_signature(no_hash, issuer)
-    with pytest.raises(KasaException, match="Unsupported DAC issuer"):
+    with pytest.raises(TapoProtocolError, match="Unsupported DAC issuer"):
         TpapProtocol._verify_certificate_signature(
             leaf, SimpleNamespace(public_key=lambda: object())
         )
@@ -381,17 +383,17 @@ async def test_http_response_and_send_error_paths():
             AuthCredential("user", "pw"), "http://device/app", http_session
         )
         assert protocol._load_json_dict(b'{"ok": true}') == {"ok": True}
-        with pytest.raises(KasaException, match="JSON response body type"):
+        with pytest.raises(TapoProtocolError, match="JSON response body type"):
             protocol._load_json_dict(b"[]")
 
-        protocol._send_once = AsyncMock(side_effect=KasaException("boom"))
-        with pytest.raises(KasaException, match="boom"):
+        protocol._send_once = AsyncMock(side_effect=TapoProtocolError("boom"))
+        with pytest.raises(TapoProtocolError, match="boom"):
             await protocol.send("{}")
         protocol._send_once = TpapProtocol._send_once.__get__(protocol, TpapProtocol)
 
         session = protocol._encryption_session
         session.perform_handshake = AsyncMock()
-        with pytest.raises(KasaException, match="not established"):
+        with pytest.raises(TapoProtocolError, match="not established"):
             await protocol._send_once("{}")
 
         key, nonce = TpapEncryptionSession.key_nonce_from_shared(b"shared", "aes_128_ccm")
@@ -401,8 +403,36 @@ async def test_http_response_and_send_error_paths():
         session._sequence = 1
         session._ds_url = URL("http://device/stok=SID/ds")
         protocol._post = AsyncMock(return_value=(500, b"error"))
-        with pytest.raises(KasaException, match="status 500"):
+        with pytest.raises(TapoRetryableError, match="status 500"):
             await protocol._send_once("{}")
+
+
+async def test_encrypted_tpap_retryable_response_renews_session():
+    async with aiohttp.ClientSession() as http_session:
+        protocol = TpapProtocol(
+            AuthCredential("user", "pw"), "http://device/app", http_session
+        )
+        session = protocol._encryption_session
+        session._session_id = "SID"
+        session._sequence = 1
+        session._ds_url = URL("http://device/stok=SID/ds")
+        session._key = b"key"
+        session._base_nonce = b"nonce"
+        session.encrypt = Mock(return_value=(b"request", 1))
+        session.decrypt = Mock(
+            side_effect=[
+                json.dumps({"error_code": TapoError.ERR_SESSION_EXPIRED.value}).encode(),
+                json.dumps({"error_code": 0, "result": {}}).encode(),
+            ]
+        )
+        protocol._post = AsyncMock(return_value=(200, b"encrypted"))
+        protocol.reset = AsyncMock()
+
+        response = await protocol.send_request(TapoRequest.get_device_info(), retry=1)
+
+        assert response.is_success()
+        assert protocol._post.await_count == 2
+        protocol.reset.assert_awaited_once()
 
 
 def test_transport_url_and_parse_helpers():
@@ -410,5 +440,5 @@ def test_transport_url_and_parse_helpers():
     assert TpapEncryptionSession._parse_optional_int("2") == 2
     assert TpapEncryptionSession._parse_optional_int("bad") is None
     assert TpapEncryptionSession._require_result_dict({"result": {}}) == {}
-    with pytest.raises(KasaException, match="missing result"):
+    with pytest.raises(TapoProtocolError, match="missing result"):
         TpapEncryptionSession._require_result_dict({})

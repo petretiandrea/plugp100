@@ -7,10 +7,14 @@ from typing import Callable, Optional, Type
 import aiohttp
 
 from plugp100.common.credentials import AuthCredential
-from plugp100.protocol.klap.klap_protocol import KlapAuthenticationError, KlapProtocol
+from plugp100.protocol.klap.klap_protocol import KlapProtocol
 from plugp100.protocol.passthrough_protocol import PassthroughProtocol
-from plugp100.protocol.tpap_protocol import AuthenticationError, TpapProtocol
-from plugp100.responses.tapo_exception import TapoError, TapoException
+from plugp100.protocol.tpap_protocol import TpapProtocol
+from plugp100.responses.tapo_exception import (
+    TapoAuthenticationError,
+    TapoError,
+    TapoException,
+)
 from .errors.invalid_authentication import InvalidAuthentication
 from .errors.protocol_guess import (
     HostUnreachableError,
@@ -200,7 +204,7 @@ def _protocol_guess_error(
 
 
 def _is_authentication_error(error: Exception) -> bool:
-    return isinstance(error, (AuthenticationError, KlapAuthenticationError)) or (
+    return isinstance(error, TapoAuthenticationError) or (
         isinstance(error, TapoException)
         and error.error_code in _AUTHENTICATION_ERROR_CODES
     )

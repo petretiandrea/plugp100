@@ -11,6 +11,7 @@ import secrets
 import struct
 from typing import TYPE_CHECKING, Any
 
+import aiohttp
 from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import ec
@@ -23,17 +24,14 @@ from ecdsa.ellipticcurve import CurveFp, PointJacobi
 from passlib.hash import md5_crypt, sha256_crypt
 from yarl import URL
 
-from .crypto import TpapCryptoMixin
-from .errors import (
-    SMART_AUTHENTICATION_ERRORS,
-    SMART_RETRYABLE_ERRORS,
-    AuthenticationError,
-    DeviceError,
-    KasaException,
-    SmartErrorCode,
-    _ConnectionError,
-    _RetryableError,
+from plugp100.responses.tapo_exception import (
+    TapoAuthenticationError,
+    TapoException,
+    TapoProtocolError,
+    TapoRetryableError,
 )
+
+from .crypto import TpapCryptoMixin
 
 if TYPE_CHECKING:
     from .protocol import TpapProtocol
@@ -141,7 +139,7 @@ class TpapEncryptionSession(TpapCryptoMixin):
     def _require_result_dict(response: dict[str, Any]) -> dict[str, Any]:
         result = response.get("result")
         if not isinstance(result, dict):
-            raise KasaException("TPAP response missing result object")
+            raise TapoProtocolError("TPAP response missing result object")
         return result
 
     async def perform_handshake(self) -> None:
@@ -170,7 +168,8 @@ class TpapEncryptionSession(TpapCryptoMixin):
             ssl=await self._transport.get_ssl_context(),
         )
         if status != 200 or not isinstance(data, dict):
-            raise KasaException(
+            error_type = TapoRetryableError if status >= 500 else TapoProtocolError
+            raise error_type(
                 f"TPAP discover failed for {self._transport._host}: "
                 f"{status} {type(data)}"
             )
@@ -179,7 +178,7 @@ class TpapEncryptionSession(TpapCryptoMixin):
         result = self._require_result_dict(data)
         tpap = result.get("tpap")
         if not isinstance(tpap, dict):
-            raise KasaException("TPAP discover response missing tpap object")
+            raise TapoProtocolError("TPAP discover response missing tpap object")
 
         self._device_mac = str(result.get("mac") or "")
         self._tpap_tls = self._parse_optional_int(tpap.get("tls"))
@@ -209,7 +208,8 @@ class TpapEncryptionSession(TpapCryptoMixin):
             ssl=ssl_context,
         )
         if status != 200 or not isinstance(data, dict):
-            raise KasaException(
+            error_type = TapoRetryableError if status >= 500 else TapoProtocolError
+            raise error_type(
                 f"TPAP {step_name} failed for {self._transport._host}: "
                 f"{status} {type(data)}"
             )
@@ -226,46 +226,40 @@ class TpapEncryptionSession(TpapCryptoMixin):
     def _handle_response_error_code(self, response: dict[str, Any], action: str) -> None:
         """Handle response errors to request reauth etc."""
         error_code_raw = response.get("error_code")
-        try:
-            error_code = SmartErrorCode.from_int(error_code_raw)
-        except (TypeError, ValueError):
+        if error_code_raw == 0:
+            return
+
+        error = TapoException.from_error_code(
+            error_code_raw,
+            f"TPAP {action} failed for {self._transport._host}",
+        )
+        if error.tapo_error is None:
             _LOGGER.warning(
                 "Device %s received unknown error code: %s",
                 self._transport._host,
                 error_code_raw,
             )
-            error_code = SmartErrorCode.INTERNAL_UNKNOWN_ERROR
 
-        if error_code is SmartErrorCode.SUCCESS:
-            return
-
-        full = (
-            f"TPAP {action} failed for {self._transport._host}: "
-            f"{error_code.name}({error_code.value})"
-        )
-        if error_code in SMART_RETRYABLE_ERRORS:
-            raise _RetryableError(full, error_code=error_code)
-        if error_code in SMART_AUTHENTICATION_ERRORS:
+        if isinstance(error, TapoAuthenticationError):
             self._invalidate_session()
-            raise AuthenticationError(full, error_code=error_code)
-        raise DeviceError(full, error_code=error_code)
+        raise error
 
     async def _perform_auth_handshake(self) -> None:
         passcode_type = self._get_passcode_type()
         if passcode_type is None:
-            raise AuthenticationError(
+            raise TapoAuthenticationError(
                 f"TPAP: no supported passcode type for {self._transport._host}"
             )
 
         candidate_secrets = self._get_candidate_secrets()
         if not candidate_secrets:
-            raise AuthenticationError(
+            raise TapoAuthenticationError(
                 f"TPAP: no credential candidates available for {self._transport._host}"
             )
 
         register_username = self._get_register_username()
         candidate_count = len(candidate_secrets)
-        last_error: KasaException | None = None
+        last_error: TapoProtocolError | None = None
 
         for attempt, candidate_secret in enumerate(candidate_secrets, start=1):
             self._shared_key = None
@@ -302,9 +296,9 @@ class TpapEncryptionSession(TpapCryptoMixin):
                 share_result = await self._login(share_params, step_name="pake_share")
                 self._establish_session_from_share_result(share_result)
                 return
-            except (_RetryableError, _ConnectionError):
+            except (TapoRetryableError, aiohttp.ClientError):
                 raise
-            except KasaException as exc:
+            except TapoProtocolError as exc:
                 last_error = exc
                 if attempt < candidate_count:
                     _LOGGER.debug(
@@ -323,7 +317,7 @@ class TpapEncryptionSession(TpapCryptoMixin):
                 )
             raise last_error
 
-        raise KasaException(  # pragma: no cover
+        raise TapoProtocolError(  # pragma: no cover
             "TPAP: handshake did not produce a session"
         )
 
@@ -578,11 +572,11 @@ class TpapEncryptionSession(TpapCryptoMixin):
         try:
             mac_bytes = bytes.fromhex(mac_hex)
         except ValueError as exc:
-            raise KasaException(
+            raise TapoProtocolError(
                 "Invalid device MAC for TPAP default passcode derivation"
             ) from exc
         if len(mac_bytes) < 6:
-            raise KasaException(
+            raise TapoProtocolError(
                 "Device MAC is too short for TPAP default passcode derivation"
             )
         seed = b"GqY5o136oa4i6VprTlMW2DpVXxmfW8"
@@ -720,13 +714,13 @@ class TpapEncryptionSession(TpapCryptoMixin):
                 NIST521p,
                 ec.SECP521R1(),
             )
-        raise KasaException(f"Unsupported TPAP suite type: {suite_type}")
+        raise TapoProtocolError(f"Unsupported TPAP suite type: {suite_type}")
 
     def _build_share_params_from_register(
         self, register_result: dict[str, Any], credentials_string: str
     ) -> dict[str, Any]:
         if self._user_random is None:
-            raise KasaException("TPAP user random not initialized")
+            raise TapoProtocolError("TPAP user random not initialized")
 
         dev_random = str(register_result.get("dev_random") or "")
         dev_salt = str(register_result.get("dev_salt") or "")
@@ -737,35 +731,37 @@ class TpapEncryptionSession(TpapCryptoMixin):
             ("dev_share", dev_share),
         ):
             if not value:
-                raise KasaException(f"TPAP register response missing {field}")
+                raise TapoProtocolError(f"TPAP register response missing {field}")
 
         suite_type_value = register_result.get("cipher_suites")
         if suite_type_value is None:
-            raise KasaException("TPAP register response has invalid cipher_suites")
+            raise TapoProtocolError("TPAP register response has invalid cipher_suites")
         try:
             suite_type = int(suite_type_value)
         except (TypeError, ValueError) as exc:
-            raise KasaException(
+            raise TapoProtocolError(
                 "TPAP register response has invalid cipher_suites"
             ) from exc
 
         iterations_value = register_result.get("iterations")
         if iterations_value is None:
-            raise KasaException("TPAP register response has invalid iterations")
+            raise TapoProtocolError("TPAP register response has invalid iterations")
         try:
             iterations = int(iterations_value)
         except (TypeError, ValueError) as exc:
-            raise KasaException("TPAP register response has invalid iterations") from exc
+            raise TapoProtocolError(
+                "TPAP register response has invalid iterations"
+            ) from exc
 
         if iterations <= 0:
-            raise KasaException("TPAP register response has invalid iterations")
+            raise TapoProtocolError("TPAP register response has invalid iterations")
 
         encryption = str(register_result.get("encryption") or "")
         if not encryption:
-            raise KasaException("TPAP register response missing encryption")
+            raise TapoProtocolError("TPAP register response missing encryption")
         chosen_cipher = self._normalize_cipher_id(encryption)
         if chosen_cipher not in self.CIPHER_PARAMETERS:
-            raise KasaException(f"Unsupported TPAP session cipher: {encryption}")
+            raise TapoProtocolError(f"Unsupported TPAP session cipher: {encryption}")
 
         self._cipher_id = chosen_cipher
         self._hkdf_hash = self._suite_hash_name(suite_type)
@@ -862,7 +858,7 @@ class TpapEncryptionSession(TpapCryptoMixin):
             if not (dac_ca and dac_proof and self._shared_key and self._dac_nonce_base64):
                 return
             if not isinstance(dac_proof, str):
-                raise KasaException("Invalid DAC proof type")
+                raise TapoProtocolError("Invalid DAC proof type")
 
             ca_cert = self._transport._load_certificate_value(dac_ca)
             ica_cert = (
@@ -873,24 +869,24 @@ class TpapEncryptionSession(TpapCryptoMixin):
             signature = self._unbase64(dac_proof)
             public_key = ca_cert.public_key()
             if not isinstance(public_key, ec.EllipticCurvePublicKey):
-                raise KasaException(
+                raise TapoProtocolError(
                     "Unsupported DAC proof public key type: "
                     f"{type(public_key).__name__}"
                 )
             public_key.verify(signature, message, ec.ECDSA(hashes.SHA256()))
         except InvalidSignature as exc:
             _LOGGER.error("TPAP: invalid DAC proof signature")
-            raise KasaException("Invalid DAC proof signature") from exc
+            raise TapoProtocolError("Invalid DAC proof signature") from exc
         except Exception as exc:
             _LOGGER.error("TPAP: DAC verification failed: %s", exc)
-            raise KasaException(f"DAC verification failed: {exc}") from exc
+            raise TapoProtocolError(f"DAC verification failed: {exc}") from exc
 
     def _establish_session_from_share_result(self, share_result: dict[str, Any]) -> None:
         dev_confirm = str(share_result.get("dev_confirm") or "").lower()
         if not dev_confirm:
-            raise KasaException("TPAP share response missing dev_confirm")
+            raise TapoProtocolError("TPAP share response missing dev_confirm")
         if dev_confirm != (self._expected_dev_confirm or "").lower():
-            raise KasaException("TPAP confirmation mismatch")
+            raise TapoProtocolError("TPAP confirmation mismatch")
 
         if self._use_dac_certification():
             self._verify_dac_proof(share_result)
@@ -898,16 +894,16 @@ class TpapEncryptionSession(TpapCryptoMixin):
         session_id = str(share_result.get("sessionId") or share_result.get("stok") or "")
         if not session_id:
             _LOGGER.error("TPAP: missing session ID from device")
-            raise KasaException("Missing session fields from device")
+            raise TapoProtocolError("Missing session fields from device")
         if self._shared_key is None:
-            raise KasaException("TPAP shared key was not derived")
+            raise TapoProtocolError("TPAP shared key was not derived")
         start_seq = share_result.get("start_seq")
         if start_seq is None:
-            raise KasaException("Missing session fields from device")
+            raise TapoProtocolError("Missing session fields from device")
         try:
             sequence = int(start_seq)
         except (TypeError, ValueError) as exc:
-            raise KasaException("Invalid session fields from device") from exc
+            raise TapoProtocolError("Invalid session fields from device") from exc
 
         self._key, self._base_nonce = self.key_nonce_from_shared(
             self._shared_key, self._cipher_id, hkdf_hash=self._hkdf_hash
@@ -918,7 +914,7 @@ class TpapEncryptionSession(TpapCryptoMixin):
 
     def _require_established_session(self) -> tuple[str, int, URL, bytes, bytes]:
         if not self.is_established:
-            raise KasaException("TPAP transport is not established")
+            raise TapoProtocolError("TPAP transport is not established")
         if TYPE_CHECKING:
             assert self._sequence is not None
             assert self._ds_url is not None
@@ -950,7 +946,7 @@ class TpapEncryptionSession(TpapCryptoMixin):
         """Decrypt the message."""
         cipher_id, _, _, key, base_nonce = self._require_established_session()
         if len(payload) < 4 + self.TAG_LEN:
-            raise KasaException("TPAP response too short")
+            raise TapoProtocolError("TPAP response too short")
 
         response_seq = struct.unpack(">I", payload[:4])[0]
         if response_seq != request_seq:
