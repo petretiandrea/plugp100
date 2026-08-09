@@ -1226,11 +1226,6 @@ XhBkdDAKBggqhkjOPQQDAgNJADBGAiEA+7j5jemtXcGYN0unH+9rjVhVAL7WrsOi
         return self._port
 
     @property
-    def credentials_hash(self) -> str | None:
-        credentials = {"un": self._credential.username, "pwd": self._credential.password}
-        return base64.b64encode(json.dumps(credentials).encode()).decode()
-
-    @property
     def name(self) -> str:
         return "TPAP"
 

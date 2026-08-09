@@ -12,6 +12,7 @@ from plugp100.new.device_factory import (
     _build_protocol_candidates,
     _guess_protocol,
 )
+from plugp100.new.errors.invalid_authentication import InvalidAuthentication
 from plugp100.protocol.tapo_protocol import TapoProtocol
 from plugp100.responses.tapo_response import TapoResponse
 
@@ -97,3 +98,22 @@ async def test_protocol_candidates_cover_http_and_https():
         finally:
             for protocol in protocols:
                 await protocol.close()
+
+
+async def test_guess_protocol_raises_invalid_authentication_after_all_failures():
+    failed = FakeCandidateProtocol(Failure(Exception("not this protocol")))
+    config = DeviceConnectConfiguration(
+        host="device", credentials=AuthCredential("user", "password")
+    )
+    with patch(
+        "plugp100.new.device_factory._build_protocol_candidates",
+        return_value=[_ProtocolCandidate("failure", lambda: failed)],
+    ):
+        try:
+            await _guess_protocol(config)
+        except InvalidAuthentication as exc:
+            assert str(exc) == "Unable to authenticate or determine protocol for device"
+        else:
+            raise AssertionError("InvalidAuthentication was not raised")
+
+    assert failed.closed

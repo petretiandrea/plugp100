@@ -1,3 +1,9 @@
+from typing import Optional
+
+
 class InvalidAuthentication(Exception):
-    def __init__(self, host: str, device_type: str):
-        super(f"Invalid authentication error for ${host}, ${device_type}")
+    def __init__(self, host: str, device_type: Optional[str]):
+        message = f"Unable to authenticate or determine protocol for {host}"
+        if device_type:
+            message += f" ({device_type})"
+        super().__init__(message)
