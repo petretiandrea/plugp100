@@ -305,7 +305,7 @@ class KlapProtocol(TapoProtocol):
 
 @dataclasses.dataclass
 class KlapSession:
-    RENEWAL_MARGIN_SECONDS = 40
+    RENEWAL_MARGIN_SECONDS = 60
 
     chiper: "KlapChiper"
     expire_at: float

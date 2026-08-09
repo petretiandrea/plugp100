@@ -105,8 +105,8 @@ async def test_klap_does_not_retry_definitive_errors(error):
 @pytest.mark.parametrize(
     ("remaining_seconds", "expected_expired"),
     [
-        pytest.param(41, False, id="outside-renewal-margin"),
-        pytest.param(40, True, id="at-renewal-margin"),
+        pytest.param(61, False, id="outside-renewal-margin"),
+        pytest.param(60, True, id="at-renewal-margin"),
         pytest.param(-1, True, id="already-expired"),
     ],
 )
