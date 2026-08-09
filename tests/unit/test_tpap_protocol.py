@@ -9,7 +9,7 @@ from cryptography.hazmat.primitives.asymmetric import ec
 
 from plugp100.api.requests.tapo_request import TapoRequest
 from plugp100.common.credentials import AuthCredential
-from plugp100.new.device_factory import (
+from plugp100.devices.device_factory import (
     DeviceConnectConfiguration,
     _get_or_guess_protocol,
 )

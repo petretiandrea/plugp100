@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 from cryptography import x509
 from cryptography.hazmat.primitives.asymmetric import ec, padding, rsa
 
-from .errors import KasaException
+from plugp100.responses.tapo_exception import TapoProtocolError
 
 
 class TpapCertificateVerifier:
@@ -37,7 +37,7 @@ XhBkdDAKBggqhkjOPQQDAgNJADBGAiEA+7j5jemtXcGYN0unH+9rjVhVAL7WrsOi
     def _load_certificate_value(cls, certificate_value: str) -> x509.Certificate:
         raw_value = certificate_value.strip()
         if not raw_value:
-            raise KasaException("Empty certificate value")
+            raise TapoProtocolError("Empty certificate value")
 
         candidates: list[bytes] = [raw_value.encode()]
         decoded_candidate: bytes | None = None
@@ -57,7 +57,7 @@ XhBkdDAKBggqhkjOPQQDAgNJADBGAiEA+7j5jemtXcGYN0unH+9rjVhVAL7WrsOi
             except Exception as exc:
                 last_error = exc
 
-        raise KasaException("Invalid certificate value") from last_error
+        raise TapoProtocolError("Invalid certificate value") from last_error
 
     @staticmethod
     def _verify_certificate_validity(certificate: x509.Certificate) -> None:
@@ -69,7 +69,7 @@ XhBkdDAKBggqhkjOPQQDAgNJADBGAiEA+7j5jemtXcGYN0unH+9rjVhVAL7WrsOi
             not_before = certificate.not_valid_before.replace(tzinfo=timezone.utc)
             not_after = certificate.not_valid_after.replace(tzinfo=timezone.utc)
         if now < not_before or now > not_after:
-            raise KasaException("Certificate is outside its validity period")
+            raise TapoProtocolError("Certificate is outside its validity period")
 
     @staticmethod
     def _verify_certificate_signature(
@@ -78,7 +78,7 @@ XhBkdDAKBggqhkjOPQQDAgNJADBGAiEA+7j5jemtXcGYN0unH+9rjVhVAL7WrsOi
         public_key = issuer.public_key()
         signature_hash = certificate.signature_hash_algorithm
         if signature_hash is None:
-            raise KasaException("Certificate signature hash algorithm is unavailable")
+            raise TapoProtocolError("Certificate signature hash algorithm is unavailable")
         if isinstance(public_key, ec.EllipticCurvePublicKey):
             public_key.verify(
                 certificate.signature,
@@ -94,7 +94,7 @@ XhBkdDAKBggqhkjOPQQDAgNJADBGAiEA+7j5jemtXcGYN0unH+9rjVhVAL7WrsOi
                 signature_hash,
             )
             return
-        raise KasaException(
+        raise TapoProtocolError(
             f"Unsupported DAC issuer public key type: {type(public_key).__name__}"
         )
 
@@ -114,6 +114,6 @@ XhBkdDAKBggqhkjOPQQDAgNJADBGAiEA+7j5jemtXcGYN0unH+9rjVhVAL7WrsOi
             else:
                 cls._verify_certificate_signature(dac_ca_certificate, root_certificate)
         except Exception as exc:
-            raise KasaException(
+            raise TapoProtocolError(
                 f"DAC certificate chain verification failed: {exc}"
             ) from exc

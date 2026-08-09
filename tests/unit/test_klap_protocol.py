@@ -20,6 +20,7 @@ from plugp100.protocol.klap.klap_protocol import (
     KlapChiper,
     KlapDeviceError,
     KlapProtocol,
+    KlapSession,
     KlapSessionError,
 )
 
@@ -99,6 +100,28 @@ async def test_klap_does_not_retry_definitive_errors(error):
         assert response.is_failure()
         assert response.error() is error
         protocol._send_request.assert_awaited_once()
+
+
+@pytest.mark.parametrize(
+    ("remaining_seconds", "expected_expired"),
+    [
+        pytest.param(61, False, id="outside-renewal-margin"),
+        pytest.param(60, True, id="at-renewal-margin"),
+        pytest.param(-1, True, id="already-expired"),
+    ],
+)
+def test_klap_session_expiration_uses_seconds(
+    remaining_seconds: int, expected_expired: bool
+):
+    now = 1_800_000_000.0
+    session = KlapSession(
+        chiper=SimpleNamespace(),
+        expire_at=now + remaining_seconds,
+        session_cookie="session-id",
+    )
+
+    with patch("plugp100.protocol.klap.klap_protocol.time.time", return_value=now):
+        assert session.is_handshake_session_expired() is expected_expired
 
 
 def _mock_klap_server(

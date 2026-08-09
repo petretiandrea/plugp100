@@ -1,9 +1,10 @@
 import asyncio
 import unittest
 
-from plugp100.new.device_factory import connect
-from plugp100.new.event_polling.event_subscription import EventSubscriptionOptions
-from plugp100.new.tapohub import TapoHub, S200ButtonDevice
+from plugp100.devices.device_factory import connect
+from plugp100.devices.event_polling.event_subscription import EventSubscriptionOptions
+from plugp100.devices.child.tapohubchildren import TriggerButtonDevice
+from plugp100.devices.tapohub import TapoHub
 from plugp100.responses.hub_childs.s200b_device_state import (
     SingleClickEvent,
     RotationEvent,
@@ -24,7 +25,7 @@ class SensorT310Test(unittest.IsolatedAsyncioTestCase):
         config = await get_test_config(device_type="hub")
         self._hub: TapoHub = await connect(config)
         await self._hub.update()
-        self._device: S200ButtonDevice = self._hub.find_child_device_by_model("S200B")
+        self._device: TriggerButtonDevice = self._hub.find_child_device_by_model("S200B")
         await self._device.update()
 
     async def asyncTearDown(self):

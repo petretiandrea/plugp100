@@ -2,9 +2,9 @@ from typing import cast
 
 import pytest
 
-from plugp100.new.child.tapohubchildren import TriggerButtonDevice
-from plugp100.new.device_type import DeviceType
-from plugp100.new.tapohub import TapoHub
+from plugp100.devices.child.tapohubchildren import TriggerButtonDevice
+from plugp100.devices.device_type import DeviceType
+from plugp100.devices.tapohub import TapoHub
 
 button = pytest.mark.parametrize(
     "device",

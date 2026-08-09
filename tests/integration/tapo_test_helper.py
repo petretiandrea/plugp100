@@ -5,8 +5,8 @@ import unittest
 import yaml
 
 from plugp100.common.credentials import AuthCredential
-from plugp100.new.device_factory import DeviceConnectConfiguration
-from plugp100.new.tapodevice import TapoDevice
+from plugp100.devices.device_factory import DeviceConnectConfiguration
+from plugp100.devices.tapodevice import TapoDevice
 from plugp100.responses.device_usage_info import DeviceUsageInfo
 
 

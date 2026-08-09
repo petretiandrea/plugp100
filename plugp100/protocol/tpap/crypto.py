@@ -6,7 +6,7 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.ciphers.aead import AESCCM, ChaCha20Poly1305
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 
-from .errors import KasaException
+from plugp100.responses.tapo_exception import TapoProtocolError
 
 
 class TpapCryptoMixin:
@@ -48,7 +48,9 @@ class TpapCryptoMixin:
         try:
             return cls.CIPHER_PARAMETERS[normalized]
         except KeyError as exc:
-            raise KasaException(f"Unsupported TPAP session cipher: {cipher_id}") from exc
+            raise TapoProtocolError(
+                f"Unsupported TPAP session cipher: {cipher_id}"
+            ) from exc
 
     @staticmethod
     def _hkdf(

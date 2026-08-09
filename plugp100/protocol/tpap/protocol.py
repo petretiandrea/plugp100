@@ -16,10 +16,13 @@ from plugp100.api.requests.tapo_request import TapoRequest
 from plugp100.common.credentials import AuthCredential
 from plugp100.common.functional.tri import Failure, Try
 from plugp100.protocol.tapo_protocol import TapoProtocol
+from plugp100.responses.tapo_exception import (
+    TapoProtocolError,
+    TapoRetryableError,
+)
 from plugp100.responses.tapo_response import TapoResponse
 
 from .certificates import TpapCertificateVerifier
-from .errors import KasaException, SmartErrorCode, _ConnectionError, _RetryableError
 from .session import TpapEncryptionSession
 
 _LOGGER = logging.getLogger(__name__)
@@ -110,24 +113,20 @@ class TpapProtocol(TpapCertificateVerifier, TapoProtocol):
     def _load_json_dict(payload: bytes) -> dict[str, Any]:
         response_data = json.loads(payload.decode())
         if not isinstance(response_data, dict):
-            raise KasaException("Unexpected TPAP JSON response body type")
+            raise TapoProtocolError("Unexpected TPAP JSON response body type")
         return response_data
 
     @staticmethod
     def _should_retry_live_session(exc: Exception) -> bool:
-        if isinstance(exc, _ConnectionError):
-            return "Connection reset" in str(exc)
-
-        if not isinstance(exc, _RetryableError):
-            return False
-
-        return exc.error_code in {
-            SmartErrorCode.SESSION_TIMEOUT_ERROR,
-            SmartErrorCode.SESSION_EXPIRED,
-            SmartErrorCode.INVALID_NONCE,
-            SmartErrorCode.TRANSPORT_NOT_AVAILABLE_ERROR,
-            SmartErrorCode.STAT_ACCESS_ERROR,
-        }
+        return isinstance(
+            exc,
+            (
+                TapoRetryableError,
+                aiohttp.ClientConnectionError,
+                aiohttp.ServerTimeoutError,
+                TimeoutError,
+            ),
+        )
 
     async def get_ssl_context(self) -> ssl.SSLContext | bool:
         """Get or create the SSL context."""
@@ -187,7 +186,7 @@ class TpapProtocol(TpapCertificateVerifier, TapoProtocol):
 
         ds_url = self._encryption_session.ds_url
         if ds_url is None:
-            raise KasaException("TPAP transport is not established")
+            raise TapoProtocolError("TPAP transport is not established")
 
         async with self._send_lock:
             payload, seq = self._encryption_session.encrypt(request)
@@ -200,19 +199,21 @@ class TpapProtocol(TpapCertificateVerifier, TapoProtocol):
                 ssl=ssl_context,
             )
             if status != 200:
-                raise KasaException(
+                error_type = TapoRetryableError if status >= 500 else TapoProtocolError
+                raise error_type(
                     f"TPAP secure request failed for {self._host}: status {status}"
                 )
 
         if isinstance(data, bytes | bytearray):
             plaintext = self._encryption_session.decrypt(bytes(data), seq)
-            return self._load_json_dict(plaintext)
+            response = self._load_json_dict(plaintext)
+        elif isinstance(data, dict):
+            response = data
+        else:
+            raise TapoProtocolError("Unexpected TPAP response body type")
 
-        if isinstance(data, dict):
-            self._encryption_session._handle_response_error_code(data, "request")
-            return data
-
-        raise KasaException("Unexpected TPAP response body type")
+        self._encryption_session._handle_response_error_code(response, "request")
+        return response
 
     async def _post(
         self,

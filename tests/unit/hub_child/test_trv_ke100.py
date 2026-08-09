@@ -1,7 +1,7 @@
 from typing import cast
 
-from plugp100.new.child.tapohubchildren import KE100Device
-from plugp100.new.tapohub import TapoHub
+from plugp100.devices.child.tapohubchildren import KE100Device
+from plugp100.devices.tapohub import TapoHub
 from plugp100.responses.hub_childs.ke100_device_state import TRVState
 from plugp100.responses.temperature_unit import TemperatureUnit
 from tests.conftest import trv

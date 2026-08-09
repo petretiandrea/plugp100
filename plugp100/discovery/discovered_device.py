@@ -5,8 +5,8 @@ from typing import Optional, Any
 import aiohttp
 
 from plugp100.common.credentials import AuthCredential
-from plugp100.new.device_factory import DeviceConnectConfiguration, connect
-from plugp100.new.tapodevice import TapoDevice
+from plugp100.devices.device_factory import DeviceConnectConfiguration, connect
+from plugp100.devices.tapodevice import TapoDevice
 
 
 @dataclasses.dataclass

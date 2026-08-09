@@ -1,5 +1,11 @@
-from plugp100.new.device_type import DeviceType
-from plugp100.new.tapohub import TapoHub
+import logging
+from types import SimpleNamespace
+from unittest.mock import AsyncMock
+
+from plugp100.common.functional.tri import Success
+from plugp100.devices.components.hub_children_component import HubChildrenComponent
+from plugp100.devices.device_type import DeviceType
+from plugp100.devices.tapohub import TapoHub
 from tests.conftest import hub, hub_lot_devices
 
 
@@ -45,3 +51,21 @@ async def test_get_alarm_tones(device: TapoHub):
 @hub_lot_devices
 async def test_should_get_all_children(device: TapoHub):
     assert len(device.children) == 17
+
+
+async def test_unsupported_children_are_skipped_without_reinitializing(caplog):
+    child_list = SimpleNamespace(
+        get_children_base_info=lambda: [SimpleNamespace(model="AC")]
+    )
+    client = SimpleNamespace(
+        get_child_device_list=AsyncMock(return_value=Success(child_list))
+    )
+    component = HubChildrenComponent(SimpleNamespace(), client)
+
+    with caplog.at_level(logging.WARNING, logger="HubChildrenComponent"):
+        await component.update()
+        await component.update()
+
+    assert component.children == []
+    client.get_child_device_list.assert_awaited_once_with(all_pages=True)
+    assert caplog.messages.count("Found child device not supported, model AC") == 1
