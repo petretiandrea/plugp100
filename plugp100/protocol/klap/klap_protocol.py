@@ -30,6 +30,14 @@ class KlapAuthenticationError(Exception):
     """Raised when the device challenge does not match the credentials."""
 
 
+class KlapSessionError(Exception):
+    """Raised when an established KLAP session must be renewed."""
+
+
+class KlapDeviceError(Exception):
+    """Raised for definitive device responses that should not be retried."""
+
+
 class KlapProtocol(TapoProtocol):
     TP_SESSION_COOKIE_NAME = "TP_SESSIONID"
     TP_TIMEOUT_COOKIE_NAME = "TIMEOUT"
@@ -73,16 +81,38 @@ class KlapProtocol(TapoProtocol):
     async def send_request(
         self, request: TapoRequest, retry: int = 3
     ) -> Try[TapoResponse[dict[str, Any]]]:
-        try:
-            async with self._request_lock:
-                if response := await self._send_request(request, retry):
-                    return TapoResponse.try_from_json(response)
-        except Exception as e:
-            if retry > 0:
-                return await self.send_request(request, retry - 1)
-            return Failure(e)
+        attempts = max(retry, 0) + 1
+        for attempt in range(attempts):
+            try:
+                async with self._request_lock:
+                    response = await self._send_request(request)
+                return TapoResponse.try_from_json(response)
+            except Exception as exc:
+                if attempt == attempts - 1 or not self._should_retry(exc):
+                    return Failure(exc)
+                self._klap_session = None
+                logger.debug(
+                    "KLAP: resetting session before retry %d/%d after error: %s",
+                    attempt + 1,
+                    attempts - 1,
+                    exc,
+                )
 
-    async def _send_request(self, request: TapoRequest, retry: int = 1) -> dict[str, Any]:
+        raise AssertionError("KLAP retry loop completed without a result")
+
+    @staticmethod
+    def _should_retry(exc: Exception) -> bool:
+        return isinstance(
+            exc,
+            (
+                KlapSessionError,
+                aiohttp.ClientConnectionError,
+                aiohttp.ServerTimeoutError,
+                TimeoutError,
+            ),
+        )
+
+    async def _send_request(self, request: TapoRequest) -> dict[str, Any]:
         if (
             self._klap_session is None
             or self._klap_session.is_handshake_session_expired()
@@ -105,20 +135,13 @@ class KlapProtocol(TapoProtocol):
             cookies=cookies,
         )
         if response.status != 200:
-            logger.error(
-                f"Query failed after successful authentication. Remaining attempts count is {retry}"
-            )
             if response.status == 403:
-                raise Exception("Forbidden error after completing handshake")
-            else:
-                raise Exception(
-                    "Device {} error code {} with seq {}",
-                    self._base_url,
-                    response.status,
-                    seq,
-                )
-        else:
-            return jsons.loads(self._klap_session.chiper.decrypt(response_data))
+                raise KlapSessionError("Forbidden error after completing handshake")
+            raise KlapDeviceError(
+                f"Device {self._base_url} returned HTTP {response.status} "
+                f"for sequence {seq}"
+            )
+        return jsons.loads(self._klap_session.chiper.decrypt(response_data))
 
     async def close(self):
         self._klap_session = None

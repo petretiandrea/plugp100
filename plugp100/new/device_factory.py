@@ -42,6 +42,7 @@ class DeviceConnectConfiguration:
     encryption_version: Optional[int] = None
     is_support_https: bool = False
     timeout: Optional[float] = 5.0
+    guess_timeout: Optional[float] = 15.0
 
     @property
     def url(self) -> str:
@@ -101,14 +102,43 @@ async def _get_or_guess_protocol(
 async def _guess_protocol(
     config: DeviceConnectConfiguration, session: Optional[aiohttp.ClientSession] = None
 ) -> TapoProtocol:
-    device_info_request = TapoRequest.get_device_info()
     failures: list[ProtocolFailure] = []
+    guess = _try_protocol_candidates(config, session, failures)
+    try:
+        return (
+            await asyncio.wait_for(guess, timeout=config.guess_timeout)
+            if config.guess_timeout is not None
+            else await guess
+        )
+    except asyncio.TimeoutError as exc:
+        failures.append(("global timeout", exc))
+        error = ProtocolDetectionTimeoutError(
+            config.host, config.device_type, failures=failures
+        )
+        _LOGGER.error("Protocol detection exceeded its global timeout: %s", error)
+        raise error from exc
+
+
+async def _try_protocol_candidates(
+    config: DeviceConnectConfiguration,
+    session: Optional[aiohttp.ClientSession],
+    failures: list[ProtocolFailure],
+) -> TapoProtocol:
+    device_info_request = TapoRequest.get_device_info()
+    unavailable_endpoints: set[str] = set()
     for candidate in _build_protocol_candidates(config, session):
+        if candidate.endpoint and candidate.endpoint in unavailable_endpoints:
+            _LOGGER.debug(
+                "Skipping protocol candidate %s because endpoint %s is unavailable",
+                candidate.name,
+                candidate.endpoint,
+            )
+            continue
         protocol = None
         success = False
         try:
             protocol = candidate.factory()
-            request = protocol.send_request(device_info_request)
+            request = protocol.send_request(device_info_request, retry=0)
             info = (
                 await asyncio.wait_for(request, timeout=config.timeout)
                 if config.timeout is not None
@@ -120,6 +150,8 @@ async def _guess_protocol(
                 return protocol
             error = info.error()
             failures.append((candidate.name, error))
+            if candidate.endpoint and _is_endpoint_unavailable(error):
+                unavailable_endpoints.add(candidate.endpoint)
             _LOGGER.debug(
                 "Protocol candidate %s failed: %s",
                 candidate.name,
@@ -127,6 +159,8 @@ async def _guess_protocol(
             )
         except Exception as ex:
             failures.append((candidate.name, ex))
+            if candidate.endpoint and _is_endpoint_unavailable(ex):
+                unavailable_endpoints.add(candidate.endpoint)
             _LOGGER.debug("Protocol candidate %s failed: %s", candidate.name, ex)
         finally:
             if protocol is not None and not success:
@@ -177,13 +211,20 @@ def _is_timeout_error(error: Exception) -> bool:
 
 
 def _is_network_error(error: Exception) -> bool:
-    return _is_timeout_error(error) or isinstance(error, aiohttp.ClientConnectionError)
+    return _is_timeout_error(error) or isinstance(
+        error, (aiohttp.ClientConnectionError, OSError)
+    )
+
+
+def _is_endpoint_unavailable(error: Exception) -> bool:
+    return isinstance(error, (aiohttp.ClientConnectorError, ConnectionRefusedError))
 
 
 @dataclasses.dataclass(frozen=True)
 class _ProtocolCandidate:
     name: str
     factory: Callable[[], TapoProtocol]
+    endpoint: str = ""
 
 
 def _build_protocol_candidates(
@@ -216,6 +257,7 @@ def _build_protocol_candidates(
                 lambda endpoint=endpoint: PassthroughProtocol(
                     endpoint.credentials, endpoint.url, session
                 ),
+                endpoint.url,
             ),
             _ProtocolCandidate(
                 f"KLAP v1 {label}",
@@ -225,6 +267,7 @@ def _build_protocol_candidates(
                     klap_handshake_v1(),
                     session,
                 ),
+                endpoint.url,
             ),
             _ProtocolCandidate(
                 f"KLAP v2 {label}",
@@ -234,25 +277,26 @@ def _build_protocol_candidates(
                     klap_handshake_v2(),
                     session,
                 ),
+                endpoint.url,
             ),
         ]
 
-    http_candidates = common_candidates(http_config, f"HTTP:{http_config.port}")
-    http_candidates.append(
+    http_candidates = [
         _ProtocolCandidate(
             f"TPAP HTTP:{http_config.port}",
             lambda: TpapProtocol(http_config.credentials, http_config.url, session),
+            http_config.url,
         )
-    )
-    https_candidates = common_candidates(https_config, f"HTTPS:{https_config.port}")
-    https_candidates.append(
+    ] + common_candidates(http_config, f"HTTP:{http_config.port}")
+    https_candidates = [
         _ProtocolCandidate(
             f"TPAP HTTPS:{tpap_https_config.port}",
             lambda: TpapProtocol(
                 tpap_https_config.credentials, tpap_https_config.url, session
             ),
+            tpap_https_config.url,
         )
-    )
+    ] + common_candidates(https_config, f"HTTPS:{https_config.port}")
 
     if config.is_support_https:
         return https_candidates + http_candidates

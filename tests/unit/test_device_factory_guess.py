@@ -30,6 +30,7 @@ class FakeCandidateProtocol(TapoProtocol):
         self.response = response
         self.delay = delay
         self.closed = False
+        self.retries = []
 
     @property
     def name(self) -> str:
@@ -38,7 +39,8 @@ class FakeCandidateProtocol(TapoProtocol):
     async def send_request(
         self, request: TapoRequest, retry: int = 3
     ) -> Try[TapoResponse[dict]]:
-        del request, retry
+        del request
+        self.retries.append(retry)
         if self.delay:
             await asyncio.sleep(self.delay)
         return self.response
@@ -70,6 +72,7 @@ async def test_guess_protocol_closes_failures_and_continues_after_timeout():
     assert timed_out.closed
     assert failed.closed
     assert not working.closed
+    assert working.retries == [0]
 
 
 async def test_protocol_candidates_cover_http_and_https():
@@ -81,27 +84,27 @@ async def test_protocol_candidates_cover_http_and_https():
         names = [candidate.name for candidate in candidates]
 
         assert names == [
+            "TPAP HTTP:80",
             "AES HTTP:80",
             "KLAP v1 HTTP:80",
             "KLAP v2 HTTP:80",
-            "TPAP HTTP:80",
+            "TPAP HTTPS:4433",
             "AES HTTPS:443",
             "KLAP v1 HTTPS:443",
             "KLAP v2 HTTPS:443",
-            "TPAP HTTPS:4433",
         ]
 
         protocols = [candidate.factory() for candidate in candidates]
         try:
             assert [protocol.name for protocol in protocols] == [
-                "Passthrough",
-                "Klap V1",
-                "Klap V2",
                 "TPAP",
                 "Passthrough",
                 "Klap V1",
                 "Klap V2",
                 "TPAP",
+                "Passthrough",
+                "Klap V1",
+                "Klap V2",
             ]
         finally:
             for protocol in protocols:
@@ -167,3 +170,48 @@ async def test_guess_protocol_reports_specific_final_error(
     assert str(raised.value) == message
     assert raised.value.failures == (("failure", failure),)
     assert failed.closed
+
+
+async def test_guess_protocol_enforces_global_timeout_and_closes_candidate():
+    slow = FakeCandidateProtocol(delay=1)
+    config = DeviceConnectConfiguration(
+        host="device",
+        credentials=AuthCredential("user", "password"),
+        timeout=None,
+        guess_timeout=0.01,
+    )
+
+    with patch(
+        "plugp100.new.device_factory._build_protocol_candidates",
+        return_value=[_ProtocolCandidate("slow", lambda: slow)],
+    ):
+        with pytest.raises(ProtocolDetectionTimeoutError) as raised:
+            await _guess_protocol(config)
+
+    assert raised.value.failures[-1][0] == "global timeout"
+    assert slow.closed
+
+
+async def test_guess_protocol_skips_candidates_on_unavailable_endpoint():
+    refused = FakeCandidateProtocol(Failure(ConnectionRefusedError("closed")))
+    skipped = FakeCandidateProtocol(Success(TapoResponse(0, {}, None)))
+    working = FakeCandidateProtocol(Success(TapoResponse(0, {"type": "plug"}, None)))
+    candidates = [
+        _ProtocolCandidate("refused", lambda: refused, "http://device:80/app"),
+        _ProtocolCandidate("skipped", lambda: skipped, "http://device:80/app"),
+        _ProtocolCandidate("working", lambda: working, "https://device:443/app"),
+    ]
+    config = DeviceConnectConfiguration(
+        host="device", credentials=AuthCredential("user", "password")
+    )
+
+    with patch(
+        "plugp100.new.device_factory._build_protocol_candidates",
+        return_value=candidates,
+    ):
+        selected = await _guess_protocol(config)
+
+    assert selected is working
+    assert refused.closed
+    assert not skipped.closed
+    assert skipped.retries == []

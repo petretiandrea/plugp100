@@ -1,18 +1,18 @@
-"""Backward-compatible imports for the TPAP protocol."""
+"""TPAP protocol package."""
 
-from .tpap import (
+from .errors import (
     SMART_AUTHENTICATION_ERRORS,
     SMART_RETRYABLE_ERRORS,
     AuthenticationError,
     DeviceError,
     KasaException,
     SmartErrorCode,
-    TpapEncryptionSession,
     TpapError,
-    TpapProtocol,
     _ConnectionError,
     _RetryableError,
 )
+from .protocol import TpapProtocol
+from .session import TpapEncryptionSession
 
 __all__ = [
     "AuthenticationError",

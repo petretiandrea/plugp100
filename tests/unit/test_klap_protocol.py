@@ -1,6 +1,7 @@
 import secrets
 from http.cookies import SimpleCookie
-from unittest.mock import patch
+from types import SimpleNamespace
+from unittest.mock import AsyncMock, patch
 
 import aiohttp
 import pytest
@@ -14,7 +15,13 @@ from plugp100.protocol.klap import (
     klap_handshake_v2,
     klap_handshake_v1,
 )
-from plugp100.protocol.klap.klap_protocol import KlapProtocol, KlapChiper
+from plugp100.protocol.klap.klap_protocol import (
+    KlapAuthenticationError,
+    KlapChiper,
+    KlapDeviceError,
+    KlapProtocol,
+    KlapSessionError,
+)
 
 
 @pytest.mark.parametrize(
@@ -48,6 +55,50 @@ async def test_query(klap_revision: KlapHandshakeRevision):
                 or expected_sequence == protocol._klap_session.chiper._seq
             )
             expected_sequence = protocol._klap_session.chiper._seq + 1
+
+
+async def test_retry_only_resets_retryable_klap_sessions():
+    async with aiohttp.ClientSession() as session:
+        protocol = KlapProtocol(
+            AuthCredential("username", "password"),
+            "http://localhost",
+            klap_strategy=klap_handshake_v2(),
+            http_session=session,
+        )
+        protocol._klap_session = SimpleNamespace()
+        protocol._send_request = AsyncMock(
+            side_effect=[
+                KlapSessionError("expired"),
+                {"error_code": 0, "result": {}},
+            ]
+        )
+
+        response = await protocol.send_request(TapoRequest.get_device_info())
+
+        assert response.is_success()
+        assert protocol._send_request.await_count == 2
+        assert protocol._klap_session is None
+
+
+@pytest.mark.parametrize(
+    "error",
+    [KlapAuthenticationError("bad credentials"), KlapDeviceError("bad response")],
+)
+async def test_klap_does_not_retry_definitive_errors(error):
+    async with aiohttp.ClientSession() as session:
+        protocol = KlapProtocol(
+            AuthCredential("username", "password"),
+            "http://localhost",
+            klap_strategy=klap_handshake_v2(),
+            http_session=session,
+        )
+        protocol._send_request = AsyncMock(side_effect=error)
+
+        response = await protocol.send_request(TapoRequest.get_device_info())
+
+        assert response.is_failure()
+        assert response.error() is error
+        protocol._send_request.assert_awaited_once()
 
 
 def _mock_klap_server(
