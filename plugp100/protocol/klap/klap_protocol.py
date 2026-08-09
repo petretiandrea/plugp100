@@ -342,5 +342,3 @@ class KlapChiper:
 
     def _cbc(self):
         return self._iv + KlapChiper.PACK_LONG(self._seq)
-
-

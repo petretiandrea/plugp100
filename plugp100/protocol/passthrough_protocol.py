@@ -107,5 +107,3 @@ class PassthroughProtocol(TapoProtocol):
                         "Detected handshake session timeout",
                     )
                 )
-
-
