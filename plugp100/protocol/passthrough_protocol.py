@@ -7,6 +7,7 @@ import aiohttp
 from plugp100.api.requests.tapo_request import TapoRequest
 from plugp100.common.credentials import AuthCredential
 from plugp100.common.functional.tri import Try
+from plugp100.common.utils.ssl_utils import ssl_context_for_url
 from plugp100.protocol.securepassthrough_transport import (
     Session,
     SecurePassthroughTransport,
@@ -28,9 +29,11 @@ class PassthroughProtocol(TapoProtocol):
     ):
         super().__init__()
         self._url = url
+        self._ssl_context = ssl_context_for_url(url)
         self._owns_http_session = http_session is None
         self._http = AsyncHttp(
-            aiohttp.ClientSession() if self._owns_http_session else http_session
+            aiohttp.ClientSession() if self._owns_http_session else http_session,
+            ssl_context=self._ssl_context,
         )
         self._passthrough = SecurePassthroughTransport(self._http)
         self._session: Optional[Session] = None
@@ -107,5 +110,3 @@ class PassthroughProtocol(TapoProtocol):
                         "Detected handshake session timeout",
                     )
                 )
-
-

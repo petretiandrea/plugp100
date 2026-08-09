@@ -82,6 +82,7 @@ class DiscoveredDevice:
                 device_type=self.device_type,
                 encryption_type=encrypt_schema.encrypt_type,
                 encryption_version=encrypt_schema.lv,
+                is_support_https=bool(encrypt_schema.is_support_https),
             )
         else:
             logging.warning(

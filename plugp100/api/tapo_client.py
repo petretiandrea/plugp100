@@ -27,6 +27,7 @@ class TapoProtocolType(Enum):
     KLAP = 1
     PASSTHROUGH = 2
     AUTO = 3
+    TPAP = 4
 
 
 class TapoClient:

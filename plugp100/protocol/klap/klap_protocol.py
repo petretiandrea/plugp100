@@ -16,6 +16,7 @@ from yarl import URL
 
 from plugp100.common.credentials import AuthCredential
 from plugp100.common.functional.tri import Try, Failure
+from plugp100.common.utils.ssl_utils import ssl_context_for_url
 from plugp100.protocol.tapo_protocol import TapoProtocol
 from plugp100.api.requests.tapo_request import TapoRequest
 from plugp100.responses.tapo_response import TapoResponse
@@ -23,6 +24,18 @@ from plugp100.responses.tapo_response import TapoResponse
 from .klap_handshake_revision import KlapHandshakeRevision, KlapHandshakeRevisionV2
 
 logger = logging.getLogger(__name__)
+
+
+class KlapAuthenticationError(Exception):
+    """Raised when the device challenge does not match the credentials."""
+
+
+class KlapSessionError(Exception):
+    """Raised when an established KLAP session must be renewed."""
+
+
+class KlapDeviceError(Exception):
+    """Raised for definitive device responses that should not be retried."""
 
 
 class KlapProtocol(TapoProtocol):
@@ -40,6 +53,7 @@ class KlapProtocol(TapoProtocol):
     ):
         super().__init__()
         self._base_url = url
+        self._ssl_context = ssl_context_for_url(url)
         self._auth_credential = auth_credential
         self._klap_strategy = klap_strategy
         self.local_auth_hash = self._klap_strategy.generate_auth_hash(
@@ -67,16 +81,38 @@ class KlapProtocol(TapoProtocol):
     async def send_request(
         self, request: TapoRequest, retry: int = 3
     ) -> Try[TapoResponse[dict[str, Any]]]:
-        try:
-            async with self._request_lock:
-                if response := await self._send_request(request, retry):
-                    return TapoResponse.try_from_json(response)
-        except Exception as e:
-            if retry > 0:
-                return await self.send_request(request, retry - 1)
-            return Failure(e)
+        attempts = max(retry, 0) + 1
+        for attempt in range(attempts):
+            try:
+                async with self._request_lock:
+                    response = await self._send_request(request)
+                return TapoResponse.try_from_json(response)
+            except Exception as exc:
+                if attempt == attempts - 1 or not self._should_retry(exc):
+                    return Failure(exc)
+                self._klap_session = None
+                logger.debug(
+                    "KLAP: resetting session before retry %d/%d after error: %s",
+                    attempt + 1,
+                    attempts - 1,
+                    exc,
+                )
 
-    async def _send_request(self, request: TapoRequest, retry: int = 1) -> dict[str, Any]:
+        raise AssertionError("KLAP retry loop completed without a result")
+
+    @staticmethod
+    def _should_retry(exc: Exception) -> bool:
+        return isinstance(
+            exc,
+            (
+                KlapSessionError,
+                aiohttp.ClientConnectionError,
+                aiohttp.ServerTimeoutError,
+                TimeoutError,
+            ),
+        )
+
+    async def _send_request(self, request: TapoRequest) -> dict[str, Any]:
         if (
             self._klap_session is None
             or self._klap_session.is_handshake_session_expired()
@@ -99,20 +135,13 @@ class KlapProtocol(TapoProtocol):
             cookies=cookies,
         )
         if response.status != 200:
-            logger.error(
-                f"Query failed after successful authentication. Remaining attempts count is {retry}"
-            )
             if response.status == 403:
-                raise Exception("Forbidden error after completing handshake")
-            else:
-                raise Exception(
-                    "Device {} error code {} with seq {}",
-                    self._base_url,
-                    response.status,
-                    seq,
-                )
-        else:
-            return jsons.loads(self._klap_session.chiper.decrypt(response_data))
+                raise KlapSessionError("Forbidden error after completing handshake")
+            raise KlapDeviceError(
+                f"Device {self._base_url} returned HTTP {response.status} "
+                f"for sequence {seq}"
+            )
+        return jsons.loads(self._klap_session.chiper.decrypt(response_data))
 
     async def close(self):
         self._klap_session = None
@@ -206,7 +235,7 @@ class KlapProtocol(TapoProtocol):
                     logger.debug(
                         f"Server response doesn't match our challenge on url {self._base_url}"
                     )
-                    raise Exception(
+                    raise KlapAuthenticationError(
                         f"Server response doesn't match our challenge on url {self._base_url}"
                     )
 
@@ -253,7 +282,11 @@ class KlapProtocol(TapoProtocol):
         response_data = None
         self._http_session.cookie_jar.clear()
         resp = await self._http_session.post(
-            url, params=params, data=data, cookies=cookies
+            url,
+            params=params,
+            data=data,
+            cookies=cookies,
+            ssl=self._ssl_context,
         )
         self._last_request_url = url
         async with resp:
@@ -342,5 +375,3 @@ class KlapChiper:
 
     def _cbc(self):
         return self._iv + KlapChiper.PACK_LONG(self._seq)
-
-
