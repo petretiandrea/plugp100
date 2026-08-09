@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 
 from plugp100.common.credentials import AuthCredential
 from plugp100.discovery.tapo_discovery import TapoDiscovery
-from plugp100.new.device_factory import connect, DeviceConnectConfiguration
+from plugp100.devices.device_factory import connect, DeviceConnectConfiguration
 
 
 def required_env(name: str) -> str:

@@ -10,7 +10,7 @@ from plugp100.api.requests.set_device_info.set_light_info_params import (
 from plugp100.api.requests.set_device_info.set_plug_info_params import SetPlugInfoParams
 from plugp100.api.tapo_client import TapoClient
 from plugp100.common.functional.tri import Try
-from plugp100.new.components.device_component import DeviceComponent
+from plugp100.devices.components.device_component import DeviceComponent
 from plugp100.responses.device_state import LightDeviceState
 
 

@@ -2,7 +2,7 @@ import dataclasses
 import logging
 from typing import Optional, List
 
-from plugp100.new.event_polling.state_tracker import StateTracker
+from plugp100.devices.event_polling.state_tracker import StateTracker
 from plugp100.responses.hub_childs.s200b_device_state import S200BEvent
 from plugp100.responses.hub_childs.trigger_log_response import TriggerLogResponse
 

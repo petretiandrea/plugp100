@@ -3,10 +3,10 @@ from typing import Optional, Tuple
 from plugp100.api.light_effect import LightEffect
 from plugp100.api.tapo_client import TapoClient
 from plugp100.common.functional.tri import Try, Failure
-from plugp100.new.components.light_component import LightComponent, HS
-from plugp100.new.components.light_effect_component import LightEffectComponent
-from plugp100.new.device_type import DeviceType
-from plugp100.new.tapodevice import TapoDevice, C
+from plugp100.devices.components.light_component import LightComponent, HS
+from plugp100.devices.components.light_effect_component import LightEffectComponent
+from plugp100.devices.device_type import DeviceType
+from plugp100.devices.tapodevice import TapoDevice, C
 from plugp100.responses.components import Components
 
 

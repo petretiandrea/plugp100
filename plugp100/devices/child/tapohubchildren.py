@@ -7,25 +7,25 @@ from plugp100.api.requests.trigger_logs_params import GetTriggerLogsParams
 from plugp100.api.tapo_client import TapoClient
 from plugp100.common.functional.tri import Try
 from plugp100.common.utils.json_utils import dataclass_encode_json
-from plugp100.new.components.battery_component import BatteryComponent
-from plugp100.new.components.humidity_component import HumidityComponent
-from plugp100.new.components.motion_sensor_component import MotionSensorComponent
-from plugp100.new.components.on_off_component import OnOffComponent
-from plugp100.new.components.report_mode_component import ReportModeComponent
-from plugp100.new.components.smart_door_component import SmartDoorComponent
-from plugp100.new.components.temperature_component import TemperatureComponent
-from plugp100.new.components.temperature_humidity_records import (
+from plugp100.devices.components.battery_component import BatteryComponent
+from plugp100.devices.components.humidity_component import HumidityComponent
+from plugp100.devices.components.motion_sensor_component import MotionSensorComponent
+from plugp100.devices.components.on_off_component import OnOffComponent
+from plugp100.devices.components.report_mode_component import ReportModeComponent
+from plugp100.devices.components.smart_door_component import SmartDoorComponent
+from plugp100.devices.components.temperature_component import TemperatureComponent
+from plugp100.devices.components.temperature_humidity_records import (
     TemperatureHumidityRecordComponent,
 )
-from plugp100.new.components.trigger_log_component import TriggerLogComponent
-from plugp100.new.components.water_leak_component import WaterLeakComponent
-from plugp100.new.device_type import DeviceType
-from plugp100.new.event_polling.event_subscription import (
+from plugp100.devices.components.trigger_log_component import TriggerLogComponent
+from plugp100.devices.components.water_leak_component import WaterLeakComponent
+from plugp100.devices.device_type import DeviceType
+from plugp100.devices.event_polling.event_subscription import (
     EventSubscriptionOptions,
     EventLogsStateTracker,
 )
-from plugp100.new.event_polling.poll_tracker import PollTracker, PollSubscription
-from plugp100.new.tapodevice import TapoDevice, C
+from plugp100.devices.event_polling.poll_tracker import PollTracker, PollSubscription
+from plugp100.devices.tapodevice import TapoDevice, C
 from plugp100.responses.components import Components
 from plugp100.responses.hub_childs.ke100_device_state import KE100DeviceState, TRVState
 from plugp100.responses.hub_childs.s200b_device_state import (

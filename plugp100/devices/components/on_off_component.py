@@ -4,7 +4,7 @@ from plugp100.api.requests.set_device_info.set_plug_info_params import SetPlugIn
 from plugp100.api.requests.tapo_request import TapoRequest
 from plugp100.api.tapo_client import TapoClient
 from plugp100.common.utils.json_utils import dataclass_encode_json
-from plugp100.new.components.device_component import DeviceComponent
+from plugp100.devices.components.device_component import DeviceComponent
 
 
 class OnOffComponent(DeviceComponent):

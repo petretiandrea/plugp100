@@ -1,6 +1,6 @@
 from typing import Any
 
-from plugp100.new.components.device_component import DeviceComponent
+from plugp100.devices.components.device_component import DeviceComponent
 
 
 class ReportModeComponent(DeviceComponent):

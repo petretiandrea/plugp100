@@ -3,7 +3,7 @@ from typing import Any
 from plugp100.api.requests.tapo_request import TapoRequest
 from plugp100.api.tapo_client import TapoClient
 from plugp100.common.functional.tri import Try
-from plugp100.new.components.device_component import DeviceComponent
+from plugp100.devices.components.device_component import DeviceComponent
 from plugp100.responses.hub_childs.t31x_device_state import TemperatureHumidityRecordsRaw
 
 

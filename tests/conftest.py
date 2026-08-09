@@ -12,8 +12,8 @@ from plugp100.api.requests.tapo_request import (
 )
 from plugp100.common.credentials import AuthCredential
 from plugp100.common.functional.tri import Try
-from plugp100.new.device_factory import DeviceConnectConfiguration, connect
-from plugp100.new.tapodevice import TapoDevice
+from plugp100.devices.device_factory import DeviceConnectConfiguration, connect
+from plugp100.devices.tapodevice import TapoDevice
 from plugp100.protocol.tapo_protocol import TapoProtocol
 from plugp100.responses.tapo_response import TapoResponse
 
@@ -48,7 +48,7 @@ async def device(request) -> TapoDevice:
         data = load_fixture(request.param)
     protocol = FakeProtocol(data)
     credential = AuthCredential("", "")
-    with patch("plugp100.new.device_factory._get_or_guess_protocol") as mock:
+    with patch("plugp100.devices.device_factory._get_or_guess_protocol") as mock:
         mock.side_effect = AsyncMock(return_value=protocol)
         connect_config = DeviceConnectConfiguration(
             host="",

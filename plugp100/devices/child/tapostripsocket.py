@@ -1,9 +1,9 @@
 from typing import Optional
 
 from plugp100.api.tapo_client import TapoClient
-from plugp100.new.components.on_off_component import OnOffComponent
-from plugp100.new.device_type import DeviceType
-from plugp100.new.tapodevice import TapoDevice, C
+from plugp100.devices.components.on_off_component import OnOffComponent
+from plugp100.devices.device_type import DeviceType
+from plugp100.devices.tapodevice import TapoDevice, C
 from plugp100.responses.components import Components
 from plugp100.responses.device_state import DeviceInfo
 

@@ -2,7 +2,7 @@ import logging
 from typing import Any, Optional
 
 from plugp100.api.tapo_client import TapoClient
-from plugp100.new.child.tapohubchildren import (
+from plugp100.devices.child.tapohubchildren import (
     SmartDoorSensor,
     TriggerButtonDevice,
     SwitchChildDevice,
@@ -11,8 +11,8 @@ from plugp100.new.child.tapohubchildren import (
     TemperatureHumiditySensor,
     KE100Device,
 )
-from plugp100.new.components.device_component import DeviceComponent
-from plugp100.new.tapodevice import TapoDevice
+from plugp100.devices.components.device_component import DeviceComponent
+from plugp100.devices.tapodevice import TapoDevice
 from plugp100.responses.hub_childs.hub_child_base_info import HubChildBaseInfo
 
 _LOGGER = logging.getLogger("HubChildrenComponent")

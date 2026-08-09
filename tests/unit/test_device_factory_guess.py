@@ -7,14 +7,14 @@ import pytest
 from plugp100.api.requests.tapo_request import TapoRequest
 from plugp100.common.credentials import AuthCredential
 from plugp100.common.functional.tri import Failure, Success, Try
-from plugp100.new.device_factory import (
+from plugp100.devices.device_factory import (
     DeviceConnectConfiguration,
     _ProtocolCandidate,
     _build_protocol_candidates,
     _guess_protocol,
 )
-from plugp100.new.errors.invalid_authentication import InvalidAuthentication
-from plugp100.new.errors.protocol_guess import (
+from plugp100.devices.errors.invalid_authentication import InvalidAuthentication
+from plugp100.devices.errors.protocol_guess import (
     HostUnreachableError,
     ProtocolDetectionTimeoutError,
     UnsupportedProtocolError,
@@ -63,7 +63,7 @@ async def test_guess_protocol_closes_failures_and_continues_after_timeout():
     )
 
     with patch(
-        "plugp100.new.device_factory._build_protocol_candidates",
+        "plugp100.devices.device_factory._build_protocol_candidates",
         return_value=candidates,
     ):
         selected = await _guess_protocol(config)
@@ -124,7 +124,7 @@ async def test_guess_protocol_raises_invalid_authentication_after_all_failures(f
         host="device", credentials=AuthCredential("user", "password")
     )
     with patch(
-        "plugp100.new.device_factory._build_protocol_candidates",
+        "plugp100.devices.device_factory._build_protocol_candidates",
         return_value=[_ProtocolCandidate("failure", lambda: failed)],
     ):
         with pytest.raises(InvalidAuthentication) as raised:
@@ -164,7 +164,7 @@ async def test_guess_protocol_reports_specific_final_error(
     )
 
     with patch(
-        "plugp100.new.device_factory._build_protocol_candidates",
+        "plugp100.devices.device_factory._build_protocol_candidates",
         return_value=[_ProtocolCandidate("failure", lambda: failed)],
     ):
         with pytest.raises(expected_error) as raised:
@@ -185,7 +185,7 @@ async def test_guess_protocol_enforces_global_timeout_and_closes_candidate():
     )
 
     with patch(
-        "plugp100.new.device_factory._build_protocol_candidates",
+        "plugp100.devices.device_factory._build_protocol_candidates",
         return_value=[_ProtocolCandidate("slow", lambda: slow)],
     ):
         with pytest.raises(ProtocolDetectionTimeoutError) as raised:
@@ -209,7 +209,7 @@ async def test_guess_protocol_skips_candidates_on_unavailable_endpoint():
     )
 
     with patch(
-        "plugp100.new.device_factory._build_protocol_candidates",
+        "plugp100.devices.device_factory._build_protocol_candidates",
         return_value=candidates,
     ):
         selected = await _guess_protocol(config)

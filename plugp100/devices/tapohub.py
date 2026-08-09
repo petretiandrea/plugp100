@@ -4,12 +4,12 @@ from typing import Optional, List, Set, Any, Callable
 from plugp100.api.requests.set_device_info.play_alarm_params import PlayAlarmParams
 from plugp100.api.tapo_client import TapoClient
 from plugp100.common.functional.tri import Try, Failure
-from plugp100.new.components.alarm_component import AlarmComponent
-from plugp100.new.components.hub_children_component import HubChildrenComponent
-from plugp100.new.device_type import DeviceType
-from plugp100.new.event_polling.poll_tracker import PollTracker, PollSubscription
-from plugp100.new.hub_device_tracker import HubConnectedDeviceTracker, HubDeviceEvent
-from plugp100.new.tapodevice import TapoDevice, C
+from plugp100.devices.components.alarm_component import AlarmComponent
+from plugp100.devices.components.hub_children_component import HubChildrenComponent
+from plugp100.devices.device_type import DeviceType
+from plugp100.devices.event_polling.poll_tracker import PollTracker, PollSubscription
+from plugp100.devices.hub_device_tracker import HubConnectedDeviceTracker, HubDeviceEvent
+from plugp100.devices.tapodevice import TapoDevice, C
 from plugp100.responses.alarm_type_list import AlarmTypeList
 from plugp100.responses.components import Components
 

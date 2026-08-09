@@ -3,7 +3,7 @@ from typing import Any, Optional
 from plugp100.api.light_effect import LightEffect
 from plugp100.api.tapo_client import TapoClient
 from plugp100.common.functional.tri import Try
-from plugp100.new.components.device_component import DeviceComponent
+from plugp100.devices.components.device_component import DeviceComponent
 from plugp100.responses.device_state import LedStripDeviceState
 
 

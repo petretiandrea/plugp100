@@ -1,12 +1,12 @@
 from typing import Optional, List
 
 from plugp100.api.tapo_client import TapoClient
-from plugp100.new.child.tapostripsocket import TapoStripSocket
-from plugp100.new.components.energy_component import EnergyComponent
-from plugp100.new.components.on_off_component import OnOffComponent
-from plugp100.new.components.socket_children_component import SocketChildrenComponent
-from plugp100.new.device_type import DeviceType
-from plugp100.new.tapodevice import TapoDevice, C
+from plugp100.devices.child.tapostripsocket import TapoStripSocket
+from plugp100.devices.components.energy_component import EnergyComponent
+from plugp100.devices.components.on_off_component import OnOffComponent
+from plugp100.devices.components.socket_children_component import SocketChildrenComponent
+from plugp100.devices.device_type import DeviceType
+from plugp100.devices.tapodevice import TapoDevice, C
 from plugp100.responses.components import Components
 
 

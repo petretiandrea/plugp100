@@ -1,9 +1,9 @@
 from typing import Any
 
 from plugp100.api.tapo_client import TapoClient
-from plugp100.new.child.tapostripsocket import TapoStripSocket
-from plugp100.new.components.device_component import DeviceComponent
-from plugp100.new.tapodevice import TapoDevice
+from plugp100.devices.child.tapostripsocket import TapoStripSocket
+from plugp100.devices.components.device_component import DeviceComponent
+from plugp100.devices.tapodevice import TapoDevice
 from plugp100.responses.child_device_list import PowerStripChild
 
 

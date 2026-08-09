@@ -1,8 +1,8 @@
 import unittest
 
-from plugp100.new.child.tapohubchildren import TemperatureHumiditySensor
-from plugp100.new.device_factory import connect
-from plugp100.new.tapohub import TapoHub
+from plugp100.devices.child.tapohubchildren import TemperatureHumiditySensor
+from plugp100.devices.device_factory import connect
+from plugp100.devices.tapohub import TapoHub
 from plugp100.responses.temperature_unit import TemperatureUnit
 from tests.integration.tapo_test_helper import (
     get_test_config,

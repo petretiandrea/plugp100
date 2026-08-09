@@ -3,9 +3,9 @@ from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
 from plugp100.common.functional.tri import Success
-from plugp100.new.components.hub_children_component import HubChildrenComponent
-from plugp100.new.device_type import DeviceType
-from plugp100.new.tapohub import TapoHub
+from plugp100.devices.components.hub_children_component import HubChildrenComponent
+from plugp100.devices.device_type import DeviceType
+from plugp100.devices.tapohub import TapoHub
 from tests.conftest import hub, hub_lot_devices
 
 

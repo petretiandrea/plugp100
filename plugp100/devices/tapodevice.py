@@ -5,10 +5,10 @@ from typing import Optional, TypeVar, Type, Dict, Any
 from plugp100.api.requests.tapo_request import TapoRequest
 from plugp100.api.tapo_client import TapoClient
 from plugp100.common.functional.tri import Try
-from plugp100.new.components.countdown import Countdown
-from plugp100.new.components.device_component import DeviceComponent
-from plugp100.new.components.overheat_component import OverheatComponent
-from plugp100.new.device_type import DeviceType
+from plugp100.devices.components.countdown import Countdown
+from plugp100.devices.components.device_component import DeviceComponent
+from plugp100.devices.components.overheat_component import OverheatComponent
+from plugp100.devices.device_type import DeviceType
 from plugp100.responses.components import Components
 from plugp100.responses.device_state import DeviceInfo
 from plugp100.responses.firmware import LatestFirmware, FirmwareDownloadProgress

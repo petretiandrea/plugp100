@@ -1,7 +1,7 @@
 from typing import Optional, Any
 
 from plugp100.api.tapo_client import TapoClient
-from plugp100.new.components.device_component import DeviceComponent
+from plugp100.devices.components.device_component import DeviceComponent
 from plugp100.responses.energy_info import EnergyInfo
 from plugp100.responses.power_info import PowerInfo
 

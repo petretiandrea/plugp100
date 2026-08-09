@@ -2,9 +2,9 @@ from typing import cast
 
 import pytest
 
-from plugp100.new.child.tapohubchildren import TemperatureHumiditySensor
-from plugp100.new.device_type import DeviceType
-from plugp100.new.tapohub import TapoHub
+from plugp100.devices.child.tapohubchildren import TemperatureHumiditySensor
+from plugp100.devices.device_type import DeviceType
+from plugp100.devices.tapohub import TapoHub
 from plugp100.responses.temperature_unit import TemperatureUnit
 
 temp_hum_sensor = pytest.mark.parametrize(

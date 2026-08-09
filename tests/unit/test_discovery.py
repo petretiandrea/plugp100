@@ -2,7 +2,7 @@ from unittest.mock import patch, AsyncMock
 
 from plugp100.common.credentials import AuthCredential
 from plugp100.discovery import DiscoveredDevice
-from plugp100.new.tapobulb import TapoBulb
+from plugp100.devices.tapobulb import TapoBulb
 from tests.conftest import load_fixture
 
 

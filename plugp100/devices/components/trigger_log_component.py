@@ -4,7 +4,7 @@ from plugp100.api.requests.tapo_request import TapoRequest
 from plugp100.api.requests.trigger_logs_params import GetTriggerLogsParams
 from plugp100.api.tapo_client import TapoClient
 from plugp100.common.functional.tri import Try
-from plugp100.new.components.device_component import DeviceComponent
+from plugp100.devices.components.device_component import DeviceComponent
 from plugp100.responses.hub_childs.s200b_device_state import S200BEvent, parse_s200b_event
 from plugp100.responses.hub_childs.trigger_log_response import TriggerLogResponse
 
