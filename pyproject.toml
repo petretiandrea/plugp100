@@ -8,14 +8,14 @@ dynamic = ["version"]
 description = "Controller for TP-Link Tapo P100 and other devices"
 readme = "README.md"
 requires-python = ">=3.10"
-license = { text = "GPL-3.0-only" }
+license = "GPL-3.0-only"
+license-files = ["LICENSE"]
 authors = [
   { name = "@petretiandrea", email = "petretiandrea@gmail.com" },
 ]
 keywords = ["Tapo", "P100"]
 classifiers = [
   "Development Status :: 5 - Production/Stable",
-  "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
@@ -24,16 +24,18 @@ classifiers = [
 dependencies = [
   "aiohttp>=3.8.1",
   "certifi>=2021.5.30",
-  "cryptography>=38.0.3",
+  "cryptography>=38.0.3,<47",
   "ecdsa>=0.19.1",
   "jsons>=1.6.3",
   "passlib>=1.7.4",
-  "python-dotenv>=1.0.0",
   "requests>=2.27.1",
   "scapy>=2.5.0",
   "semantic-version==2.10.0",
   "urllib3>=2.5,<3",
 ]
+
+[project.optional-dependencies]
+example = ["python-dotenv>=1.0.0"]
 
 [project.urls]
 Homepage = "https://github.com/petretiandrea/plugp100"
@@ -41,12 +43,12 @@ Repository = "https://github.com/petretiandrea/plugp100"
 
 [dependency-groups]
 dev = [
-  "async-timeout==4.0.2",
-  "black==23.12.1",
-  "pre-commit==3.6.0",
-  "pytest-cov==4.1.0",
-  "pytest-asyncio==0.23.4",
-  "pyyaml==6.0.1",
+  "async-timeout",
+  "black",
+  "pre-commit",
+  "pytest-cov",
+  "pytest-asyncio",
+  "pyyaml",
 ]
 
 [tool.uv]
@@ -56,7 +58,7 @@ default-groups = ["dev"]
 version = { attr = "plugp100.__version__" }
 
 [tool.setuptools.packages.find]
-exclude = ["tests*"]
+exclude = ["build_tools*", "tests*"]
 
 [tool.black]
 line-length = 90
@@ -67,3 +69,5 @@ testpaths = ["tests"]
 norecursedirs = [".git"]
 console_output_style = "count"
 asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+asyncio_default_test_loop_scope = "function"

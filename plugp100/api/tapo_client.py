@@ -10,15 +10,14 @@ from plugp100.api.requests.tapo_request import TapoRequest, MultipleRequestParam
 from plugp100.common.credentials import AuthCredential
 from plugp100.common.functional.tri import Try, Failure, Success
 from plugp100.common.utils.json_utils import Json, dataclass_encode_json
-from plugp100.protocol.klap import klap_handshake_v2
-from plugp100.protocol.klap.klap_protocol import KlapProtocol
-from plugp100.protocol.passthrough_protocol import PassthroughProtocol
-from plugp100.protocol.tapo_protocol import TapoProtocol
-from plugp100.responses.child_device_list import ChildDeviceList
-from plugp100.responses.components import Components
-from plugp100.responses.energy_info import EnergyInfo
-from plugp100.responses.power_info import PowerInfo
-from plugp100.responses.tapo_exception import TapoException
+from plugp100.api.protocol.klap import klap_handshake_v2
+from plugp100.api.protocol.klap.klap_protocol import KlapProtocol
+from plugp100.api.protocol.passthrough_protocol import PassthroughProtocol
+from plugp100.api.protocol.tapo_protocol import TapoProtocol
+from plugp100.models.child import ChildDeviceList
+from plugp100.models.components import Components
+from plugp100.models.energy import EnergyInfo
+from plugp100.models.power import PowerInfo
 
 logger = logging.getLogger(__name__)
 

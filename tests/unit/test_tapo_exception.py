@@ -7,8 +7,8 @@ import pytest
 from plugp100.api.requests.tapo_request import TapoRequest
 from plugp100.common.credentials import AuthCredential
 from plugp100.common.functional.tri import Failure, Success
-from plugp100.protocol.passthrough_protocol import PassthroughProtocol
-from plugp100.responses.tapo_exception import (
+from plugp100.api.protocol.passthrough_protocol import PassthroughProtocol
+from plugp100.api.transport.exceptions import (
     TAPO_AUTHENTICATION_ERRORS,
     TAPO_RETRYABLE_ERRORS,
     TapoAuthenticationError,
@@ -19,7 +19,7 @@ from plugp100.responses.tapo_exception import (
     TapoRetryableError,
     _error_message,
 )
-from plugp100.responses.tapo_response import TapoResponse
+from plugp100.api.transport.response import TapoResponse
 
 
 @pytest.mark.parametrize("error", TAPO_RETRYABLE_ERRORS, ids=lambda error: error.name)

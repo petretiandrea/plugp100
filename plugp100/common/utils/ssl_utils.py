@@ -3,7 +3,6 @@ from typing import Optional
 
 from yarl import URL
 
-
 DEVICE_CIPHERS = ":".join(
     [
         "ECDHE-RSA-AES128-GCM-SHA256",

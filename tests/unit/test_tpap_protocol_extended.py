@@ -17,8 +17,8 @@ from yarl import URL
 
 from plugp100.api.requests.tapo_request import TapoRequest
 from plugp100.common.credentials import AuthCredential
-from plugp100.protocol.tpap_protocol import TpapEncryptionSession, TpapProtocol
-from plugp100.responses.tapo_exception import (
+from plugp100.api.protocol.tpap_protocol import TpapEncryptionSession, TpapProtocol
+from plugp100.api.transport.exceptions import (
     TapoAuthenticationError,
     TapoDeviceError,
     TapoError,

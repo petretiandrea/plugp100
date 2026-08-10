@@ -9,11 +9,11 @@ from cryptography.hazmat.primitives.asymmetric import ec
 
 from plugp100.api.requests.tapo_request import TapoRequest
 from plugp100.common.credentials import AuthCredential
-from plugp100.devices.device_factory import (
+from plugp100.devices.factory import (
     DeviceConnectConfiguration,
     _get_or_guess_protocol,
 )
-from plugp100.protocol.tpap_protocol import TpapEncryptionSession, TpapProtocol
+from plugp100.api.protocol.tpap_protocol import TpapEncryptionSession, TpapProtocol
 
 
 def test_tpap_cipher_roundtrip():

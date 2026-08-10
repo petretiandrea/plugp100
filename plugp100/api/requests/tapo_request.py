@@ -20,9 +20,11 @@ class TapoRequest(object):
     def login(credential: AuthCredential, v2: bool = False) -> "TapoRequest":
         return TapoRequest(
             method="login_device",
-            params=LoginDeviceParams(credential.username, credential.password)
-            if not v2
-            else LoginDeviceParamsV2(credential.username, credential.password),
+            params=(
+                LoginDeviceParams(credential.username, credential.password)
+                if not v2
+                else LoginDeviceParamsV2(credential.username, credential.password)
+            ),
         )
 
     @staticmethod

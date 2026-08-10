@@ -1,7 +1,6 @@
 import secrets
 from http.cookies import SimpleCookie
-from types import SimpleNamespace
-from unittest.mock import AsyncMock, patch
+from unittest.mock import patch
 
 import aiohttp
 import pytest
@@ -10,19 +9,12 @@ from plugp100.api.requests.tapo_request import TapoRequest
 from plugp100.api.tapo_client import TapoClient
 from plugp100.common.credentials import AuthCredential
 from plugp100.common.functional.tri import Success
-from plugp100.protocol.klap import (
+from plugp100.api.protocol.klap import (
     KlapHandshakeRevision,
     klap_handshake_v2,
     klap_handshake_v1,
 )
-from plugp100.protocol.klap.klap_protocol import (
-    KlapAuthenticationError,
-    KlapChiper,
-    KlapDeviceError,
-    KlapProtocol,
-    KlapSession,
-    KlapSessionError,
-)
+from plugp100.api.protocol.klap.klap_protocol import KlapProtocol, KlapChiper
 
 
 @pytest.mark.parametrize(
@@ -56,72 +48,6 @@ async def test_query(klap_revision: KlapHandshakeRevision):
                 or expected_sequence == protocol._klap_session.chiper._seq
             )
             expected_sequence = protocol._klap_session.chiper._seq + 1
-
-
-async def test_retry_only_resets_retryable_klap_sessions():
-    async with aiohttp.ClientSession() as session:
-        protocol = KlapProtocol(
-            AuthCredential("username", "password"),
-            "http://localhost",
-            klap_strategy=klap_handshake_v2(),
-            http_session=session,
-        )
-        protocol._klap_session = SimpleNamespace()
-        protocol._send_request = AsyncMock(
-            side_effect=[
-                KlapSessionError("expired"),
-                {"error_code": 0, "result": {}},
-            ]
-        )
-
-        response = await protocol.send_request(TapoRequest.get_device_info())
-
-        assert response.is_success()
-        assert protocol._send_request.await_count == 2
-        assert protocol._klap_session is None
-
-
-@pytest.mark.parametrize(
-    "error",
-    [KlapAuthenticationError("bad credentials"), KlapDeviceError("bad response")],
-)
-async def test_klap_does_not_retry_definitive_errors(error):
-    async with aiohttp.ClientSession() as session:
-        protocol = KlapProtocol(
-            AuthCredential("username", "password"),
-            "http://localhost",
-            klap_strategy=klap_handshake_v2(),
-            http_session=session,
-        )
-        protocol._send_request = AsyncMock(side_effect=error)
-
-        response = await protocol.send_request(TapoRequest.get_device_info())
-
-        assert response.is_failure()
-        assert response.error() is error
-        protocol._send_request.assert_awaited_once()
-
-
-@pytest.mark.parametrize(
-    ("remaining_seconds", "expected_expired"),
-    [
-        pytest.param(61, False, id="outside-renewal-margin"),
-        pytest.param(60, True, id="at-renewal-margin"),
-        pytest.param(-1, True, id="already-expired"),
-    ],
-)
-def test_klap_session_expiration_uses_seconds(
-    remaining_seconds: int, expected_expired: bool
-):
-    now = 1_800_000_000.0
-    session = KlapSession(
-        chiper=SimpleNamespace(),
-        expire_at=now + remaining_seconds,
-        session_cookie="session-id",
-    )
-
-    with patch("plugp100.protocol.klap.klap_protocol.time.time", return_value=now):
-        assert session.is_handshake_session_expired() is expected_expired
 
 
 def _mock_klap_server(

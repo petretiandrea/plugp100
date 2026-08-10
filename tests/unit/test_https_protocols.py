@@ -6,9 +6,9 @@ import aiohttp
 
 from plugp100.common.credentials import AuthCredential
 from plugp100.common.utils.ssl_utils import ssl_context_for_url
-from plugp100.protocol.klap import klap_handshake_v2
-from plugp100.protocol.klap.klap_protocol import KlapProtocol
-from plugp100.protocol.passthrough_protocol import PassthroughProtocol
+from plugp100.api.protocol.klap import klap_handshake_v2
+from plugp100.api.protocol.klap.klap_protocol import KlapProtocol
+from plugp100.api.protocol.passthrough_protocol import PassthroughProtocol
 
 
 class MockResponse:

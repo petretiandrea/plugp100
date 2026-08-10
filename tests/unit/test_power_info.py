@@ -1,4 +1,4 @@
-from plugp100.responses.power_info import PowerInfo
+from plugp100.models.power import PowerInfo
 
 
 def test_power_info_missing_current_power_returns_none():
