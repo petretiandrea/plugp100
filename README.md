@@ -40,7 +40,7 @@ This library supports a wide range of Tapo devices, including:
   - Temperature Humidity Sensor
 
 Every device class has more than one component which enrich the basic capability of Tapo Device. 
-You can see the supported components inside `plugp100/new/components` package.
+You can see the supported components inside the `plugp100/components` package.
 
 
 ## Usage
@@ -100,7 +100,7 @@ Connect to a Tapo device without knowing its device type and protocol. The libra
 ```python
 import asyncio
 from plugp100.common.credentials import AuthCredential
-from plugp100.new.device_factory import connect, DeviceConnectConfiguration
+from plugp100.devices.factory import connect, DeviceConnectConfiguration
 
 async def example_connect_by_guessing(credentials: AuthCredential, host: str):
     device_configuration = DeviceConnectConfiguration(
@@ -134,7 +134,7 @@ Connect to a Tapo device with known device type and protocol details:
 ```python
 import asyncio
 from plugp100.common.credentials import AuthCredential
-from plugp100.new.device_factory import connect, DeviceConnectConfiguration
+from plugp100.devices.factory import connect, DeviceConnectConfiguration
 
 async def example_connect_knowing_device_and_protocol(credentials: AuthCredential, host: str):
     device_configuration = DeviceConnectConfiguration(
