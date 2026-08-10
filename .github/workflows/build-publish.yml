@@ -19,6 +19,31 @@ on:
 #      - v*.*.*
 
 jobs:
+  checks:
+    name: Linting & Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v9
+        with:
+          enable-cache: true
+      - name: Sync dependencies
+        run: uv sync --group dev
+      - name: Check style
+        run: uv run black --check --verbose .
+      - name: Test code
+        run: |
+          uv run pytest \
+            --cov-fail-under=60 \
+            --cov-report=term-missing:skip-covered \
+            --cov=plugp100 \
+            -p no:sugar \
+            tests/unit
+
 #  build_vendoring_wheels:
 #    if: ${{ startsWith(github.ref, 'refs/tags/v') }}
 #    runs-on: ubuntu-latest
@@ -60,27 +85,28 @@ jobs:
     name: Publish to PyPi
     runs-on: ubuntu-latest
     environment: release
+    needs: checks
     #    needs: [ build_vendoring_wheels ]
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
           token: ${{ secrets.GIT_GITHUB_TOKEN }}
           persist-credentials: true
 
-      - name: Setup Node 20.x
-        uses: actions/setup-node@v5
+      - name: Setup Node 24.x
+        uses: actions/setup-node@v7
         with:
-          node-version: 20
+          node-version: 24
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: '3.12'
       - name: Set up uv
-        uses: astral-sh/setup-uv@v7
+        uses: astral-sh/setup-uv@v9
         with:
           enable-cache: true
 
@@ -101,15 +127,17 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GIT_GITHUB_TOKEN }}
 
       - name: Bump version file
+        if: ${{ steps.semantic.outputs.new_release_version != '' }}
         run: sed -i 's/__version__ = ".*"/__version__ = \"${{ steps.semantic.outputs.new_release_version }}\"/g' plugp100/__init__.py
 
       - name: Generate source and wheel distributions
+        if: ${{ steps.semantic.outputs.new_release_version != '' }}
         run: |
           uv build
           ls -R
 
       - name: Publish source distribution to PyPi
-        if: ${{ github.event.inputs.skip_pypi_publish != 'true' }}
+        if: ${{ steps.semantic.outputs.new_release_version != '' && github.event.inputs.skip_pypi_publish != 'true' }}
         env:
           TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
           TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
@@ -117,6 +145,7 @@ jobs:
           uvx twine upload dist/*
 
       - name: Semantic Release
+        if: ${{ steps.semantic.outputs.new_release_version != '' }}
         uses: cycjimmy/semantic-release-action@v6
         with:
           semantic_version: 23.0.2

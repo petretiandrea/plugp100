@@ -10,7 +10,7 @@ def build_packet_for_payload(payload, pkt_type, pkt_id=b"\x01\x02\x03\x04"):
         + len_bytes
         + pkt_type
         + pkt_id
-        + b"\x5A\x6B\x7C\x8D"
+        + b"\x5a\x6b\x7c\x8d"
         + payload
     )
     calculated_crc32 = zlib.crc32(skeleton) & 0xFFFFFFFF

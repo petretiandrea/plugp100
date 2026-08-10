@@ -11,13 +11,11 @@ class Try(Generic[A]):
 
     @staticmethod
     @overload
-    def of(func_or_value: Callable[[], B]) -> "Try[B]":
-        ...
+    def of(func_or_value: Callable[[], B]) -> "Try[B]": ...
 
     @staticmethod
     @overload
-    def of(func_or_value: B) -> "Try[B]":
-        ...
+    def of(func_or_value: B) -> "Try[B]": ...
 
     @staticmethod
     def of(func_or_value: Union[B, Callable[[], B]]) -> "Try[B]":

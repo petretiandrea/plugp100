@@ -57,14 +57,16 @@ class DiscoveredDevice:
             "hw_ver": self.hw_ver,
             "is_support_iot_cloud": self.is_support_iot_cloud,
             "factory_default": self.factory_default,
-            "mgt_encrypt_schm": {
-                "is_support_https": self.mgt_encrypt_schm.is_support_https,
-                "encrypt_type": self.mgt_encrypt_schm.encrypt_type,
-                "http_port": self.mgt_encrypt_schm.http_port,
-                "lv": self.mgt_encrypt_schm.lv,
-            }
-            if self.mgt_encrypt_schm is not None
-            else None,
+            "mgt_encrypt_schm": (
+                {
+                    "is_support_https": self.mgt_encrypt_schm.is_support_https,
+                    "encrypt_type": self.mgt_encrypt_schm.encrypt_type,
+                    "http_port": self.mgt_encrypt_schm.http_port,
+                    "lv": self.mgt_encrypt_schm.lv,
+                }
+                if self.mgt_encrypt_schm is not None
+                else None
+            ),
         }
 
 

@@ -1,6 +1,5 @@
 from typing import Optional, Sequence, Tuple
 
-
 ProtocolFailure = Tuple[str, Exception]
 
 

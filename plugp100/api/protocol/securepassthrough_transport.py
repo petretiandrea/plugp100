@@ -126,9 +126,11 @@ class SecurePassthroughTransport:
         logger.debug(f"Request body: {request_body}")
 
         response_encrypted = await self._http.async_make_post_cookie(
-            session.url
-            if session.token is None
-            else f"{session.url}?token={session.token}",
+            (
+                session.url
+                if session.token is None
+                else f"{session.url}?token={session.token}"
+            ),
             request_body,
             session.get_cookies(),
         )

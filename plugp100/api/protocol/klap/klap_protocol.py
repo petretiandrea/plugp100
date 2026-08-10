@@ -330,7 +330,7 @@ class KlapChiper:
         self.remote_seed = remote_seed
         self.user_hash = user_hash
         self._key = self._key_derive(local_seed, remote_seed, user_hash)
-        (self._iv, self._seq) = self._iv_derive(local_seed, remote_seed, user_hash)
+        self._iv, self._seq = self._iv_derive(local_seed, remote_seed, user_hash)
         self._sig = self._sig_derive(local_seed, remote_seed, user_hash)
         self._aes_chiper = algorithms.AES(self._key)
 

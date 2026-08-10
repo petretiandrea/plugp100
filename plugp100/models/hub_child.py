@@ -18,7 +18,6 @@ from plugp100.models.hub_children import (
     parse_t110_event,
 )
 
-
 __all__ = [
     "CloseEvent",
     "DoubleClickEvent",

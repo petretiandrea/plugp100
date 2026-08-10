@@ -47,6 +47,10 @@ You can see the supported components inside the `plugp100/components` package.
 
 Replace `<tapo_username>`, `<tapo_password>`, and `<tapo_device_ip>` with your Tapo account credentials and device IP address.
 
+To run the bundled example, copy `.env.example` to `.env`, fill in the device
+credentials, and install the optional dependency with
+`pip install "plugp100[example]"` (or `uv sync --extra example` when developing).
+
 ### Authentication
 
 Before using the library, make sure to have your Tapo credentials ready:

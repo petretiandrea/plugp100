@@ -2,8 +2,6 @@ import asyncio
 import logging
 import os
 
-from dotenv import load_dotenv
-
 from plugp100.common.credentials import AuthCredential
 from plugp100.devices.factory import DeviceConnectConfiguration, connect
 from plugp100.discovery import TapoDiscovery, connect_discovered_device
@@ -14,6 +12,16 @@ def required_env(name: str) -> str:
     if not value:
         raise RuntimeError(f"Missing required environment variable: {name}")
     return value
+
+
+def load_example_env() -> None:
+    try:
+        from dotenv import load_dotenv
+    except ModuleNotFoundError as exc:
+        raise RuntimeError(
+            "Install the example dependencies with 'pip install plugp100[example]'"
+        ) from exc
+    load_dotenv()
 
 
 # Example get device from discovery
@@ -79,7 +87,7 @@ async def example_connect_by_guessing(credentials: AuthCredential, host: str):
 
 
 async def main():
-    load_dotenv()
+    load_example_env()
     credentials = AuthCredential(
         required_env("TAPO_USERNAME"), required_env("TAPO_PASSWORD")
     )

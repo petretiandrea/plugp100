@@ -86,9 +86,11 @@ class LedStripDeviceState(DeviceState):
                 color_temp_range=None if color_temp_range == () else color_temp_range,
                 saturation=kwargs.get("saturation"),
                 color_temp=kwargs.get("color_temp"),
-                lighting_effect=LightEffect(**kwargs.get("lighting_effect"))
-                if "lighting_effect" in kwargs
-                else None,
+                lighting_effect=(
+                    LightEffect(**kwargs.get("lighting_effect"))
+                    if "lighting_effect" in kwargs
+                    else None
+                ),
             )
         )
 
