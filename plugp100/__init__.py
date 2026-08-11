@@ -25,4 +25,4 @@ __all__ = [
     "connect_discovered_device",
     "connect",
 ]
-__version__ = "6.0.0"
+__version__ = "6.0.1"
