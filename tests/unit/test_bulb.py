@@ -1,6 +1,7 @@
 from plugp100.api.light_effect import LightEffect
-from plugp100.new.device_type import DeviceType
-from plugp100.new.tapobulb import TapoBulb, HS
+from plugp100.devices.bulb import TapoBulb
+from plugp100.devices.types import DeviceType
+from plugp100.components.light import HS
 from tests.conftest import bulb, bulb_led_strip
 
 

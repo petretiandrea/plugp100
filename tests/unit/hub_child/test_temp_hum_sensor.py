@@ -1,11 +1,9 @@
-from typing import cast
-
 import pytest
 
-from plugp100.new.child.tapohubchildren import TemperatureHumiditySensor
-from plugp100.new.device_type import DeviceType
-from plugp100.new.tapohub import TapoHub
-from plugp100.responses.temperature_unit import TemperatureUnit
+from plugp100.devices.children import TemperatureHumiditySensor
+from plugp100.devices.types import DeviceType
+from plugp100.models.temperature import TemperatureUnit
+from tests.conftest import temp_hum_device
 
 temp_hum_sensor = pytest.mark.parametrize(
     "device",
@@ -16,8 +14,8 @@ temp_hum_sensor = pytest.mark.parametrize(
 
 
 @temp_hum_sensor
-async def test_should_get_expose_state(device: TapoHub):
-    child = cast(TemperatureHumiditySensor, device.children[0])
+async def test_should_get_expose_state(temp_hum_device: TemperatureHumiditySensor):
+    child = temp_hum_device
     assert child.device_type == DeviceType.Sensor
 
     assert child.parent_device_id is not None
@@ -37,8 +35,10 @@ async def test_should_get_expose_state(device: TapoHub):
 
 
 @temp_hum_sensor
-async def test_should_get_humidity_temperature_records(device: TapoHub):
-    child = cast(TemperatureHumiditySensor, device.children[0])
+async def test_should_get_humidity_temperature_records(
+    temp_hum_device: TemperatureHumiditySensor,
+):
+    child = temp_hum_device
     records = (await child.get_temperature_humidity_records()).get_or_raise()
     assert records.local_time is not None
     assert len(records.past24_temperature) > 0

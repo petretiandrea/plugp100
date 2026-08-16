@@ -1,9 +1,27 @@
 import asyncio
 import logging
+import os
 
 from plugp100.common.credentials import AuthCredential
-from plugp100.discovery.tapo_discovery import TapoDiscovery
-from plugp100.new.device_factory import connect, DeviceConnectConfiguration
+from plugp100.devices.factory import DeviceConnectConfiguration, connect
+from plugp100.discovery import TapoDiscovery, connect_discovered_device
+
+
+def required_env(name: str) -> str:
+    value = os.getenv(name)
+    if not value:
+        raise RuntimeError(f"Missing required environment variable: {name}")
+    return value
+
+
+def load_example_env() -> None:
+    try:
+        from dotenv import load_dotenv
+    except ModuleNotFoundError as exc:
+        raise RuntimeError(
+            "Install the example dependencies with 'pip install plugp100[example]'"
+        ) from exc
+    load_dotenv()
 
 
 # Example get device from discovery
@@ -11,7 +29,7 @@ async def example_discovery(credentials: AuthCredential):
     discovered = await TapoDiscovery.scan(timeout=5)
     for discovered_device in discovered:
         try:
-            device = await discovered_device.get_tapo_device(credentials)
+            device = await connect_discovered_device(discovered_device, credentials)
             await device.update()
             print(
                 {
@@ -36,8 +54,7 @@ async def example_connect_knowing_device_and_protocol(
         host=host,
         credentials=credentials,
         device_type="SMART.TAPOPLUG",
-        encryption_type="klap",
-        encryption_version=2,
+        encryption_type="tpap",
     )
     device = await connect(device_configuration)
     await device.update()
@@ -49,6 +66,7 @@ async def example_connect_knowing_device_and_protocol(
             "components": device.get_device_components,
         }
     )
+    await device.client.close()
 
 
 # Example without knowing device class and protocol. The library will try
@@ -65,13 +83,18 @@ async def example_connect_by_guessing(credentials: AuthCredential, host: str):
             "components": device.get_device_components,
         }
     )
+    await device.client.close()
 
 
 async def main():
-    credentials = AuthCredential("<tapo_username>", "<tapo_password>")
+    load_example_env()
+    credentials = AuthCredential(
+        required_env("TAPO_USERNAME"), required_env("TAPO_PASSWORD")
+    )
+    host = required_env("TAPO_DEVICE_IP")
     await example_discovery(credentials)
-    await example_connect_knowing_device_and_protocol(credentials, "<tapo_device_ip>")
-    await example_connect_by_guessing(credentials, "<tapo_device_ip>")
+    await example_connect_knowing_device_and_protocol(credentials, host)
+    await example_connect_by_guessing(credentials, host)
 
 
 if __name__ == "__main__":

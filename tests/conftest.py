@@ -12,10 +12,17 @@ from plugp100.api.requests.tapo_request import (
 )
 from plugp100.common.credentials import AuthCredential
 from plugp100.common.functional.tri import Try
-from plugp100.new.device_factory import DeviceConnectConfiguration, connect
-from plugp100.new.tapodevice import TapoDevice
-from plugp100.protocol.tapo_protocol import TapoProtocol
-from plugp100.responses.tapo_response import TapoResponse
+from plugp100.devices import connect
+from plugp100.devices.base import TapoDevice
+from plugp100.devices.children import (
+    KE100Device,
+    TemperatureHumiditySensor,
+    TriggerButtonDevice,
+)
+from plugp100.devices.factory import DeviceConnectConfiguration
+from plugp100.devices.hub import TapoHub
+from plugp100.api.protocol.tapo_protocol import TapoProtocol
+from plugp100.api.transport.response import TapoResponse
 
 plug = pytest.mark.parametrize("device", ["p100.json", "p105.json"], indirect=True)
 
@@ -48,7 +55,7 @@ async def device(request) -> TapoDevice:
         data = load_fixture(request.param)
     protocol = FakeProtocol(data)
     credential = AuthCredential("", "")
-    with patch("plugp100.new.device_factory._get_or_guess_protocol") as mock:
+    with patch("plugp100.devices.factory._get_or_guess_protocol") as mock:
         mock.side_effect = AsyncMock(return_value=protocol)
         connect_config = DeviceConnectConfiguration(
             host="",
@@ -60,6 +67,21 @@ async def device(request) -> TapoDevice:
         device = await connect(connect_config)
         await device.update()
         return device
+
+
+@pytest.fixture
+async def button_device(device: TapoHub) -> TriggerButtonDevice:
+    return device.children[0]
+
+
+@pytest.fixture
+async def temp_hum_device(device: TapoHub) -> TemperatureHumiditySensor:
+    return device.children[0]
+
+
+@pytest.fixture
+async def trv_device(device: TapoHub) -> KE100Device:
+    return device.children[0]
 
 
 def load_fixture_with_merge(files: list[str]):

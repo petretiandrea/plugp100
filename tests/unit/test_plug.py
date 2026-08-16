@@ -1,6 +1,6 @@
-from plugp100.new.device_type import DeviceType
-from plugp100.new.tapodevice import TapoDevice
-from plugp100.new.tapoplug import TapoPlug
+from plugp100.devices.base import TapoDevice
+from plugp100.devices.plug import TapoPlug
+from plugp100.devices.types import DeviceType
 from tests.conftest import plug
 
 

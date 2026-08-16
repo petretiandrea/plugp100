@@ -1,4 +1,4 @@
-from plugp100.encryption import helpers
+from plugp100.api.encryption import helpers
 
 
 class LoginDeviceParams(object):

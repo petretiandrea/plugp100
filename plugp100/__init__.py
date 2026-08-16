@@ -1,17 +1,28 @@
-# import actual context
-import os
-import sys
+from plugp100.api import TapoClient
+from plugp100.common.credentials import AuthCredential
+from plugp100.devices import DeviceType, TapoBulb, TapoDevice, TapoHub, TapoPlug
+from plugp100.devices.factory import DeviceConnectConfiguration, connect
+from plugp100.discovery import (
+    DiscoveredDevice,
+    EncryptionSchema,
+    TapoDiscovery,
+    connect_discovered_device,
+)
 
-# Vendoring: add vendor directory to module search path
-parent_dir = os.path.abspath(os.path.dirname(__file__))
-vendor_dir = os.path.join(parent_dir, "_vendor")
-if os.path.exists(vendor_dir):
-    for vendor_path in os.listdir(vendor_dir):
-        sys.path.append(os.path.join(vendor_dir, vendor_path))
-
-from plugp100.responses import *
-from plugp100.api.requests import *
-from plugp100.api import *
-from plugp100.common import *
-
-__version__ = "5.1.7"
+__all__ = [
+    "AuthCredential",
+    "DeviceConnectConfiguration",
+    "DeviceType",
+    "DiscoveredDevice",
+    "EncryptionSchema",
+    "TapoBulb",
+    "TapoClient",
+    "TapoDevice",
+    "TapoDiscovery",
+    "TapoHub",
+    "TapoPlug",
+    "__version__",
+    "connect_discovered_device",
+    "connect",
+]
+__version__ = "6.0.1"

@@ -1,4 +1,4 @@
-from plugp100.responses.energy_info import EnergyInfo
+from plugp100.models.energy import EnergyInfo
 
 
 def test_energy_info_missing_today_energy_returns_none():

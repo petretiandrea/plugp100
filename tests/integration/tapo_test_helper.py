@@ -5,9 +5,9 @@ import unittest
 import yaml
 
 from plugp100.common.credentials import AuthCredential
-from plugp100.new.device_factory import DeviceConnectConfiguration
-from plugp100.new.tapodevice import TapoDevice
-from plugp100.responses.device_usage_info import DeviceUsageInfo
+from plugp100.devices.base import TapoDevice
+from plugp100.devices.factory import DeviceConnectConfiguration
+from plugp100.models.device_usage import DeviceUsageInfo
 
 
 async def _test_expose_device_info(device: TapoDevice, test: unittest.TestCase):

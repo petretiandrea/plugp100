@@ -1,3 +1,4 @@
+import asyncio
 import json
 import socket
 import threading
@@ -6,12 +7,9 @@ import unittest
 from cryptography.hazmat.primitives import serialization, hashes
 from cryptography.hazmat.primitives.asymmetric import padding
 
-from plugp100.discovery.discovered_device import DiscoveredDevice, EncryptionSchema
-from plugp100.discovery.tapo_discovery import (
-    TapoDiscovery,
-    _build_packet_for_payload_json,
-    PKT_ONBOARD_RESPONSE,
-)
+from plugp100.api.discovery.local_scanner import PKT_ONBOARD_RESPONSE, TapoDiscovery
+from plugp100.api.discovery.packets import build_packet_for_payload_json
+from plugp100.models.discovery import DiscoveredDevice, EncryptionSchema
 
 
 def _prepare_fake_handshake_response(key, iv, rsa_key, result):
@@ -67,7 +65,7 @@ class TapoDiscoveryTest(unittest.TestCase):
             }
             response = _prepare_fake_handshake_response(key, iv, rsa_key, result)
             pkt_id = handshake_packet[8:12]
-            to_send = _build_packet_for_payload_json(
+            to_send = build_packet_for_payload_json(
                 response, PKT_ONBOARD_RESPONSE, pkt_id
             )
             sock.sendto(to_send, addr)
@@ -75,7 +73,7 @@ class TapoDiscoveryTest(unittest.TestCase):
     def test_end_to_end(self):
         t = threading.Thread(target=self._emulated_tapo_device)
         t.start()
-        devices = list(TapoDiscovery.scan(broadcast="127.0.0.1", timeout=2))
+        devices = asyncio.run(TapoDiscovery.scan(broadcast="127.0.0.1", timeout=2))
         t.join(timeout=3)
 
         self.assertEqual(len(devices), 1)

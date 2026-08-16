@@ -1,10 +1,11 @@
 import asyncio
 import unittest
 
-from plugp100.new.device_factory import connect
-from plugp100.new.event_polling.event_subscription import EventSubscriptionOptions
-from plugp100.new.tapohub import TapoHub, S200ButtonDevice
-from plugp100.responses.hub_childs.s200b_device_state import (
+from plugp100.devices.children import S200ButtonDevice
+from plugp100.devices.factory import connect
+from plugp100.devices.hub import TapoHub
+from plugp100.events.event_subscription import EventSubscriptionOptions
+from plugp100.models.hub_child import (
     SingleClickEvent,
     RotationEvent,
 )

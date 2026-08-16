@@ -1,8 +1,8 @@
 import asyncio
 import unittest
 
-from plugp100.new.device_factory import connect
-from plugp100.new.tapohub import TapoHub
+from plugp100.devices.factory import connect
+from plugp100.devices.hub import TapoHub
 from tests.integration.tapo_test_helper import (
     _test_expose_device_info,
     get_test_config,
