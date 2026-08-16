@@ -6,6 +6,7 @@ from plugp100.api.tapo_client import TapoClient
 from plugp100.common.functional.tri import Try
 from plugp100.common.utils.json_utils import dataclass_encode_json
 from plugp100.components.battery import BatteryComponent
+from plugp100.components.temperature import TemperatureComponent
 from plugp100.devices.base import C
 from plugp100.devices.children.base import TapoHubChildDevice
 from plugp100.devices.types import DeviceType
@@ -28,7 +29,7 @@ class KE100Device(TapoHubChildDevice):
         self._last_state: KE100DeviceState | None = None
 
     def _get_components_to_activate(self, components: Components) -> list[C]:
-        return super()._get_components_to_activate(components) + [BatteryComponent()]
+        return super()._get_components_to_activate(components) + [BatteryComponent()] + [TemperatureComponent()]
 
     async def _update_from_state(self, state: dict[str, Any]):
         self._last_state = KE100DeviceState.from_json(state).get_or_raise()
