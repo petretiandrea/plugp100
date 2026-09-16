@@ -7,10 +7,12 @@ import pytest
 from plugp100.api.requests.tapo_request import TapoRequest
 from plugp100.common.credentials import AuthCredential
 from plugp100.common.functional.tri import Failure, Success, Try
+from plugp100.devices import TapoBulb, TapoDevice, TapoHub, TapoPlug
 from plugp100.devices.factory import (
     DeviceConnectConfiguration,
     _ProtocolCandidate,
     _build_protocol_candidates,
+    _get_device_class_from_model_type,
     _guess_protocol,
 )
 from plugp100.errors.invalid_authentication import InvalidAuthentication
@@ -218,3 +220,24 @@ async def test_guess_protocol_skips_candidates_on_unavailable_endpoint():
     assert refused.closed
     assert not skipped.closed
     assert skipped.retries == []
+
+
+@pytest.mark.parametrize(
+    ("device_type", "expected"),
+    [
+        ("SMART.TAPOPLUG", TapoPlug),
+        ("SMART.TAPOBULB", TapoBulb),
+        ("SMART.TAPOSWITCH", TapoBulb),
+        ("smart.taposwitch", TapoBulb),
+        ("SMART.TAPOHUB", TapoHub),
+        ("SMART.KASAHUB", TapoHub),
+        ("SMART.SOMETHINGELSE", TapoDevice),
+    ],
+)
+def test_device_class_from_model_type(device_type, expected):
+    assert _get_device_class_from_model_type(device_type) is expected
+
+
+def test_device_class_from_model_type_rejects_camera():
+    with pytest.raises(Exception, match="not supported"):
+        _get_device_class_from_model_type("SMART.IPCAMERA")
