@@ -1,5 +1,6 @@
 import base64
 import logging
+import re
 import time
 import uuid
 from dataclasses import dataclass
@@ -80,9 +81,24 @@ class SecurePassthroughTransport:
             session_id = [
                 value for key, value in handshake_cookies.items() if "SESSIONID" in key
             ][0]
-            timeout = int(
-                [value for key, value in handshake_cookies.items() if "TIMEOUT" in key][0]
+            timeout = next(
+                (
+                    int(value)
+                    for key, value in handshake_cookies.items()
+                    if "TIMEOUT" in key
+                ),
+                None,
             )
+            if timeout is None:
+                # Some devices send TIMEOUT as a TP_SESSIONID attribute, which aiohttp ignores.
+                for header in response.headers.getall("Set-Cookie", []):
+                    if header.startswith("TP_SESSIONID=") and (
+                        match := re.search(r"(?:^|;)\s*TIMEOUT=(\d+)\s*(?:;|$)", header)
+                    ):
+                        timeout = int(match.group(1))
+                        break
+                else:
+                    timeout = 1440
 
             logger.debug("Decoding handshake key...")
             handshake_key = resp_dict["result"]["key"]
