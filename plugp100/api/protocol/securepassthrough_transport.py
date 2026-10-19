@@ -73,8 +73,15 @@ class SecurePassthroughTransport:
         response_or_error = TapoResponse.try_from_json(resp_dict).map(lambda _: True)
 
         if response_or_error.is_success():
+            # Devices send "TP_SESSIONID=...;TIMEOUT=1440". aiohttp >= 3.14.4 treats
+            # TIMEOUT as an unknown attribute and drops it, so parse the raw header.
             handshake_cookies = {
-                cookie.key: cookie.value for cookie in response.cookies.values()
+                key.strip(): value.strip()
+                for header in response.headers.getall("Set-Cookie", [])
+                for key, sep, value in (
+                    part.partition("=") for part in header.split(";")
+                )
+                if sep
             }
             logger.debug(f"Got Handshake cookies: ...{handshake_cookies}")
             session_id = [
