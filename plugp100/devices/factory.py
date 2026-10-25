@@ -314,6 +314,12 @@ def _get_device_class_from_model_type(device_type: str) -> Type[TapoDevice]:
         return TapoPlug
     elif device_type == "SMART.TAPOBULB":
         return TapoBulb
+    elif device_type == "SMART.TAPOSWITCH":
+        # Tapo wall switches (S500/S505/S515 and their dimmer variants) drive a
+        # light, and LightComponent already covers them: turn_on/turn_off issue the
+        # same set_device_info(device_on=...) request an OnOffComponent would, and
+        # dimmer models additionally negotiate the "brightness" component.
+        return TapoBulb
     elif device_type == "SMART.TAPOHUB":
         return TapoHub
     elif device_type == "SMART.KASAHUB":
