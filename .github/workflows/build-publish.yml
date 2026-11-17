@@ -114,7 +114,7 @@ jobs:
         id: semantic
         uses: cycjimmy/semantic-release-action@v6
         with:
-          semantic_version: 23.0.2
+          semantic_version: 23.1.1
           branches: |
             [ 'main', {name: 'next', prerelease: true}, {name: 'dev', channel: 'dev', prerelease: true} ]
           extra_plugins: |
@@ -148,7 +148,7 @@ jobs:
         if: ${{ steps.semantic.outputs.new_release_version != '' }}
         uses: cycjimmy/semantic-release-action@v6
         with:
-          semantic_version: 23.0.2
+          semantic_version: 23.1.1
           branches: |
             [ 'main',  {name: 'next', prerelease: true},  {name: 'dev', channel: 'dev', prerelease: true}]
           extra_plugins: |
