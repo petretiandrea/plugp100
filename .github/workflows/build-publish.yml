@@ -99,7 +99,7 @@ jobs:
       - name: Setup Node 24.x
         uses: actions/setup-node@v7
         with:
-          node-version: 24
+          node-version: 26
 
       - name: Set up Python
         uses: actions/setup-python@v7
