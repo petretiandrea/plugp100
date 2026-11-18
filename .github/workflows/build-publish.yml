@@ -112,7 +112,7 @@ jobs:
 
       - name: Semantic Release (Dry Run)
         id: semantic
-        uses: cycjimmy/semantic-release-action@v6
+        uses: cycjimmy/semantic-release-action@v8.1.4
         with:
           semantic_version: 23.0.2
           branches: |
@@ -146,7 +146,7 @@ jobs:
 
       - name: Semantic Release
         if: ${{ steps.semantic.outputs.new_release_version != '' }}
-        uses: cycjimmy/semantic-release-action@v6
+        uses: cycjimmy/semantic-release-action@v8.1.4
         with:
           semantic_version: 23.0.2
           branches: |
