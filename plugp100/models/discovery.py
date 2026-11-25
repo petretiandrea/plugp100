@@ -28,7 +28,11 @@ class DiscoveredDevice:
     @staticmethod
     def from_dict(values: dict[str, Any]) -> "DiscoveredDevice":
         if enc_schema_info := values.get("mgt_encrypt_schm", None):
-            encryption_schema = EncryptionSchema(**enc_schema_info)
+            # Newer firmware adds keys such as new_klap; ignore the ones we don't know
+            known = {field.name for field in dataclasses.fields(EncryptionSchema)}
+            encryption_schema = EncryptionSchema(
+                **{k: v for k, v in enc_schema_info.items() if k in known}
+            )
         else:
             encryption_schema = None
         return DiscoveredDevice(
