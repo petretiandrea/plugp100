@@ -42,3 +42,11 @@ async def test_should_not_get_device_info_if_discovery_has_type():
         )
         send_request.assert_not_called()
         assert device is not None
+
+
+def test_discovered_device_ignores_unknown_encryption_schema_keys():
+    discovery_data = load_fixture("discovery.json")
+    discovery_data["mgt_encrypt_schm"]["new_klap"] = 1
+    discovered_device = DiscoveredDevice.from_dict(discovery_data)
+    assert discovered_device.mgt_encrypt_schm is not None
+    assert not hasattr(discovered_device.mgt_encrypt_schm, "new_klap")
